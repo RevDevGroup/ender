@@ -9,6 +9,10 @@
 
 aiosqlite==0.17.0
     # via tortoise-orm
+amqp==5.1.0
+    # via
+    #   kombu
+    #   librabbitmq
 anyio==3.5.0
     # via starlette
 asgiref==3.5.0
@@ -17,12 +21,27 @@ bcrypt==3.2.0
     # via
     #   -r requirements.in
     #   passlib
+billiard==3.6.4.0
+    # via celery
+celery[librabbitmq]==5.2.6
+    # via -r requirements.in
 cffi==1.15.0
     # via
     #   bcrypt
     #   cryptography
 click==8.1.2
-    # via uvicorn
+    # via
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+    #   uvicorn
+click-didyoumean==0.3.0
+    # via celery
+click-plugins==1.1.1
+    # via celery
+click-repl==0.2.0
+    # via celery
 cryptography==36.0.2
     # via
     #   pyjwt
@@ -55,12 +74,22 @@ idna==3.3
     #   email-validator
 iso8601==0.1.16
     # via tortoise-orm
+jinja2==3.1.1
+    # via -r requirements.in
+kombu==5.2.4
+    # via celery
+librabbitmq==2.0.0
+    # via celery
 makefun==1.13.1
     # via fastapi-users
+markupsafe==2.1.1
+    # via jinja2
 passlib[bcrypt]==1.7.4
     # via
     #   -r requirements.in
     #   fastapi-users
+prompt-toolkit==3.0.29
+    # via click-repl
 pyasn1==0.4.8
     # via
     #   python-jose
@@ -82,13 +111,17 @@ python-jose[cryptography]==3.3.0
 python-multipart==0.0.5
     # via fastapi-users
 pytz==2022.1
-    # via tortoise-orm
+    # via
+    #   celery
+    #   tortoise-orm
 rsa==4.8
     # via python-jose
 six==1.16.0
     # via
     #   bcrypt
+    #   click-repl
     #   ecdsa
+    #   librabbitmq
     #   python-multipart
 sniffio==1.2.0
     # via anyio
@@ -102,6 +135,13 @@ typing-extensions==4.1.1
     #   pydantic
 uvicorn==0.17.6
     # via -r requirements.in
+vine==5.0.0
+    # via
+    #   amqp
+    #   celery
+    #   kombu
+wcwidth==0.2.5
+    # via prompt-toolkit
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

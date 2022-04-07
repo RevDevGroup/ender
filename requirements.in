@@ -11,9 +11,11 @@
 bcrypt
 fastapi
 fastapi-users[tortoise-orm]
+jinja2
 pydantic[email]
 passlib
 python-jose[cryptography]
 python-dotenv
 uvicorn
 gunicorn
+celery[librabbitmq]
