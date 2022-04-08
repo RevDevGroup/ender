@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  postgresql:
+    container_name: ender-postgresql
+    image: docker.uclv.cu/postgres:alpine
+    hostname: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+
+  adminer:
+    container_name: "ender-adminer"
+    image: docker.uclv.cu/adminer
+    hostname: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  rabbitmq:
+    container_name: "ender-rabbitmq"
+    image: docker.uclv.cu/rabbitmq:management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RMQ_PASS}
+    ports:
+      - '5672:5672'
+      - '15672:15672'
