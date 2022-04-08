@@ -17,6 +17,8 @@ anyio==3.5.0
     # via starlette
 asgiref==3.5.0
     # via uvicorn
+asyncpg==0.25.0
+    # via -r requirements.in
 bcrypt==3.2.0
     # via
     #   -r requirements.in
@@ -25,10 +27,14 @@ billiard==3.6.4.0
     # via celery
 celery[librabbitmq]==5.2.6
     # via -r requirements.in
+certifi==2021.10.8
+    # via requests
 cffi==1.15.0
     # via
     #   bcrypt
     #   cryptography
+charset-normalizer==2.0.12
+    # via requests
 click==8.1.2
     # via
     #   celery
@@ -72,6 +78,7 @@ idna==3.3
     # via
     #   anyio
     #   email-validator
+    #   requests
 iso8601==0.1.16
     # via tortoise-orm
 jinja2==3.1.1
@@ -114,6 +121,8 @@ pytz==2022.1
     # via
     #   celery
     #   tortoise-orm
+requests==2.27.1
+    # via -r requirements.in
 rsa==4.8
     # via python-jose
 six==1.16.0
@@ -133,6 +142,8 @@ typing-extensions==4.1.1
     # via
     #   aiosqlite
     #   pydantic
+urllib3==1.26.9
+    # via requests
 uvicorn==0.17.6
     # via -r requirements.in
 vine==5.0.0

@@ -1,15 +1,10 @@
 # Celery config module
-# Don't modify this!
-import os
-from dotenv import load_dotenv
+# Don't modify this directly!
+from app.core.config import BROKER_URL_MAIN, RATE_LIMIT, RESULT_BACKEND
 
-load_dotenv(".env")
+broker_url = BROKER_URL_MAIN
+result_backend = RESULT_BACKEND
 
-broker_url = os.environ["BROKER_URL"]
-result_backend = os.environ["RESULT_BACKEND"]
+task_compression = "gzip"
 
-task_compression = 'gzip'
-
-task_annotations = {
-    '*': {'rate_limit': os.environ["RATE_LIMIT"]}
-}
+task_annotations = {"*": {"rate_limit": RATE_LIMIT}}
