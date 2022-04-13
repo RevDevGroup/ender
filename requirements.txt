@@ -4,8 +4,9 @@
 #
 #    pip-compile --index-url=https://nexus.uclv.edu.cu/repository/pypi/simple --output-file=requirements.txt requirements.in
 #
---index-url https://nexus.uclv.edu.cu/repository/pypi/simple
---trusted-host nexus.prod.uci.cu
+# Uncomment for Cuba users
+# --index-url https://nexus.uclv.edu.cu/repository/pypi/simple
+# --trusted-host nexus.prod.uci.cu
 
 aiosqlite==0.17.0
     # via tortoise-orm
