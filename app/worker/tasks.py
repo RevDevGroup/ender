@@ -1,9 +1,9 @@
+import os
 import requests
-
-from app.core.config import ANDROID_DEVICE
 
 from .celery_app import app
 
+ANDROID_DEVICE = os.environ["ANDROID_DEVICE"]
 
 @app.task
 def check_balance():
