@@ -10,7 +10,7 @@ from app.schemas.schemas import Message_Pydantic_Create, Message_Pydantic_Show
 router = APIRouter(tags=["Messages"], prefix="/messages")
 
 
-@router.get("/", response_model=List[Message_Pydantic_Show])
+@router.get("", response_model=List[Message_Pydantic_Show])
 async def get_all(user: UserDB = Depends(current_active_user)):
     return await get_messages(user=user.id)
 
