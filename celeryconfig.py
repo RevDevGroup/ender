@@ -12,3 +12,5 @@ result_backend = RESULT_BACKEND
 task_compression = "gzip"
 
 task_annotations = {"*": {"rate_limit": RATE_LIMIT}}
+
+worker_cancel_long_running_tasks_on_connection_loss = True # Until Celery 6.0
