@@ -31,7 +31,7 @@ class UserDB(User, models.BaseUserDB, PydanticModel):
 
 
 class Message(Model):
-    phone = fields.CharField(max_length=8)
+    phone = fields.CharField(max_length=11)
     message_body = fields.CharField(max_length=160)
     user: fields.ForeignKeyRelation[UserModel] = fields.ForeignKeyField(
         "models.UserModel", related_name="messages"
