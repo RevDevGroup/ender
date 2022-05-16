@@ -15,7 +15,9 @@ async def get_all(user: UserDB = Depends(current_active_user)):
     return await get_messages(user=user.id)
 
 
-@router.post("/create", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/create", status_code=status.HTTP_200_OK, response_model=Message_Pydantic_Show
+)
 async def create_message(
     request: Message_Pydantic_Create, user: UserDB = Depends(current_active_user)
 ):
