@@ -108,7 +108,7 @@ pydantic[email]==1.9.0
     # via
     #   -r requirements.in
     #   fastapi
-pyjwt[crypto]==2.3.0
+pyjwt[crypto]==2.4.0
     # via fastapi-users
 pypika-tortoise==0.1.4
     # via tortoise-orm
