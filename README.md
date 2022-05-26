@@ -2,7 +2,7 @@
 
 # EnderSMS
 
-## A SaaS for sending SMS to Cuba :cuba
+### A SaaS for sending SMS to Cuba :cuba:
 
   [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
   ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fender.onrender.com)
