@@ -1,8 +1,9 @@
 <div align="center">
 
-  # EnderSMS
+# EnderSMS
 
-  #### A SaaS for sending SMS to Cuba :cuba:
+## A SaaS for sending SMS to Cuba :cuba
+
   [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
   ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fender.onrender.com)
   ![Twitter Follow](https://img.shields.io/twitter/follow/JimScope?style=social)
@@ -18,6 +19,7 @@
 ## Tech Stack
 
 **Server:**
+
 - Python
 - FastAPI
 - MongoDB
@@ -34,10 +36,10 @@
 - [@ragnarok22](https://www.github.com/ragnarok22)
 - [@jorgeajimenezl](https://www.github.com/jorgeajimenezl)
 
-
 ## Sponsored By
 
 - RevDevGroup
+
 ## Support
 
 For support, email jimscope@protonmail.com or join our Telegram Group [TheRevDevGroup](https://t.me/TheRevDevGroup).
