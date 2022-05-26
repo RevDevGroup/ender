@@ -10,14 +10,12 @@
 
 bcrypt
 fastapi
-fastapi-users[tortoise-orm]
-asyncpg
+fastapi-users[beanie]
 jinja2
-pydantic[email]
+pydantic
 passlib
 python-jose[cryptography]
 python-dotenv
-uvicorn
-gunicorn
+uvicorn[standard]
 celery[librabbitmq]
 requests

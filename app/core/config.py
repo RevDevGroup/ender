@@ -6,6 +6,7 @@ load_dotenv("./.env")
 
 # DB config.
 DATABASE_URL = os.environ["DATABASE_URL"]
+DB_NAME = os.environ["DB_NAME"]
 
 # App config.
 

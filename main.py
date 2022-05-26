@@ -1,11 +1,13 @@
+from beanie import init_beanie
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-from tortoise.contrib.fastapi import register_tortoise
 
 from app.api.users import auth_backend, fastapi_users
-from app.core.config import DATABASE_URL
+from app.database.database import db
+from app.models.models import Message, User
 from app.routes import index, messages
+from app.schemas.schemas import UserCreate, UserRead, UserUpdate
 
 app = FastAPI(
     version="0.1.0",
@@ -32,25 +34,40 @@ app.add_middleware(
 app.include_router(index.router)
 
 app.include_router(
-    fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["Auth"]
+    fastapi_users.get_auth_router(
+        auth_backend, requires_verification=False
+    ),  # Set requires_verification True in a future
+    prefix="/auth/jwt",
+    tags=["Auth"],
 )
-app.include_router(fastapi_users.get_register_router(), prefix="/auth", tags=["Auth"])
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["Auth"],
+)
 app.include_router(
     fastapi_users.get_reset_password_router(),
     prefix="/auth",
     tags=["Auth"],
 )
 app.include_router(
-    fastapi_users.get_verify_router(),
+    fastapi_users.get_verify_router(UserRead),
     prefix="/auth",
     tags=["Auth"],
 )
-app.include_router(fastapi_users.get_users_router(), prefix="/users", tags=["Users"])
+app.include_router(
+    fastapi_users.get_users_router(
+        UserRead, UserUpdate, requires_verification=False
+    ),  # Set requires_verification True in a future
+    prefix="/users",
+    tags=["Users"],
+)
 app.include_router(messages.router)
 
-register_tortoise(
-    app,
-    db_url=DATABASE_URL,
-    modules={"models": ["app.models.models"]},
-    generate_schemas=True,
-)
+
+@app.on_event("startup")
+async def on_startup():
+    await init_beanie(
+        database=db,
+        document_models=[User, Message],
+    )

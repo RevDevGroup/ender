@@ -1,5 +1,6 @@
 from typing import Optional
 
+from beanie import PydanticObjectId
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers
 from fastapi_users.authentication import (
@@ -7,35 +8,32 @@ from fastapi_users.authentication import (
     BearerTransport,
     JWTStrategy,
 )
-from fastapi_users.db import TortoiseUserDatabase
+from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
 from app.core.config import API_SECRET_KEY
-from app.database.db import get_user_db
-from app.models.models import User, UserCreate, UserDB, UserUpdate
-
-SECRET = API_SECRET_KEY
+from app.database.database import get_user_db
+from app.models.models import User
 
 
-class UserManager(BaseUserManager[UserCreate, UserDB]):
-    user_db_model = UserDB
-    reset_password_token_secret = SECRET
-    verification_token_secret = SECRET
+class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
+    reset_password_token_secret = API_SECRET_KEY
+    verification_token_secret = API_SECRET_KEY
 
-    async def on_after_register(self, user: UserDB, request: Optional[Request] = None):
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
-        self, user: UserDB, token: str, request: Optional[Request] = None
+        self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
-        self, user: UserDB, token: str, request: Optional[Request] = None
+        self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
-async def get_user_manager(user_db: TortoiseUserDatabase = Depends(get_user_db)):
+async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
 
@@ -43,7 +41,7 @@ bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return JWTStrategy(secret=API_SECRET_KEY, lifetime_seconds=3600)
 
 
 auth_backend = AuthenticationBackend(
@@ -51,14 +49,8 @@ auth_backend = AuthenticationBackend(
     transport=bearer_transport,
     get_strategy=get_jwt_strategy,
 )
-fastapi_users = FastAPIUsers(
-    get_user_manager,
-    [auth_backend],
-    User,
-    UserCreate,
-    UserUpdate,
-    UserDB,
-)
+
+fastapi_users = FastAPIUsers[User, PydanticObjectId](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)
 current_active_superuser = fastapi_users.current_user(active=True, superuser=True)
