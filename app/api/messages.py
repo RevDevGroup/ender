@@ -4,8 +4,10 @@ from app.models.models import Message
 from app.worker.tasks import send_sms
 
 
-async def get_messages(user: PydanticObjectId):
-    return await Message.find(Message.user == user).to_list()
+async def get_messages(limit, skip, user: PydanticObjectId):
+    return (
+        await Message.find(Message.user == user).limit(int(limit)).skip(skip).to_list()
+    )
 
 
 async def send_message(user: PydanticObjectId, **kwargs):

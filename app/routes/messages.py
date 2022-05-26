@@ -1,3 +1,4 @@
+from email.policy import default
 from typing import List
 
 from fastapi import APIRouter, Depends, Query, status
@@ -14,13 +15,13 @@ async def get_all(
     limit: str = Query(
         default=10,
         min_length=1,
-        max_length=3,
-        regex="^[1-9][0-9]?$|^100$",
-        description="Limit the number of results from 1 - 100",
+        max_length=2,
+        description="Limit the number of results",
     ),
+    skip: int | None = Query(default=None, description="Skip a number of results"),
     user: UserRead = Depends(current_active_user),
 ):
-    return await get_messages(user=user.id)
+    return await get_messages(user=user.id, limit=limit, skip=skip)
 
 
 @router.post("/create", status_code=status.HTTP_200_OK, response_model=MessageRead)
