@@ -1,4 +1,3 @@
-from email.policy import default
 from typing import List
 
 from fastapi import APIRouter, Depends, Query, status
@@ -24,8 +23,10 @@ async def get_all(
     return await get_messages(user=user.id, limit=limit, skip=skip)
 
 
-@router.post("/create", status_code=status.HTTP_200_OK, response_model=MessageRead)
+@router.post(
+    "/create", status_code=status.HTTP_200_OK, response_model=List[MessageRead]
+)
 async def create_message(
-    request: MessageCreate, user: UserRead = Depends(current_active_user)
+    request: List[MessageCreate], user: UserRead = Depends(current_active_user)
 ):
-    return await send_message(user=user.id, **request.dict())
+    return await send_message(user=user.id, request=request)

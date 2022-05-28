@@ -10,13 +10,14 @@ async def get_messages(limit, skip, user: PydanticObjectId):
     )
 
 
-async def send_message(user: PydanticObjectId, **kwargs):
-    # await send_sms.delay(kwargs.get("phone"), kwargs.get("message_body"))
-    return await Message(
-        phone=kwargs.get("phone"), message_body=kwargs.get("message_body"), user=user
-    ).insert()
-
-
-async def send_messages():
-    pass
-    # return await Message()
+async def send_message(user: PydanticObjectId, request):
+    # Maybe this can be improved with insert_many()
+    messages = []
+    for data in request:
+        d = data.dict()
+        messages.append(
+            await Message(
+                phone=d.get("phone"), message_body=d.get("message_body"), user=user
+            ).insert()
+        )
+    return messages
