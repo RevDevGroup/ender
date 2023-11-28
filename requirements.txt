@@ -7,7 +7,6 @@
 # Uncomment for Cuba users
 # --index-url https://nexus.uclv.edu.cu/repository/pypi/simple
 # --trusted-host nexus.prod.uci.cu
-
 aiosqlite==0.17.0
     # via tortoise-orm
 amqp==5.1.0
@@ -49,7 +48,7 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.2.0
     # via celery
-cryptography==36.0.2
+cryptography==41.0.6
     # via
     #   pyjwt
     #   python-jose
@@ -108,8 +107,10 @@ pydantic[email]==1.9.0
     # via
     #   -r requirements.in
     #   fastapi
-pyjwt[crypto]==2.4.0
-    # via fastapi-users
+pyjwt[crypto]==2.3.0
+    # via
+    #   fastapi-users
+    #   pyjwt
 pypika-tortoise==0.1.4
     # via tortoise-orm
 python-dotenv==0.20.0
