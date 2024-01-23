@@ -27,7 +27,7 @@ billiard==3.6.4.0
     # via celery
 celery[librabbitmq]==5.2.6
     # via -r requirements.in
-certifi==2021.10.8
+certifi==2023.7.22
     # via requests
 cffi==1.15.0
     # via
