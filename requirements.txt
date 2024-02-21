@@ -48,7 +48,7 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.2.0
     # via celery
-cryptography==41.0.6
+cryptography==42.0.4
     # via
     #   pyjwt
     #   python-jose
