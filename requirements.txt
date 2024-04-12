@@ -52,7 +52,7 @@ cryptography==41.0.6
     # via
     #   pyjwt
     #   python-jose
-dnspython==2.2.1
+dnspython==2.6.1
     # via email-validator
 ecdsa==0.17.0
     # via python-jose
@@ -108,9 +108,7 @@ pydantic[email]==1.9.0
     #   -r requirements.in
     #   fastapi
 pyjwt[crypto]==2.3.0
-    # via
-    #   fastapi-users
-    #   pyjwt
+    # via fastapi-users
 pypika-tortoise==0.1.4
     # via tortoise-orm
 python-dotenv==0.20.0
