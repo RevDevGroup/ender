@@ -70,7 +70,7 @@ fastapi-users[tortoise-orm]==9.3.0
     #   fastapi-users-db-tortoise
 fastapi-users-db-tortoise==2.0.0
     # via fastapi-users
-gunicorn==20.1.0
+gunicorn==22.0.0
     # via -r requirements.in
 h11==0.13.0
     # via uvicorn
@@ -91,6 +91,8 @@ makefun==1.13.1
     # via fastapi-users
 markupsafe==2.1.1
     # via jinja2
+packaging==24.0
+    # via gunicorn
 passlib[bcrypt]==1.7.4
     # via
     #   -r requirements.in
@@ -108,9 +110,7 @@ pydantic[email]==1.9.0
     #   -r requirements.in
     #   fastapi
 pyjwt[crypto]==2.3.0
-    # via
-    #   fastapi-users
-    #   pyjwt
+    # via fastapi-users
 pypika-tortoise==0.1.4
     # via tortoise-orm
 python-dotenv==0.20.0
@@ -155,6 +155,3 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
