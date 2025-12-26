@@ -11,7 +11,7 @@
 bcrypt
 fastapi
 fastapi-users[tortoise-orm]
-asyncpg
+asyncpg==0.31.0
 jinja2
 pydantic[email]
 passlib
@@ -19,5 +19,6 @@ python-jose[cryptography]
 python-dotenv
 uvicorn
 gunicorn
-celery[librabbitmq]
+celery
 requests
+paho-mqtt
