@@ -1,9 +1,10 @@
 version: "3.9"
 services:
-  postgresql:
+  db:
     container_name: ender-postgresql
-    image: docker.uclv.cu/postgres:alpine
+    image: postgres:alpine
     hostname: postgres
+    shm_size: 128mb
     restart: always
     ports:
       - 5432:5432
@@ -14,7 +15,7 @@ services:
 
   adminer:
     container_name: "ender-adminer"
-    image: docker.uclv.cu/adminer
+    image: dockette/adminer:postgres
     hostname: adminer
     restart: always
     ports:
@@ -22,10 +23,19 @@ services:
 
   rabbitmq:
     container_name: "ender-rabbitmq"
-    image: docker.uclv.cu/rabbitmq:management-alpine
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RMQ_PASS}
+    image: rabbitmq:management-alpine
     ports:
       - '5672:5672'
       - '15672:15672'
+
+  mosquitto:
+    container_name: "ender-mosquitto"
+    image: eclipse-mosquitto
+    ports:
+      - '1883:1883'
+      - '8883:8883'
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: always

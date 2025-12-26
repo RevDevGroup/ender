@@ -6,6 +6,8 @@ from tortoise.contrib.fastapi import register_tortoise
 from app.api.users import auth_backend, fastapi_users
 from app.core.config import DATABASE_URL
 from app.routes import index, messages
+from app.api.devices import router as devices_router
+from app.mqtt.client import mqtt_client
 
 app = FastAPI(
     version="0.1.0",
@@ -47,6 +49,7 @@ app.include_router(
 )
 app.include_router(fastapi_users.get_users_router(), prefix="/users", tags=["Users"])
 app.include_router(messages.router)
+app.include_router(devices_router)
 
 register_tortoise(
     app,
@@ -54,3 +57,11 @@ register_tortoise(
     modules={"models": ["app.models.models"]},
     generate_schemas=True,
 )
+
+@app.on_event("startup")
+async def startup_event():
+    mqtt_client.start()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    mqtt_client.stop()

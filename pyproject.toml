@@ -1,3 +1,14 @@
+[project]
+name = "ender"
+version = "0.1.0"
+description = "SMS Gateway API"
+authors = [
+    {name = "RevDevGroup", email = "revdev@protonmail.com"},
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = []
+
 # Linter configuration.
 [tool.isort]
 profile = "black"
