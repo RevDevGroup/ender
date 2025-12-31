@@ -8,10 +8,11 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
 
+from app import crud
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User
+from app.models import SMSDevice, TokenPayload, User
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -55,3 +56,25 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def get_device_by_api_key(session: SessionDep, api_key: str) -> SMSDevice:
+    """Validar API key y obtener dispositivo"""
+
+    device = crud.get_sms_device_by_api_key(session=session, api_key=api_key)
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+    return device
+
+
+def verify_device_active(device: SMSDevice) -> SMSDevice:
+    """Verificar que el dispositivo esté activo y online"""
+    if device.status not in ["online", "idle"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Device is not active",
+        )
+    return device
