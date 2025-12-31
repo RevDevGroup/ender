@@ -1,66 +1,87 @@
+import asyncio
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, select
 
 from app.core.celery_app import celery_app
 from app.core.db import engine
-from app.models import SMSDevice, SMSMessage, UserQuota, WebhookConfig
+from app.models import SMSDevice, SMSMessage, SMSOutbox, UserQuota, WebhookConfig
 from app.services.sms_service import AndroidSMSProvider
 from app.services.webhook_service import WebhookService
 from app.services.websocket_manager import websocket_manager
 
 
 @celery_app.task
-def assign_pending_messages() -> dict:
-    """Asignar mensajes pendientes a dispositivos disponibles"""
+def dispatch_outbox_messages() -> dict:
+    """
+    Scans for pending messages in the SMSOutbox and sends them via WebSocket
+    if the target device is connected.
+    """
+    processed_count = 0
+    sent_count = 0
     with Session(engine) as session:
-        # Buscar mensajes pendientes
+        # Get pending messages from the outbox
         statement = (
-            select(SMSMessage)
-            .where(SMSMessage.status == "pending")
-            .where(SMSMessage.message_type == "outgoing")
-            .order_by(SMSMessage.created_at)
+            select(SMSOutbox)
+            .where(SMSOutbox.status == "pending")
+            .order_by(SMSOutbox.created_at)
             .limit(100)
         )
-        messages = session.exec(statement).all()
+        pending_messages = session.exec(statement).all()
+        processed_count = len(pending_messages)
 
-        assigned_count = 0
-        for message in messages:
-            device = AndroidSMSProvider.assign_message_to_device(
-                session=session, message=message
-            )
-            if device:
-                # Marcar como asignado - el WebSocket lo enviará cuando esté conectado
-                message.status = "assigned"
-                session.add(message)
-                assigned_count += 1
+        for outbox_item in pending_messages:
+            if outbox_item.device_id and asyncio.run(
+                websocket_manager.is_connected(outbox_item.device_id)
+            ):
+                # Mark as sending
+                outbox_item.status = "sending"
+                outbox_item.sending_at = datetime.now(timezone.utc)
+                session.add(outbox_item)
+                session.commit()
 
-        session.commit()
-        return {"assigned": assigned_count, "total": len(messages)}
+                # Send via WebSocket
+                asyncio.run(
+                    websocket_manager.send_to_device(
+                        outbox_item.device_id, outbox_item.payload
+                    )
+                )
+                sent_count += 1
+
+    return {"processed": processed_count, "sent": sent_count}
 
 
 @celery_app.task
-def send_message_to_device(message_id: str, device_id: str) -> dict:
-    """Marcar mensaje como asignado a dispositivo"""
+def process_sms_ack(outbox_id: str, status: str, error_message: str | None = None) -> dict:
+    """
+    Process the acknowledgment (ACK) from a device for a sent SMS.
+    """
     with Session(engine) as session:
-        message = session.get(SMSMessage, uuid.UUID(message_id))
-        if not message:
-            return {"success": False, "error": "Mensaje no encontrado"}
+        outbox_item = session.get(SMSOutbox, uuid.UUID(outbox_id))
+        if not outbox_item:
+            return {"success": False, "error": "Outbox item not found"}
 
-        device = session.get(SMSDevice, uuid.UUID(device_id))
-        if not device:
-            return {"success": False, "error": "Dispositivo no encontrado"}
+        # Update Outbox
+        outbox_item.status = status
+        if error_message:
+            outbox_item.last_error = error_message
+        session.add(outbox_item)
 
-        # Asignar mensaje al dispositivo
-        message.device_id = device.id
-        message.status = "assigned"
-        session.add(message)
+        # Update original SMSMessage
+        message = session.get(SMSMessage, outbox_item.sms_message_id)
+        if message:
+            message.status = status
+            if error_message:
+                message.error_message = error_message
+            if status == "sent":
+                message.sent_at = datetime.now(timezone.utc)
+            session.add(message)
+
         session.commit()
 
-        # El WebSocket manager enviará el mensaje cuando el dispositivo esté conectado
-        return {"success": True, "message_id": message_id, "device_id": device_id}
+        return {"success": True, "outbox_id": outbox_id, "status": status}
 
 
 @celery_app.task
@@ -202,29 +223,23 @@ def retry_webhook_delivery() -> dict:
 
 @celery_app.task
 def cleanup_offline_devices() -> dict:
-    """Marcar dispositivos offline si no hay conexión WebSocket activa"""
+    """Mark devices as offline if their last heartbeat is too old."""
     with Session(engine) as session:
-        statement = select(SMSDevice).where(SMSDevice.status == "online")
-        devices = session.exec(statement).all()
+        # Devices that are online but haven't sent a heartbeat in the last 5 minutes
+        five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+        statement = (
+            select(SMSDevice)
+            .where(SMSDevice.status == "online")
+            .where(SMSDevice.last_heartbeat < five_minutes_ago)
+        )
+        offline_devices = session.exec(statement).all()
 
-        offline_count = 0
-        for device in devices:
-            # Verificar si está conectado vía WebSocket
-            if not websocket_manager.is_device_connected(device.id):
-                # Verificar último heartbeat
-                if device.last_heartbeat:
-                    timeout = datetime.utcnow() - timedelta(seconds=300)  # 5 minutos
-                    if device.last_heartbeat < timeout:
-                        device.status = "offline"
-                        session.add(device)
-                        offline_count += 1
-                else:
-                    device.status = "offline"
-                    session.add(device)
-                    offline_count += 1
+        for device in offline_devices:
+            device.status = "offline"
+            session.add(device)
 
         session.commit()
-        return {"offline_count": offline_count}
+        return {"offline_count": len(offline_devices)}
 
 
 @celery_app.task
