@@ -39,16 +39,13 @@ def send_sms(
     # Validar límites
     QuotaService.check_sms_quota(session=session, user_id=current_user.id, count=1)
 
-    # Crear mensaje
-    message = crud.create_sms_message(
+    # Crear mensaje y entrada en outbox en una transacción
+    message = crud.create_sms_outbox_message(
         session=session, message_in=message_in, user_id=current_user.id
     )
 
     # Incrementar contador
     QuotaService.increment_sms_count(session=session, user_id=current_user.id, count=1)
-
-    # Disparar asignación
-    assign_pending_messages.delay()
 
     return {
         "success": True,
@@ -70,13 +67,13 @@ def send_bulk_sms(
         session=session, user_id=current_user.id, count=len(bulk_in.recipients)
     )
 
-    # Crear mensajes
+    # Crear mensajes y entradas en outbox
     message_ids = []
     for recipient in bulk_in.recipients:
         message_in = SMSMessageCreate(
             to=recipient, body=bulk_in.body, device_id=bulk_in.device_id
         )
-        message = crud.create_sms_message(
+        message = crud.create_sms_outbox_message(
             session=session, message_in=message_in, user_id=current_user.id
         )
         message_ids.append(str(message.id))
@@ -85,9 +82,6 @@ def send_bulk_sms(
     QuotaService.increment_sms_count(
         session=session, user_id=current_user.id, count=len(bulk_in.recipients)
     )
-
-    # Disparar asignación
-    assign_pending_messages.delay()
 
     return {
         "success": True,

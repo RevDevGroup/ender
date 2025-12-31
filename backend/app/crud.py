@@ -14,6 +14,7 @@ from app.models import (
     SMSMessage,
     SMSMessageCreate,
     SMSMessageUpdate,
+    SMSOutbox,
     User,
     UserCreate,
     UserUpdate,
@@ -135,6 +136,49 @@ def create_sms_message(
     session.add(db_message)
     session.commit()
     session.refresh(db_message)
+    return db_message
+
+
+def create_sms_outbox_message(
+    *, session: Session, message_in: SMSMessageCreate, user_id: uuid.UUID
+) -> SMSMessage:
+    """
+    Create an SMS message and its corresponding outbox entry in a single transaction.
+    """
+    # Create the main SMSMessage
+    db_message = SMSMessage.model_validate(message_in, update={"user_id": user_id})
+    session.add(db_message)
+
+    # Create the Outbox entry
+    outbox_payload = {
+        "type": "task",
+        "message_id": str(db_message.id),  # This will be populated after the flush
+        "to": db_message.to,
+        "body": db_message.body,
+    }
+    db_outbox = SMSOutbox(
+        sms_message=db_message,  # Link via relationship
+        device_id=db_message.device_id,
+        payload=outbox_payload,
+        status="pending",
+    )
+    session.add(db_outbox)
+
+    # Commit both at once
+    session.commit()
+
+    # Refresh to get DB-generated values
+    session.refresh(db_message)
+    session.refresh(db_outbox)
+
+    # Now, update the payload with the actual message ID and outbox ID
+    outbox_payload["message_id"] = str(db_message.id)
+    outbox_payload["outbox_id"] = str(db_outbox.id)
+    db_outbox.payload = outbox_payload
+    session.add(db_outbox)
+    session.commit()
+    session.refresh(db_outbox)
+
     return db_message
 
 

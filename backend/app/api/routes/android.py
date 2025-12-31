@@ -1,49 +1,17 @@
+import asyncio
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
-from sqlmodel import Session, select
+from sqlmodel import Session
 
-from app import crud
 from app.api.deps import get_device_by_api_key
 from app.core.db import engine
-from app.models import SMSDevice, SMSMessage
+from app.models import SMSDevice
 from app.services.websocket_manager import websocket_manager
-from app.tasks.sms_tasks import process_incoming_sms, update_message_status
+from app.tasks.sms_tasks import process_incoming_sms, process_sms_ack
 
 router = APIRouter(prefix="/android", tags=["android"])
-
-
-async def _send_pending_messages(
-    session: Session, device: SMSDevice, websocket: WebSocket
-) -> None:
-    """Send pending assigned messages to the device"""
-    statement = (
-        select(SMSMessage)
-        .where(SMSMessage.device_id == device.id)
-        .where(SMSMessage.status == "assigned")
-        .where(SMSMessage.message_type == "outgoing")
-        .order_by(SMSMessage.created_at)
-        .limit(50)
-    )
-    messages = session.exec(statement).all()
-
-    # Refresh device. I need to find a better way to manage the Session
-    session.refresh(device)
-
-    for message in messages:
-        message_data = {
-            "type": "task",
-            "message_id": str(message.id),
-            "to": message.to,
-            "body": message.body,
-        }
-        await websocket.send_json(message_data)
-        # Update to sending status
-        message.status = "sending"
-        session.add(message)
-
-    session.commit()
 
 
 @router.websocket("/ws")
@@ -51,107 +19,108 @@ async def websocket_endpoint(
     websocket: WebSocket,
     api_key: str = Query(...),
 ):
-    """Persistent WebSocket connection for Android devices"""
+    """Persistent WebSocket connection for Android devices."""
     with Session(engine) as session:
-        # API Key validation
         device = get_device_by_api_key(session=session, api_key=api_key)
+        if not device:
+            await websocket.close(code=4001, reason="Invalid API Key")
+            return
 
-        await websocket_manager.connect_device(websocket, device.id)
+    # Connect device and start Redis listener
+    listener_task = await websocket_manager.connect(websocket, device.id)
 
-        # Update device status
-        device.status = "online"
-        device.last_heartbeat = datetime.now(timezone.utc)
-        session.add(device)
-        session.commit()
+    # Update device status in DB (last heartbeat)
+    _update_device_heartbeat_in_db(device.id)
 
-        try:
-            # Send pending message on connection
-            await _send_pending_messages(session, device, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            message_type = data.get("type")
 
-            while True:
-                # Receive client messages
-                data = await websocket.receive_json()
+            if message_type == "register":
+                _update_device_info_in_db(device.id, data)
+                await websocket.send_json(
+                    {
+                        "type": "registered",
+                        "device_id": str(device.id),
+                        "status": "ok",
+                    }
+                )
 
-                message_type = data.get("type")
-
-                if message_type == "register":
-                    # Update device info
-                    device.name = data.get("device_name", device.name)
-                    device.phone_number = data.get("phone_number", device.phone_number)
-                    device.last_heartbeat = datetime.now(timezone.utc)
-                    session.add(device)
-                    session.commit()
-
+            elif message_type == "sms_report":
+                raw_outbox_id = data.get("outbox_id")
+                try:
+                    outbox_id = uuid.UUID(raw_outbox_id)
+                except (TypeError, ValueError):
                     await websocket.send_json(
-                        {
-                            "type": "registered",
-                            "device_id": str(device.id),
-                            "status": "ok",
-                        }
+                        {"type": "error", "message": "Invalid outbox_id"}
                     )
+                    continue
 
-                elif message_type == "sms_report":
-                    # SMS status delivery
-                    raw_id = data.get("message_id")
-                    try:
-                        message_id = uuid.UUID(raw_id)
-                    except (TypeError, ValueError):
-                        await websocket.send_json(
-                            {"type": "error", "message": "Invalid message_id"}
-                        )
-                        continue
-                    status_value = data.get("status")  # sent, failed
-                    error = data.get("error")
+                status_value = data.get("status")  # sent, failed
+                error = data.get("error")
+                process_sms_ack.delay(str(outbox_id), status_value, error)
+                await websocket.send_json(
+                    {"type": "ack", "outbox_id": raw_outbox_id}
+                )
 
-                    message = crud.get_sms_message(
-                        session=session, message_id=message_id
-                    )
-                    if message and message.device_id == device.id:
-                        update_message_status.delay(
-                            str(message_id), status_value, error
-                        )
+            elif message_type == "sms_incoming":
+                process_incoming_sms.delay(
+                    str(device.user_id),
+                    data.get("from"),
+                    data.get("body"),
+                    data.get("timestamp"),
+                )
+                await websocket.send_json({"type": "ack", "status": "received"})
 
-                    await websocket.send_json(
-                        {"type": "ack", "message_id": data.get("message_id")}
-                    )
+            elif message_type == "ping":
+                await websocket_manager.refresh_heartbeat(device.id)
+                _update_device_heartbeat_in_db(device.id)
+                await websocket.send_json({"type": "pong"})
 
-                elif message_type == "sms_incoming":
-                    # Report sms incoming
-                    from_number = data.get("from")
-                    body = data.get("body")
-                    timestamp = data.get("timestamp")
+            else:
+                await websocket.send_json(
+                    {"type": "error", "message": f"Unknown message type: {message_type}"}
+                )
 
-                    process_incoming_sms.delay(
-                        str(device.user_id), from_number, body, timestamp
-                    )
+    except WebSocketDisconnect:
+        pass  # Normal disconnect
+    except Exception:
+        # Log exception here if needed
+        pass
+    finally:
+        # Cleanup
+        listener_task.cancel()
+        await websocket_manager.disconnect(device.id)
+        _update_device_status_in_db(device.id, "offline")
 
-                    await websocket.send_json({"type": "ack", "status": "received"})
 
-                elif message_type == "ping":
-                    # Heartbeat/keepalive
-                    device.last_heartbeat = datetime.now(timezone.utc)
-                    session.add(device)
-                    session.commit()
-
-                    # Send pending messages with the ping
-                    await _send_pending_messages(session, device, websocket)
-
-                    await websocket.send_json({"type": "pong"})
-
-                else:
-                    await websocket.send_json(
-                        {"type": "error", "message": f"Unknown message: {message_type}"}
-                    )
-
-        except WebSocketDisconnect:
-            # Disconnect Device
-            await websocket_manager.disconnect_device(device.id)
-            device.status = "offline"
+# Helper functions to interact with DB in a new session
+def _update_device_heartbeat_in_db(device_id: uuid.UUID):
+    with Session(engine) as session:
+        device = session.get(SMSDevice, device_id)
+        if device:
+            device.last_heartbeat = datetime.now(timezone.utc)
+            device.status = "online"
             session.add(device)
             session.commit()
-        except Exception:
-            await websocket_manager.disconnect_device(device.id)
-            device.status = "offline"
+
+
+def _update_device_info_in_db(device_id: uuid.UUID, data: dict):
+    with Session(engine) as session:
+        device = session.get(SMSDevice, device_id)
+        if device:
+            device.name = data.get("device_name", device.name)
+            device.phone_number = data.get("phone_number", device.phone_number)
+            device.last_heartbeat = datetime.now(timezone.utc)
             session.add(device)
             session.commit()
-            raise
+
+
+def _update_device_status_in_db(device_id: uuid.UUID, status: str):
+    with Session(engine) as session:
+        device = session.get(SMSDevice, device_id)
+        if device:
+            device.status = status
+            session.add(device)
+            session.commit()
