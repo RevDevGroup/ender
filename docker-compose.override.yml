@@ -53,7 +53,7 @@ services:
   adminer:
     restart: "no"
     ports:
-      - "8080:8080"
+      - "8080:80"
 
   backend:
     restart: "no"

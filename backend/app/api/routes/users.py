@@ -13,8 +13,8 @@ from app.api.deps import (
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
-    Item,
     Message,
+    SMSMessage,
     UpdatePassword,
     User,
     UserCreate,
@@ -44,13 +44,11 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
+    user_public_list = [UserPublic.model_validate(user) for user in users]
 
-    return UsersPublic(data=users, count=count)
+    return UsersPublic(data=user_public_list, count=count)
 
 
-@router.post(
-    "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
-)
 def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
@@ -219,7 +217,7 @@ def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(Item).where(col(Item.owner_id) == user_id)
+    statement = delete(SMSMessage).where(col(SMSMessage.user_id) == user_id)
     session.exec(statement)  # type: ignore
     session.delete(user)
     session.commit()

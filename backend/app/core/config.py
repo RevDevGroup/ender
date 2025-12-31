@@ -94,6 +94,19 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # Celery and Redis configuration
+    CELERY_BROKER_URL: str = "redis://redis:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://redis:6379/0"
+    REDIS_URL: str = "redis://redis:6379/0"
+
+    # WebSocket configuration
+    WEBSOCKET_HEARTBEAT_TIMEOUT: int = 300  # 5 minutes in seconds
+    WEBSOCKET_PING_INTERVAL: int = 60  # 60 seconds for ping/pong
+
+    # Quota configuration
+    QUOTA_RESET_DAY: int = 1  # Day of month to reset counters, default: 1
+    DEFAULT_PLAN: str = "free"  # Default plan for new users
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
