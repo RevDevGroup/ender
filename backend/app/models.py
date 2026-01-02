@@ -248,7 +248,9 @@ class SMSOutbox(SQLModel, table=True):
     sms_message_id: uuid.UUID = Field(foreign_key="smsmessage.id", index=True)
     device_id: uuid.UUID | None = Field(foreign_key="smsdevice.id", nullable=True)
     payload: dict[str, Any] = Field(sa_column=Column(JSON))
-    status: str = Field(default="pending", max_length=50, index=True)  # pending, sending, sent, failed, retry
+    status: str = Field(
+        default="pending", max_length=50, index=True
+    )  # pending, sending, sent, failed, retry
     attempts: int = Field(default=0)
     next_attempt_at: datetime | None = Field(default=None)
     last_error: str | None = Field(default=None, max_length=500)

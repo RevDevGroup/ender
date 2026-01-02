@@ -1,4 +1,4 @@
-from celery import Celery
+from celery import Celery  # type: ignore
 
 from app.core.config import settings
 

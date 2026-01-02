@@ -1,6 +1,7 @@
-import asyncio
+import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from sqlmodel import Session
@@ -18,10 +19,11 @@ router = APIRouter(prefix="/android", tags=["android"])
 async def websocket_endpoint(
     websocket: WebSocket,
     api_key: str = Query(...),
-):
+) -> None:
     """Persistent WebSocket connection for Android devices."""
     with Session(engine) as session:
         device = get_device_by_api_key(session=session, api_key=api_key)
+        logging.info("Device attempting to connect via WebSocket:", device)
         if not device:
             await websocket.close(code=4001, reason="Invalid API Key")
             return
@@ -60,9 +62,7 @@ async def websocket_endpoint(
                 status_value = data.get("status")  # sent, failed
                 error = data.get("error")
                 process_sms_ack.delay(str(outbox_id), status_value, error)
-                await websocket.send_json(
-                    {"type": "ack", "outbox_id": raw_outbox_id}
-                )
+                await websocket.send_json({"type": "ack", "outbox_id": raw_outbox_id})
 
             elif message_type == "sms_incoming":
                 process_incoming_sms.delay(
@@ -80,7 +80,10 @@ async def websocket_endpoint(
 
             else:
                 await websocket.send_json(
-                    {"type": "error", "message": f"Unknown message type: {message_type}"}
+                    {
+                        "type": "error",
+                        "message": f"Unknown message type: {message_type}",
+                    }
                 )
 
     except WebSocketDisconnect:
@@ -96,7 +99,7 @@ async def websocket_endpoint(
 
 
 # Helper functions to interact with DB in a new session
-def _update_device_heartbeat_in_db(device_id: uuid.UUID):
+def _update_device_heartbeat_in_db(device_id: uuid.UUID) -> None:
     with Session(engine) as session:
         device = session.get(SMSDevice, device_id)
         if device:
@@ -106,7 +109,7 @@ def _update_device_heartbeat_in_db(device_id: uuid.UUID):
             session.commit()
 
 
-def _update_device_info_in_db(device_id: uuid.UUID, data: dict):
+def _update_device_info_in_db(device_id: uuid.UUID, data: dict[str, Any]) -> None:
     with Session(engine) as session:
         device = session.get(SMSDevice, device_id)
         if device:
@@ -117,7 +120,7 @@ def _update_device_info_in_db(device_id: uuid.UUID, data: dict):
             session.commit()
 
 
-def _update_device_status_in_db(device_id: uuid.UUID, status: str):
+def _update_device_status_in_db(device_id: uuid.UUID, status: str) -> None:
     with Session(engine) as session:
         device = session.get(SMSDevice, device_id)
         if device:
