@@ -2,7 +2,7 @@
 name = "app"
 version = "0.1.0"
 description = ""
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "fastapi[standard]<1.0.0,>=0.114.2",
     "python-multipart<1.0.0,>=0.0.7",
@@ -24,7 +24,6 @@ dependencies = [
     "celery>=5.4.0,<6.0.0",
     "redis>=5.1.0,<6.0.0",
     "websockets>=13.0,<14.0.0",
-    "aioredis>=2.0.0,<3.0.0",
 ]
 
 [tool.uv]

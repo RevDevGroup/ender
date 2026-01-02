@@ -2,8 +2,9 @@ import asyncio
 import json
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
-import aioredis
+import redis.asyncio as redis
 from fastapi import WebSocket, WebSocketDisconnect
 
 from app.core.config import settings
@@ -15,7 +16,7 @@ class WebSocketManager:
     """
 
     def __init__(self, redis_url: str):
-        self.redis = aioredis.from_url(redis_url)
+        self.redis = redis.from_url(redis_url)  # type: ignore[no-untyped-call]
 
     def _get_device_key(self, device_id: uuid.UUID) -> str:
         """Get the Redis key for storing a device's connection status."""
@@ -25,7 +26,9 @@ class WebSocketManager:
         """Get the Redis Pub/Sub channel name for a specific device."""
         return f"ws:channel:{device_id}"
 
-    async def connect(self, websocket: WebSocket, device_id: uuid.UUID) -> asyncio.Task:
+    async def connect(
+        self, websocket: WebSocket, device_id: uuid.UUID
+    ) -> asyncio.Task[None]:
         """
         Accept a new WebSocket connection, register it in Redis, and start
         a listener task for Pub/Sub messages.
@@ -44,9 +47,7 @@ class WebSocketManager:
         await self.redis.expire(device_key, settings.WEBSOCKET_HEARTBEAT_TIMEOUT)
 
         # Create a listener task for this specific device
-        listener_task = asyncio.create_task(
-            self._redis_listener(websocket, device_id)
-        )
+        listener_task = asyncio.create_task(self._redis_listener(websocket, device_id))
         return listener_task
 
     async def disconnect(self, device_id: uuid.UUID) -> None:
@@ -66,9 +67,12 @@ class WebSocketManager:
     async def is_connected(self, device_id: uuid.UUID) -> bool:
         """Check if a device is marked as connected in Redis."""
         device_key = self._get_device_key(device_id)
-        return await self.redis.exists(device_key) > 0
+        exists = await self.redis.exists(device_key)
+        return bool(exists)
 
-    async def send_to_device(self, device_id: uuid.UUID, message: dict) -> None:
+    async def send_to_device(
+        self, device_id: uuid.UUID, message: dict[str, Any]
+    ) -> None:
         """
         Publish a message to the device-specific Redis channel for delivery.
         """
@@ -87,7 +91,9 @@ class WebSocketManager:
         try:
             while True:
                 # Wait for a message
-                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=None)
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=None
+                )
                 if message and message["type"] == "message":
                     # The data is a bytes string, so we need to decode it
                     data = json.loads(message["data"].decode("utf-8"))

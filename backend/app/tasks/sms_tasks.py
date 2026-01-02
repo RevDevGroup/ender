@@ -2,59 +2,79 @@ import asyncio
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlmodel import Session, select
 
 from app.core.celery_app import celery_app
+from app.core.config import settings
 from app.core.db import engine
 from app.models import SMSDevice, SMSMessage, SMSOutbox, UserQuota, WebhookConfig
 from app.services.sms_service import AndroidSMSProvider
 from app.services.webhook_service import WebhookService
-from app.services.websocket_manager import websocket_manager
+from app.services.websocket_manager import WebSocketManager
 
 
-@celery_app.task
-def dispatch_outbox_messages() -> dict:
+@celery_app.task  # type: ignore[misc]
+def dispatch_outbox_messages() -> dict[str, Any]:
     """
     Scans for pending messages in the SMSOutbox and sends them via WebSocket
     if the target device is connected.
     """
-    processed_count = 0
-    sent_count = 0
-    with Session(engine) as session:
-        # Get pending messages from the outbox
-        statement = (
-            select(SMSOutbox)
-            .where(SMSOutbox.status == "pending")
-            .order_by(SMSOutbox.created_at)
-            .limit(100)
-        )
-        pending_messages = session.exec(statement).all()
-        processed_count = len(pending_messages)
 
-        for outbox_item in pending_messages:
-            if outbox_item.device_id and asyncio.run(
-                websocket_manager.is_connected(outbox_item.device_id)
-            ):
-                # Mark as sending
-                outbox_item.status = "sending"
-                outbox_item.sending_at = datetime.now(timezone.utc)
-                session.add(outbox_item)
-                session.commit()
+    # Define an inner async function to handle the lifecycle correctly
+    async def _process_dispatch() -> dict[str, Any]:
+        # Instantiate a FRESH manager for this specific execution context.
+        # This attaches the Redis pool to the current asyncio loop created by asyncio.run()
+        local_ws_manager = WebSocketManager(settings.REDIS_URL)
 
-                # Send via WebSocket
-                asyncio.run(
-                    websocket_manager.send_to_device(
-                        outbox_item.device_id, outbox_item.payload
-                    )
+        processed_count = 0
+        sent_count = 0
+
+        try:
+            with Session(engine) as session:
+                # Get pending messages from the outbox
+                from sqlalchemy import desc as sa_desc
+
+                statement = (
+                    select(SMSOutbox)
+                    .where(SMSOutbox.status == "pending")
+                    .order_by(sa_desc(SMSOutbox.created_at))  # type: ignore[arg-type]
+                    .limit(100)
                 )
-                sent_count += 1
+                pending_messages = session.exec(statement).all()
+                processed_count = len(pending_messages)
 
-    return {"processed": processed_count, "sent": sent_count}
+                for outbox_item in pending_messages:
+                    # Use the local manager instance
+                    if outbox_item.device_id and await local_ws_manager.is_connected(
+                        outbox_item.device_id
+                    ):
+                        # Mark as sending
+                        outbox_item.status = "sending"
+                        outbox_item.sending_at = datetime.now(timezone.utc)
+                        session.add(outbox_item)
+                        session.commit()
+
+                        # Send via WebSocket using local manager
+                        await local_ws_manager.send_to_device(
+                            outbox_item.device_id, outbox_item.payload
+                        )
+                        sent_count += 1
+        finally:
+            # Crucial: Close the Redis connection before the loop closes
+            await local_ws_manager.redis.close()
+
+        return {"processed": processed_count, "sent": sent_count}
+
+    # Execute the async wrapper
+    return asyncio.run(_process_dispatch())
 
 
-@celery_app.task
-def process_sms_ack(outbox_id: str, status: str, error_message: str | None = None) -> dict:
+@celery_app.task  # type: ignore[misc]
+def process_sms_ack(
+    outbox_id: str, status: str, error_message: str | None = None
+) -> dict[str, Any]:
     """
     Process the acknowledgment (ACK) from a device for a sent SMS.
     """
@@ -84,14 +104,14 @@ def process_sms_ack(outbox_id: str, status: str, error_message: str | None = Non
         return {"success": True, "outbox_id": outbox_id, "status": status}
 
 
-@celery_app.task
+@celery_app.task  # type: ignore[misc]
 def process_incoming_sms(
     user_id: str, from_number: str, body: str, timestamp: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     """Procesar SMS entrantes reportados por Android"""
     import asyncio
 
-    async def _process():
+    async def _process() -> dict[str, Any]:
         with Session(engine) as session:
             message = AndroidSMSProvider.process_incoming_sms(
                 session=session,
@@ -105,7 +125,7 @@ def process_incoming_sms(
             statement = (
                 select(WebhookConfig)
                 .where(WebhookConfig.user_id == uuid.UUID(user_id))
-                .where(WebhookConfig.active is True)
+                .where(WebhookConfig.active)
             )
             webhooks = session.exec(statement).all()
 
@@ -133,12 +153,12 @@ def process_incoming_sms(
     return asyncio.run(_process())
 
 
-@celery_app.task
-def send_webhook_notification(webhook_id: str, message_id: str) -> dict:
+@celery_app.task  # type: ignore[misc]
+def send_webhook_notification(webhook_id: str, message_id: str) -> dict[str, Any]:
     """Enviar notificación HTTP a webhook configurado cuando llega SMS"""
     import asyncio
 
-    async def _send():
+    async def _send() -> dict[str, Any]:
         with Session(engine) as session:
             webhook = session.get(WebhookConfig, uuid.UUID(webhook_id))
             if not webhook:
@@ -159,10 +179,10 @@ def send_webhook_notification(webhook_id: str, message_id: str) -> dict:
     return asyncio.run(_send())
 
 
-@celery_app.task
+@celery_app.task  # type: ignore[misc]
 def update_message_status(
     message_id: str, status: str, error_message: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     """Actualizar estado de mensajes"""
     with Session(engine) as session:
         message = session.get(SMSMessage, uuid.UUID(message_id))
@@ -174,9 +194,9 @@ def update_message_status(
             message.error_message = error_message
 
         if status == "sent":
-            message.sent_at = datetime.utcnow()
+            message.sent_at = datetime.now(timezone.utc)
         elif status == "delivered":
-            message.delivered_at = datetime.utcnow()
+            message.delivered_at = datetime.now(timezone.utc)
 
         session.add(message)
         session.commit()
@@ -184,12 +204,12 @@ def update_message_status(
         return {"success": True, "message_id": message_id, "status": status}
 
 
-@celery_app.task
-def retry_failed_messages() -> dict:
+@celery_app.task  # type: ignore[misc]
+def retry_failed_messages() -> dict[str, Any]:
     """Reintentar mensajes fallidos"""
     with Session(engine) as session:
         # Buscar mensajes fallidos de las últimas 24 horas
-        cutoff = datetime.utcnow() - timedelta(hours=24)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         statement = (
             select(SMSMessage)
             .where(SMSMessage.status == "failed")
@@ -208,21 +228,21 @@ def retry_failed_messages() -> dict:
         session.commit()
 
         # Disparar asignación
-        assign_pending_messages.delay()
+        dispatch_outbox_messages.delay()
 
         return {"retried": retried_count}
 
 
-@celery_app.task
-def retry_webhook_delivery() -> dict:
+@celery_app.task  # type: ignore[misc]
+def retry_webhook_delivery() -> dict[str, Any]:
     """Reintentar envío de webhooks fallidos"""
     # Esta tarea se puede implementar si guardamos intentos de webhook
     # Por ahora, los webhooks se reintentan en process_incoming_sms
     return {"success": True, "message": "Webhooks se procesan en tiempo real"}
 
 
-@celery_app.task
-def cleanup_offline_devices() -> dict:
+@celery_app.task  # type: ignore[misc]
+def cleanup_offline_devices() -> dict[str, Any]:
     """Mark devices as offline if their last heartbeat is too old."""
     with Session(engine) as session:
         # Devices that are online but haven't sent a heartbeat in the last 5 minutes
@@ -230,7 +250,7 @@ def cleanup_offline_devices() -> dict:
         statement = (
             select(SMSDevice)
             .where(SMSDevice.status == "online")
-            .where(SMSDevice.last_heartbeat < five_minutes_ago)
+            .where(SMSDevice.last_heartbeat < five_minutes_ago)  # type: ignore[operator]
         )
         offline_devices = session.exec(statement).all()
 
@@ -242,8 +262,8 @@ def cleanup_offline_devices() -> dict:
         return {"offline_count": len(offline_devices)}
 
 
-@celery_app.task
-def reset_monthly_quotas() -> dict:
+@celery_app.task  # type: ignore[misc]
+def reset_monthly_quotas() -> dict[str, Any]:
     """Resetear contadores mensuales de SMS (tarea periódica)"""
     with Session(engine) as session:
         statement = select(UserQuota)
@@ -255,7 +275,7 @@ def reset_monthly_quotas() -> dict:
             if quota.last_reset_date:
                 if quota.last_reset_date.day == 1:  # Día 1 del mes
                     quota.sms_sent_this_month = 0
-                    quota.last_reset_date = datetime.utcnow()
+                    quota.last_reset_date = datetime.now(timezone.utc)
                     session.add(quota)
                     reset_count += 1
 
@@ -263,8 +283,8 @@ def reset_monthly_quotas() -> dict:
         return {"reset_count": reset_count}
 
 
-@celery_app.task
-def check_user_quota(user_id: str, quota_type: str, count: int = 1) -> dict:
+@celery_app.task  # type: ignore[misc]
+def check_user_quota(user_id: str, quota_type: str, count: int = 1) -> dict[str, Any]:
     """Verificar límites de usuario antes de operaciones"""
     from app.services.quota_service import QuotaService
 

@@ -1,4 +1,5 @@
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -8,6 +9,7 @@ import emails  # type: ignore
 import jwt
 from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
+from sqlmodel import Session
 
 from app.core import security
 from app.core.config import settings
@@ -111,3 +113,30 @@ def verify_password_reset_token(token: str) -> str | None:
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None
+
+
+def validate_sms_device(
+    *, session: Session, device_id: uuid.UUID | None, user_id: uuid.UUID
+) -> None:
+    """
+    Valida que un dispositivo SMS existe y pertenece al usuario.
+
+    Args:
+        session: Sesión de base de datos
+        device_id: ID del dispositivo a validar (opcional)
+        user_id: ID del usuario que debe ser dueño del dispositivo
+
+    Raises:
+        ValueError: Si el dispositivo no existe o no pertenece al usuario
+    """
+    if device_id is None:
+        return
+
+    # Importar aquí para evitar circular imports
+    from app.crud import get_sms_device
+
+    device = get_sms_device(session=session, device_id=device_id)
+    if device is None:
+        raise ValueError(f"Device with id {device_id} not found")
+    if device.user_id != user_id:
+        raise ValueError(f"Device {device_id} does not belong to user")
