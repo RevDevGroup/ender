@@ -28,13 +28,15 @@ class WebhookService:
             "message_id": str(message.id),
         }
 
+        payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
         # Preparar headers
         headers = {"Content-Type": "application/json"}
 
         # Agregar firma HMAC si existe secret_key
         if webhook.secret_key:
             signature = WebhookService._generate_signature(
-                webhook.secret_key, json.dumps(payload)
+                webhook.secret_key, json.dumps(payload_json)
             )
             headers["X-Webhook-Signature"] = signature
 

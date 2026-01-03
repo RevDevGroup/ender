@@ -8,7 +8,7 @@ services:
   proxy:
     image: traefik:3.0
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/jianpedi/.docker/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "80:80"
       - "8090:8080"
@@ -34,6 +34,7 @@ services:
       - --api
       # Enable the Dashboard and API in insecure mode for local development
       - --api.insecure=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
     labels:
       # Enable Traefik for this service, to make it available in the public network
       - traefik.enable=true

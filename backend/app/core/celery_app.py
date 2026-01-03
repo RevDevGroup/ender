@@ -1,4 +1,4 @@
-from celery import Celery
+from celery import Celery  # type: ignore
 
 from app.core.config import settings
 
@@ -22,9 +22,9 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
     beat_schedule={
-        "assign-pending-messages": {
-            "task": "app.tasks.sms_tasks.assign_pending_messages",
-            "schedule": 30.0,  # Cada 30 segundos
+        "dispatch-outbox-messages": {
+            "task": "app.tasks.sms_tasks.dispatch_outbox_messages",
+            "schedule": 10.0,  # Every 10 seconds
         },
         "retry-failed-messages": {
             "task": "app.tasks.sms_tasks.retry_failed_messages",

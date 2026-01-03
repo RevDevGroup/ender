@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.core.config import settings
@@ -186,7 +187,9 @@ class QuotaService:
         """Crear quota por defecto para usuario"""
         # Buscar plan por defecto
         plan_name = settings.DEFAULT_PLAN.lower()
-        statement = select(UserPlan).where(UserPlan.name.ilike(f"%{plan_name}%"))
+        statement = select(UserPlan).where(
+            func.lower(UserPlan.name).like(f"%{plan_name}%")
+        )
         plan = session.exec(statement).first()
 
         if not plan:
