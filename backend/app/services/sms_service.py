@@ -23,7 +23,8 @@ class AndroidSMSProvider(SMSProvider):
 
     def send_message(self, message: SMSMessage) -> bool:
         """Asignar mensaje a dispositivo disponible"""
-        return self.assign_message_to_device(message=message)
+        result = self.assign_message_to_device(session=self.session, message=message)
+        return result is not None
 
     @staticmethod
     def assign_message_to_device(
@@ -37,11 +38,13 @@ class AndroidSMSProvider(SMSProvider):
                 return device
 
         # Buscar dispositivo online del mismo usuario
+        from sqlalchemy import desc, nulls_last
+
         statement = (
             select(SMSDevice)
             .where(SMSDevice.user_id == message.user_id)
             .where(SMSDevice.status == "online")
-            .order_by(SMSDevice.last_heartbeat.desc())
+            .order_by(nulls_last(desc(SMSDevice.last_heartbeat)))  # type: ignore[arg-type]
         )
         device = session.exec(statement).first()
 
