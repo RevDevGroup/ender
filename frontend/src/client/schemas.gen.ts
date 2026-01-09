@@ -69,119 +69,6 @@ export const HTTPValidationErrorSchema = {
     title: 'HTTPValidationError'
 } as const;
 
-export const ItemCreateSchema = {
-    properties: {
-        title: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    required: ['title'],
-    title: 'ItemCreate'
-} as const;
-
-export const ItemPublicSchema = {
-    properties: {
-        title: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        },
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
-        },
-        owner_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Owner Id'
-        }
-    },
-    type: 'object',
-    required: ['title', 'id', 'owner_id'],
-    title: 'ItemPublic'
-} as const;
-
-export const ItemUpdateSchema = {
-    properties: {
-        title: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255,
-                    minLength: 1
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    title: 'ItemUpdate'
-} as const;
-
-export const ItemsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/ItemPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'ItemsPublic'
-} as const;
-
 export const MessageSchema = {
     properties: {
         message: {
@@ -212,6 +99,38 @@ export const NewPasswordSchema = {
     title: 'NewPassword'
 } as const;
 
+export const PlanUpgradeSchema = {
+    properties: {
+        plan_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Plan Id'
+        }
+    },
+    type: 'object',
+    required: ['plan_id'],
+    title: 'PlanUpgrade'
+} as const;
+
+export const PlanUpgradePublicSchema = {
+    properties: {
+        message: {
+            type: 'string',
+            title: 'Message'
+        },
+        data: {
+            additionalProperties: {
+                type: 'string'
+            },
+            type: 'object',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['message', 'data'],
+    title: 'PlanUpgradePublic'
+} as const;
+
 export const PrivateUserCreateSchema = {
     properties: {
         email: {
@@ -235,6 +154,428 @@ export const PrivateUserCreateSchema = {
     type: 'object',
     required: ['email', 'password', 'full_name'],
     title: 'PrivateUserCreate'
+} as const;
+
+export const SMSBulkCreateSchema = {
+    properties: {
+        recipients: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Recipients'
+        },
+        body: {
+            type: 'string',
+            maxLength: 1600,
+            title: 'Body'
+        },
+        device_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Device Id'
+        }
+    },
+    type: 'object',
+    required: ['recipients', 'body'],
+    title: 'SMSBulkCreate'
+} as const;
+
+export const SMSBulkSendPublicSchema = {
+    properties: {
+        total_recipients: {
+            type: 'integer',
+            title: 'Total Recipients'
+        },
+        status: {
+            type: 'string',
+            title: 'Status'
+        },
+        message_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Message Ids'
+        }
+    },
+    type: 'object',
+    required: ['total_recipients', 'status', 'message_ids'],
+    title: 'SMSBulkSendPublic'
+} as const;
+
+export const SMSDeviceCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name'
+        },
+        phone_number: {
+            type: 'string',
+            maxLength: 20,
+            title: 'Phone Number'
+        },
+        status: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Status',
+            default: 'offline'
+        }
+    },
+    type: 'object',
+    required: ['name', 'phone_number'],
+    title: 'SMSDeviceCreate'
+} as const;
+
+export const SMSDeviceCreatePublicSchema = {
+    properties: {
+        device_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Device Id'
+        },
+        api_key: {
+            type: 'string',
+            title: 'Api Key'
+        },
+        status: {
+            type: 'string',
+            title: 'Status'
+        }
+    },
+    type: 'object',
+    required: ['device_id', 'api_key', 'status'],
+    title: 'SMSDeviceCreatePublic'
+} as const;
+
+export const SMSDevicePublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name'
+        },
+        phone_number: {
+            type: 'string',
+            maxLength: 20,
+            title: 'Phone Number'
+        },
+        status: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Status',
+            default: 'offline'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        user_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'User Id'
+        },
+        last_heartbeat: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Heartbeat'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['name', 'phone_number', 'id', 'user_id', 'last_heartbeat', 'created_at', 'updated_at'],
+    title: 'SMSDevicePublic'
+} as const;
+
+export const SMSDeviceUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        phone_number: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 20
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Phone Number'
+        },
+        status: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Status'
+        }
+    },
+    type: 'object',
+    title: 'SMSDeviceUpdate'
+} as const;
+
+export const SMSDevicesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/SMSDevicePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'SMSDevicesPublic'
+} as const;
+
+export const SMSMessageCreateSchema = {
+    properties: {
+        to: {
+            type: 'string',
+            maxLength: 20,
+            title: 'To'
+        },
+        from_number: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 20
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'From Number'
+        },
+        body: {
+            type: 'string',
+            maxLength: 1600,
+            title: 'Body'
+        },
+        status: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Status',
+            default: 'pending'
+        },
+        message_type: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Message Type',
+            default: 'outgoing'
+        },
+        device_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Device Id'
+        }
+    },
+    type: 'object',
+    required: ['to', 'body'],
+    title: 'SMSMessageCreate'
+} as const;
+
+export const SMSMessagePublicSchema = {
+    properties: {
+        to: {
+            type: 'string',
+            maxLength: 20,
+            title: 'To'
+        },
+        from_number: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 20
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'From Number'
+        },
+        body: {
+            type: 'string',
+            maxLength: 1600,
+            title: 'Body'
+        },
+        status: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Status',
+            default: 'pending'
+        },
+        message_type: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Message Type',
+            default: 'outgoing'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        device_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Device Id'
+        },
+        user_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'User Id'
+        },
+        webhook_sent: {
+            type: 'boolean',
+            title: 'Webhook Sent'
+        },
+        error_message: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Error Message'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        sent_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Sent At'
+        },
+        delivered_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Delivered At'
+        }
+    },
+    type: 'object',
+    required: ['to', 'body', 'id', 'device_id', 'user_id', 'webhook_sent', 'error_message', 'created_at', 'updated_at', 'sent_at', 'delivered_at'],
+    title: 'SMSMessagePublic'
+} as const;
+
+export const SMSMessageSendPublicSchema = {
+    properties: {
+        message_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Message Id'
+        },
+        status: {
+            type: 'string',
+            title: 'Status'
+        }
+    },
+    type: 'object',
+    required: ['message_id', 'status'],
+    title: 'SMSMessageSendPublic'
+} as const;
+
+export const SMSMessagesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/SMSMessagePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'SMSMessagesPublic'
 } as const;
 
 export const TokenSchema = {
@@ -316,6 +657,68 @@ export const UserCreateSchema = {
     title: 'UserCreate'
 } as const;
 
+export const UserPlanPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Name'
+        },
+        max_sms_per_month: {
+            type: 'integer',
+            title: 'Max Sms Per Month',
+            default: 0
+        },
+        max_devices: {
+            type: 'integer',
+            title: 'Max Devices',
+            default: 0
+        },
+        price: {
+            type: 'number',
+            title: 'Price',
+            default: 0
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['name', 'id', 'created_at', 'updated_at'],
+    title: 'UserPlanPublic'
+} as const;
+
+export const UserPlansPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/UserPlanPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'UserPlansPublic'
+} as const;
+
 export const UserPublicSchema = {
     properties: {
         email: {
@@ -355,6 +758,45 @@ export const UserPublicSchema = {
     type: 'object',
     required: ['email', 'id'],
     title: 'UserPublic'
+} as const;
+
+export const UserQuotaPublicSchema = {
+    properties: {
+        plan: {
+            type: 'string',
+            title: 'Plan'
+        },
+        sms_sent_this_month: {
+            type: 'integer',
+            title: 'Sms Sent This Month'
+        },
+        max_sms_per_month: {
+            type: 'integer',
+            title: 'Max Sms Per Month'
+        },
+        devices_registered: {
+            type: 'integer',
+            title: 'Devices Registered'
+        },
+        max_devices: {
+            type: 'integer',
+            title: 'Max Devices'
+        },
+        reset_date: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Reset Date'
+        }
+    },
+    type: 'object',
+    required: ['plan', 'sms_sent_this_month', 'max_sms_per_month', 'devices_registered', 'max_devices', 'reset_date'],
+    title: 'UserQuotaPublic'
 } as const;
 
 export const UserRegisterSchema = {
@@ -523,4 +965,169 @@ export const ValidationErrorSchema = {
     type: 'object',
     required: ['loc', 'msg', 'type'],
     title: 'ValidationError'
+} as const;
+
+export const WebhookConfigCreateSchema = {
+    properties: {
+        url: {
+            type: 'string',
+            maxLength: 500,
+            title: 'Url'
+        },
+        secret_key: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Secret Key'
+        },
+        events: {
+            type: 'string',
+            maxLength: 500,
+            title: 'Events',
+            default: '["sms_received"]'
+        },
+        active: {
+            type: 'boolean',
+            title: 'Active',
+            default: true
+        }
+    },
+    type: 'object',
+    required: ['url'],
+    title: 'WebhookConfigCreate'
+} as const;
+
+export const WebhookConfigPublicSchema = {
+    properties: {
+        url: {
+            type: 'string',
+            maxLength: 500,
+            title: 'Url'
+        },
+        secret_key: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Secret Key'
+        },
+        events: {
+            type: 'string',
+            maxLength: 500,
+            title: 'Events',
+            default: '["sms_received"]'
+        },
+        active: {
+            type: 'boolean',
+            title: 'Active',
+            default: true
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        user_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'User Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['url', 'id', 'user_id', 'created_at', 'updated_at'],
+    title: 'WebhookConfigPublic'
+} as const;
+
+export const WebhookConfigUpdateSchema = {
+    properties: {
+        url: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Url'
+        },
+        secret_key: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Secret Key'
+        },
+        events: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Events'
+        },
+        active: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Active'
+        }
+    },
+    type: 'object',
+    title: 'WebhookConfigUpdate'
+} as const;
+
+export const WebhookConfigsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WebhookConfigPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'WebhookConfigsPublic'
 } as const;

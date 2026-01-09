@@ -13,28 +13,6 @@ export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
 
-export type ItemCreate = {
-    title: string;
-    description?: (string | null);
-};
-
-export type ItemPublic = {
-    title: string;
-    description?: (string | null);
-    id: string;
-    owner_id: string;
-};
-
-export type ItemsPublic = {
-    data: Array<ItemPublic>;
-    count: number;
-};
-
-export type ItemUpdate = {
-    title?: (string | null);
-    description?: (string | null);
-};
-
 export type Message = {
     message: string;
 };
@@ -44,11 +22,104 @@ export type NewPassword = {
     new_password: string;
 };
 
+export type PlanUpgrade = {
+    plan_id: string;
+};
+
+export type PlanUpgradePublic = {
+    message: string;
+    data: {
+        [key: string]: (string);
+    };
+};
+
 export type PrivateUserCreate = {
     email: string;
     password: string;
     full_name: string;
     is_verified?: boolean;
+};
+
+export type SMSBulkCreate = {
+    recipients: Array<(string)>;
+    body: string;
+    device_id?: (string | null);
+};
+
+export type SMSBulkSendPublic = {
+    total_recipients: number;
+    status: string;
+    message_ids: Array<(string)>;
+};
+
+export type SMSDeviceCreate = {
+    name: string;
+    phone_number: string;
+    status?: string;
+};
+
+export type SMSDeviceCreatePublic = {
+    device_id: string;
+    api_key: string;
+    status: string;
+};
+
+export type SMSDevicePublic = {
+    name: string;
+    phone_number: string;
+    status?: string;
+    id: string;
+    user_id: string;
+    last_heartbeat: (string | null);
+    created_at: string;
+    updated_at: string;
+};
+
+export type SMSDevicesPublic = {
+    data: Array<SMSDevicePublic>;
+    count: number;
+};
+
+export type SMSDeviceUpdate = {
+    name?: (string | null);
+    phone_number?: (string | null);
+    status?: (string | null);
+};
+
+export type SMSMessageCreate = {
+    to: string;
+    from_number?: (string | null);
+    body: string;
+    status?: string;
+    message_type?: string;
+    device_id?: (string | null);
+};
+
+export type SMSMessagePublic = {
+    to: string;
+    from_number?: (string | null);
+    body: string;
+    status?: string;
+    message_type?: string;
+    id: string;
+    device_id: (string | null);
+    user_id: string;
+    webhook_sent: boolean;
+    error_message: (string | null);
+    created_at: string;
+    updated_at: string;
+    sent_at: (string | null);
+    delivered_at: (string | null);
+};
+
+export type SMSMessageSendPublic = {
+    message_id: string;
+    status: string;
+};
+
+export type SMSMessagesPublic = {
+    data: Array<SMSMessagePublic>;
+    count: number;
 };
 
 export type Token = {
@@ -69,12 +140,36 @@ export type UserCreate = {
     password: string;
 };
 
+export type UserPlanPublic = {
+    name: string;
+    max_sms_per_month?: number;
+    max_devices?: number;
+    price?: number;
+    id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type UserPlansPublic = {
+    data: Array<UserPlanPublic>;
+    count: number;
+};
+
 export type UserPublic = {
     email: string;
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
     id: string;
+};
+
+export type UserQuotaPublic = {
+    plan: string;
+    sms_sent_this_month: number;
+    max_sms_per_month: number;
+    devices_registered: number;
+    max_devices: number;
+    reset_date: (string | null);
 };
 
 export type UserRegister = {
@@ -107,37 +202,35 @@ export type ValidationError = {
     type: string;
 };
 
-export type ItemsReadItemsData = {
-    limit?: number;
-    skip?: number;
+export type WebhookConfigCreate = {
+    url: string;
+    secret_key?: (string | null);
+    events?: string;
+    active?: boolean;
 };
 
-export type ItemsReadItemsResponse = (ItemsPublic);
-
-export type ItemsCreateItemData = {
-    requestBody: ItemCreate;
-};
-
-export type ItemsCreateItemResponse = (ItemPublic);
-
-export type ItemsReadItemData = {
+export type WebhookConfigPublic = {
+    url: string;
+    secret_key?: (string | null);
+    events?: string;
+    active?: boolean;
     id: string;
+    user_id: string;
+    created_at: string;
+    updated_at: string;
 };
 
-export type ItemsReadItemResponse = (ItemPublic);
-
-export type ItemsUpdateItemData = {
-    id: string;
-    requestBody: ItemUpdate;
+export type WebhookConfigsPublic = {
+    data: Array<WebhookConfigPublic>;
+    count: number;
 };
 
-export type ItemsUpdateItemResponse = (ItemPublic);
-
-export type ItemsDeleteItemData = {
-    id: string;
+export type WebhookConfigUpdate = {
+    url?: (string | null);
+    secret_key?: (string | null);
+    events?: (string | null);
+    active?: (boolean | null);
 };
-
-export type ItemsDeleteItemResponse = (Message);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
@@ -165,11 +258,86 @@ export type LoginRecoverPasswordHtmlContentData = {
 
 export type LoginRecoverPasswordHtmlContentResponse = (string);
 
+export type PlansListPlansResponse = (UserPlansPublic);
+
+export type PlansGetQuotaResponse = (UserQuotaPublic);
+
+export type PlansUpgradePlanData = {
+    requestBody: PlanUpgrade;
+};
+
+export type PlansUpgradePlanResponse = (PlanUpgradePublic);
+
 export type PrivateCreateUserData = {
     requestBody: PrivateUserCreate;
 };
 
 export type PrivateCreateUserResponse = (UserPublic);
+
+export type SmsSendSmsData = {
+    requestBody: SMSMessageCreate;
+};
+
+export type SmsSendSmsResponse = (SMSMessageSendPublic);
+
+export type SmsSendBulkSmsData = {
+    requestBody: SMSBulkCreate;
+};
+
+export type SmsSendBulkSmsResponse = (SMSBulkSendPublic);
+
+export type SmsListMessagesData = {
+    limit?: number;
+    messageType?: (string | null);
+    skip?: number;
+};
+
+export type SmsListMessagesResponse = (SMSMessagesPublic);
+
+export type SmsGetMessageData = {
+    messageId: string;
+};
+
+export type SmsGetMessageResponse = (SMSMessagePublic);
+
+export type SmsListIncomingMessagesData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type SmsListIncomingMessagesResponse = (SMSMessagesPublic);
+
+export type SmsCreateDeviceData = {
+    requestBody: SMSDeviceCreate;
+};
+
+export type SmsCreateDeviceResponse = (SMSDeviceCreatePublic);
+
+export type SmsListDevicesData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type SmsListDevicesResponse = (SMSDevicesPublic);
+
+export type SmsGetDeviceData = {
+    deviceId: string;
+};
+
+export type SmsGetDeviceResponse = (SMSDevicePublic);
+
+export type SmsUpdateDeviceData = {
+    deviceId: string;
+    requestBody: SMSDeviceUpdate;
+};
+
+export type SmsUpdateDeviceResponse = (SMSDevicePublic);
+
+export type SmsDeleteDeviceData = {
+    deviceId: string;
+};
+
+export type SmsDeleteDeviceResponse = (Message);
 
 export type UsersReadUsersData = {
     limit?: number;
@@ -225,10 +393,36 @@ export type UsersDeleteUserData = {
 
 export type UsersDeleteUserResponse = (Message);
 
-export type UtilsTestEmailData = {
-    emailTo: string;
+export type UtilsHealthCheckResponse = (boolean);
+
+export type WebhooksCreateWebhookData = {
+    requestBody: WebhookConfigCreate;
 };
 
-export type UtilsTestEmailResponse = (Message);
+export type WebhooksCreateWebhookResponse = (WebhookConfigPublic);
 
-export type UtilsHealthCheckResponse = (boolean);
+export type WebhooksListWebhooksData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type WebhooksListWebhooksResponse = (WebhookConfigsPublic);
+
+export type WebhooksGetWebhookData = {
+    webhookId: string;
+};
+
+export type WebhooksGetWebhookResponse = (WebhookConfigPublic);
+
+export type WebhooksUpdateWebhookData = {
+    requestBody: WebhookConfigUpdate;
+    webhookId: string;
+};
+
+export type WebhooksUpdateWebhookResponse = (WebhookConfigPublic);
+
+export type WebhooksDeleteWebhookData = {
+    webhookId: string;
+};
+
+export type WebhooksDeleteWebhookResponse = (Message);

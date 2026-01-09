@@ -3,118 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
-
-export class ItemsService {
-    /**
-     * Read Items
-     * Retrieve items.
-     * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
-     * @returns ItemsPublic Successful Response
-     * @throws ApiError
-     */
-    public static readItems(data: ItemsReadItemsData = {}): CancelablePromise<ItemsReadItemsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/items/',
-            query: {
-                skip: data.skip,
-                limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Create Item
-     * Create new item.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static createItem(data: ItemsCreateItemData): CancelablePromise<ItemsCreateItemResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/items/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Read Item
-     * Get item by ID.
-     * @param data The data for the request.
-     * @param data.id
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static readItem(data: ItemsReadItemData): CancelablePromise<ItemsReadItemResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/items/{id}',
-            path: {
-                id: data.id
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Update Item
-     * Update an item.
-     * @param data The data for the request.
-     * @param data.id
-     * @param data.requestBody
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static updateItem(data: ItemsUpdateItemData): CancelablePromise<ItemsUpdateItemResponse> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/items/{id}',
-            path: {
-                id: data.id
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Item
-     * Delete an item.
-     * @param data The data for the request.
-     * @param data.id
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static deleteItem(data: ItemsDeleteItemData): CancelablePromise<ItemsDeleteItemResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/items/{id}',
-            path: {
-                id: data.id
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
+import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PlansListPlansResponse, PlansGetQuotaResponse, PlansUpgradePlanData, PlansUpgradePlanResponse, PrivateCreateUserData, PrivateCreateUserResponse, SmsSendSmsData, SmsSendSmsResponse, SmsSendBulkSmsData, SmsSendBulkSmsResponse, SmsListMessagesData, SmsListMessagesResponse, SmsGetMessageData, SmsGetMessageResponse, SmsListIncomingMessagesData, SmsListIncomingMessagesResponse, SmsCreateDeviceData, SmsCreateDeviceResponse, SmsListDevicesData, SmsListDevicesResponse, SmsGetDeviceData, SmsGetDeviceResponse, SmsUpdateDeviceData, SmsUpdateDeviceResponse, SmsDeleteDeviceData, SmsDeleteDeviceResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksListWebhooksData, WebhooksListWebhooksResponse, WebhooksGetWebhookData, WebhooksGetWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse } from './types.gen';
 
 export class LoginService {
     /**
@@ -213,6 +102,54 @@ export class LoginService {
     }
 }
 
+export class PlansService {
+    /**
+     * List Plans
+     * List available plans
+     * @returns UserPlansPublic Successful Response
+     * @throws ApiError
+     */
+    public static listPlans(): CancelablePromise<PlansListPlansResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/plans/list'
+        });
+    }
+    
+    /**
+     * Get Quota
+     * Get user quota information
+     * @returns UserQuotaPublic Successful Response
+     * @throws ApiError
+     */
+    public static getQuota(): CancelablePromise<PlansGetQuotaResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/plans/quota'
+        });
+    }
+    
+    /**
+     * Upgrade Plan
+     * Change user plan (requires superuser or payment integration)
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns PlanUpgradePublic Successful Response
+     * @throws ApiError
+     */
+    public static upgradePlan(data: PlansUpgradePlanData): CancelablePromise<PlansUpgradePlanResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/plans/upgrade',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
 export class PrivateService {
     /**
      * Create User
@@ -228,6 +165,226 @@ export class PrivateService {
             url: '/api/v1/private/users/',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class SmsService {
+    /**
+     * Send Sms
+     * Send SMS
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns SMSMessageSendPublic Successful Response
+     * @throws ApiError
+     */
+    public static sendSms(data: SmsSendSmsData): CancelablePromise<SmsSendSmsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/send',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Send Bulk Sms
+     * Send SMS to multiple recipients
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns SMSBulkSendPublic Successful Response
+     * @throws ApiError
+     */
+    public static sendBulkSms(data: SmsSendBulkSmsData): CancelablePromise<SmsSendBulkSmsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/send-bulk',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Messages
+     * List messages
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.messageType
+     * @returns SMSMessagesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listMessages(data: SmsListMessagesData = {}): CancelablePromise<SmsListMessagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/sms/messages',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                message_type: data.messageType
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Message
+     * Get specific message
+     * @param data The data for the request.
+     * @param data.messageId
+     * @returns SMSMessagePublic Successful Response
+     * @throws ApiError
+     */
+    public static getMessage(data: SmsGetMessageData): CancelablePromise<SmsGetMessageResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/sms/messages/{message_id}',
+            path: {
+                message_id: data.messageId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Incoming Messages
+     * List incoming SMS
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns SMSMessagesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listIncomingMessages(data: SmsListIncomingMessagesData = {}): CancelablePromise<SmsListIncomingMessagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/sms/incoming',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Device
+     * Register new device
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns SMSDeviceCreatePublic Successful Response
+     * @throws ApiError
+     */
+    public static createDevice(data: SmsCreateDeviceData): CancelablePromise<SmsCreateDeviceResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/devices',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Devices
+     * Get devices
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns SMSDevicesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listDevices(data: SmsListDevicesData = {}): CancelablePromise<SmsListDevicesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/sms/devices',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Device
+     * Get device
+     * @param data The data for the request.
+     * @param data.deviceId
+     * @returns SMSDevicePublic Successful Response
+     * @throws ApiError
+     */
+    public static getDevice(data: SmsGetDeviceData): CancelablePromise<SmsGetDeviceResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/sms/devices/{device_id}',
+            path: {
+                device_id: data.deviceId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Device
+     * Update device
+     * @param data The data for the request.
+     * @param data.deviceId
+     * @param data.requestBody
+     * @returns SMSDevicePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateDevice(data: SmsUpdateDeviceData): CancelablePromise<SmsUpdateDeviceResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/sms/devices/{device_id}',
+            path: {
+                device_id: data.deviceId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Device
+     * Delete device
+     * @param data The data for the request.
+     * @param data.deviceId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteDevice(data: SmsDeleteDeviceData): CancelablePromise<SmsDeleteDeviceResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/sms/devices/{device_id}',
+            path: {
+                device_id: data.deviceId
+            },
             errors: {
                 422: 'Validation Error'
             }
@@ -434,27 +591,6 @@ export class UsersService {
 
 export class UtilsService {
     /**
-     * Test Email
-     * Test emails.
-     * @param data The data for the request.
-     * @param data.emailTo
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static testEmail(data: UtilsTestEmailData): CancelablePromise<UtilsTestEmailResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/utils/test-email/',
-            query: {
-                email_to: data.emailTo
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
      * Health Check
      * @returns boolean Successful Response
      * @throws ApiError
@@ -463,6 +599,117 @@ export class UtilsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/utils/health-check/'
+        });
+    }
+}
+
+export class WebhooksService {
+    /**
+     * Create Webhook
+     * Create/configure webhook
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns WebhookConfigPublic Successful Response
+     * @throws ApiError
+     */
+    public static createWebhook(data: WebhooksCreateWebhookData): CancelablePromise<WebhooksCreateWebhookResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/webhooks',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Webhooks
+     * List configured webhooks
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns WebhookConfigsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listWebhooks(data: WebhooksListWebhooksData = {}): CancelablePromise<WebhooksListWebhooksResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/webhooks',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Webhook
+     * Get specific webhook
+     * @param data The data for the request.
+     * @param data.webhookId
+     * @returns WebhookConfigPublic Successful Response
+     * @throws ApiError
+     */
+    public static getWebhook(data: WebhooksGetWebhookData): CancelablePromise<WebhooksGetWebhookResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/webhooks/{webhook_id}',
+            path: {
+                webhook_id: data.webhookId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Webhook
+     * Update webhook
+     * @param data The data for the request.
+     * @param data.webhookId
+     * @param data.requestBody
+     * @returns WebhookConfigPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateWebhook(data: WebhooksUpdateWebhookData): CancelablePromise<WebhooksUpdateWebhookResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/webhooks/{webhook_id}',
+            path: {
+                webhook_id: data.webhookId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Webhook
+     * Delete webhook
+     * @param data The data for the request.
+     * @param data.webhookId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteWebhook(data: WebhooksDeleteWebhookData): CancelablePromise<WebhooksDeleteWebhookResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/webhooks/{webhook_id}',
+            path: {
+                webhook_id: data.webhookId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

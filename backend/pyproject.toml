@@ -7,7 +7,6 @@ dependencies = [
     "fastapi[standard]<1.0.0,>=0.114.2",
     "python-multipart<1.0.0,>=0.0.7",
     "email-validator<3.0.0.0,>=2.1.0.post1",
-    "passlib[bcrypt]<2.0.0,>=1.7.4",
     "tenacity<9.0.0,>=8.2.3",
     "pydantic>2.0",
     "emails<1.0,>=0.6",

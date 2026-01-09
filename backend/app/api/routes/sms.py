@@ -1,5 +1,4 @@
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -8,11 +7,16 @@ from app.api.deps import CurrentUser, SessionDep
 from app.models import (
     Message,
     SMSBulkCreate,
+    SMSBulkSendPublic,
     SMSDeviceCreate,
+    SMSDeviceCreatePublic,
     SMSDevicePublic,
+    SMSDevicesPublic,
     SMSDeviceUpdate,
     SMSMessageCreate,
     SMSMessagePublic,
+    SMSMessageSendPublic,
+    SMSMessagesPublic,
 )
 from app.services.quota_service import QuotaService
 
@@ -20,13 +24,15 @@ router = APIRouter(prefix="/sms", tags=["sms"])
 
 
 # SMS Sending and Management
-@router.post("/send", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/send", status_code=status.HTTP_201_CREATED, response_model=SMSMessageSendPublic
+)
 def send_sms(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     message_in: SMSMessageCreate,
-) -> dict[str, Any]:
+) -> SMSMessageSendPublic:
     """Send SMS"""
     # Check limits
     QuotaService.check_sms_quota(session=session, user_id=current_user.id, count=1)
@@ -42,20 +48,18 @@ def send_sms(
     # Increment counter
     QuotaService.increment_sms_count(session=session, user_id=current_user.id, count=1)
 
-    return {
-        "success": True,
-        "message_id": str(message.id),
-        "status": message.status,
-    }
+    return SMSMessageSendPublic(message_id=message.id, status=message.status)
 
 
-@router.post("/send-bulk", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/send-bulk", status_code=status.HTTP_201_CREATED, response_model=SMSBulkSendPublic
+)
 def send_bulk_sms(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     bulk_in: SMSBulkCreate,
-) -> dict[str, Any]:
+) -> SMSBulkSendPublic:
     """Send SMS to multiple recipients"""
     # Check limits
     QuotaService.check_sms_quota(
@@ -72,7 +76,7 @@ def send_bulk_sms(
             message = crud.create_sms_outbox_message(
                 session=session, message_in=message_in, user_id=current_user.id
             )
-            message_ids.append(str(message.id))
+            message_ids.append(message.id)
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -81,15 +85,14 @@ def send_bulk_sms(
         session=session, user_id=current_user.id, count=len(bulk_in.recipients)
     )
 
-    return {
-        "success": True,
-        "total_recipients": len(bulk_in.recipients),
-        "status": "processing",
-        "message_ids": message_ids,
-    }
+    return SMSBulkSendPublic(
+        total_recipients=len(bulk_in.recipients),
+        status="processing",
+        message_ids=message_ids,
+    )
 
 
-@router.get("/messages")
+@router.get("/messages", response_model=SMSMessagesPublic)
 def list_messages(
     *,
     session: SessionDep,
@@ -97,7 +100,7 @@ def list_messages(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     message_type: str | None = Query(None),
-) -> dict[str, Any]:
+) -> SMSMessagesPublic:
     """List messages"""
     messages = crud.get_sms_messages_by_user(
         session=session,
@@ -106,37 +109,35 @@ def list_messages(
         skip=skip,
         limit=limit,
     )
-    return {
-        "success": True,
-        "data": [SMSMessagePublic.model_validate(m) for m in messages],
-        "count": len(messages),
-    }
+    return SMSMessagesPublic(
+        data=[SMSMessagePublic.model_validate(m) for m in messages], count=len(messages)
+    )
 
 
-@router.get("/messages/{message_id}")
+@router.get("/messages/{message_id}", response_model=SMSMessagePublic)
 def get_message(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     message_id: uuid.UUID,
-) -> dict[str, Any]:
+) -> SMSMessagePublic:
     """Get specific message"""
     message = crud.get_sms_message(session=session, message_id=message_id)
     if not message or message.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
-    return {"success": True, "data": SMSMessagePublic.model_validate(message)}
+    return SMSMessagePublic.model_validate(message)
 
 
-@router.get("/incoming")
+@router.get("/incoming", response_model=SMSMessagesPublic)
 def list_incoming_messages(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-) -> dict[str, Any]:
+) -> SMSMessagesPublic:
     """List incoming SMS"""
     messages = crud.get_sms_messages_by_user(
         session=session,
@@ -145,21 +146,23 @@ def list_incoming_messages(
         skip=skip,
         limit=limit,
     )
-    return {
-        "success": True,
-        "data": [SMSMessagePublic.model_validate(m) for m in messages],
-        "count": len(messages),
-    }
+    return SMSMessagesPublic(
+        data=[SMSMessagePublic.model_validate(m) for m in messages], count=len(messages)
+    )
 
 
 # Device management
-@router.post("/devices", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/devices",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SMSDeviceCreatePublic,
+)
 def create_device(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     device_in: SMSDeviceCreate,
-) -> dict[str, Any]:
+) -> SMSDeviceCreatePublic:
     """Register new device"""
     # Validate device limit
     QuotaService.check_device_quota(session=session, user_id=current_user.id)
@@ -172,59 +175,54 @@ def create_device(
     # Increment device count
     QuotaService.increment_device_count(session=session, user_id=current_user.id)
 
-    return {
-        "success": True,
-        "data": {
-            "device_id": str(device.id),
-            "api_key": device.api_key,
-            "status": device.status,
-        },
-    }
+    return SMSDeviceCreatePublic(
+        device_id=device.id,
+        api_key=device.api_key,
+        status=device.status,
+    )
 
 
-@router.get("/devices")
+@router.get("/devices", response_model=SMSDevicesPublic)
 def list_devices(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-) -> dict[str, Any]:
+) -> SMSDevicesPublic:
     """Get devices"""
     devices = crud.get_sms_devices_by_user(
         session=session, user_id=current_user.id, skip=skip, limit=limit
     )
-    return {
-        "success": True,
-        "data": [SMSDevicePublic.model_validate(d) for d in devices],
-        "count": len(devices),
-    }
+    return SMSDevicesPublic(
+        data=[SMSDevicePublic.model_validate(d) for d in devices], count=len(devices)
+    )
 
 
-@router.get("/devices/{device_id}")
+@router.get("/devices/{device_id}", response_model=SMSDevicePublic)
 def get_device(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     device_id: uuid.UUID,
-) -> dict[str, Any]:
+) -> SMSDevicePublic:
     """Get device"""
     device = crud.get_sms_device(session=session, device_id=device_id)
     if not device or device.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Device not found"
         )
-    return {"success": True, "data": SMSDevicePublic.model_validate(device)}
+    return SMSDevicePublic.model_validate(device)
 
 
-@router.put("/devices/{device_id}")
+@router.put("/devices/{device_id}", response_model=SMSDevicePublic)
 def update_device(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     device_id: uuid.UUID,
     device_in: SMSDeviceUpdate,
-) -> dict[str, Any]:
+) -> SMSDevicePublic:
     """Update device"""
     device = crud.get_sms_device(session=session, device_id=device_id)
     if not device or device.user_id != current_user.id:
@@ -234,10 +232,10 @@ def update_device(
     device = crud.update_sms_device(
         session=session, db_device=device, device_in=device_in
     )
-    return {"success": True, "data": SMSDevicePublic.model_validate(device)}
+    return SMSDevicePublic.model_validate(device)
 
 
-@router.delete("/devices/{device_id}")
+@router.delete("/devices/{device_id}", response_model=Message)
 def delete_device(
     *,
     session: SessionDep,

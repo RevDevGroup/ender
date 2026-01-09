@@ -180,6 +180,11 @@ class SMSDevicePublic(SMSDeviceBase):
     updated_at: datetime
 
 
+class SMSDevicesPublic(SQLModel):
+    data: list[SMSDevicePublic]
+    count: int
+
+
 class SMSMessageBase(SQLModel):
     to: str = Field(max_length=20)
     from_number: str | None = Field(default=None, max_length=20)
@@ -243,6 +248,28 @@ class SMSMessagePublic(SMSMessageBase):
     delivered_at: datetime | None
 
 
+class SMSMessagesPublic(SQLModel):
+    data: list[SMSMessagePublic]
+    count: int
+
+
+class SMSMessageSendPublic(SQLModel):
+    message_id: uuid.UUID
+    status: str
+
+
+class SMSBulkSendPublic(SQLModel):
+    total_recipients: int
+    status: str
+    message_ids: list[uuid.UUID]
+
+
+class SMSDeviceCreatePublic(SQLModel):
+    device_id: uuid.UUID
+    api_key: str
+    status: str
+
+
 class SMSOutbox(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     sms_message_id: uuid.UUID = Field(foreign_key="smsmessage.id", index=True)
@@ -304,6 +331,11 @@ class WebhookConfigPublic(WebhookConfigBase):
     updated_at: datetime
 
 
+class WebhookConfigsPublic(SQLModel):
+    data: list[WebhookConfigPublic]
+    count: int
+
+
 class UserPlanCreate(UserPlanBase):
     pass
 
@@ -314,9 +346,20 @@ class UserPlanPublic(UserPlanBase):
     updated_at: datetime
 
 
-class UserQuotaPublic(UserQuotaBase):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    plan_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
+class UserPlansPublic(SQLModel):
+    data: list[UserPlanPublic]
+    count: int
+
+
+class UserQuotaPublic(SQLModel):
+    plan: str
+    sms_sent_this_month: int
+    max_sms_per_month: int
+    devices_registered: int
+    max_devices: int
+    reset_date: str | None
+
+
+class PlanUpgradePublic(SQLModel):
+    message: str
+    data: dict[str, str]
