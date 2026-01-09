@@ -23,7 +23,7 @@ async def websocket_endpoint(
     """Persistent WebSocket connection for Android devices."""
     with Session(engine) as session:
         device = get_device_by_api_key(session=session, api_key=api_key)
-        logging.info("Device attempting to connect via WebSocket:", device)
+        logging.info(f"Device attempting to connect via WebSocket: {device}")
         if not device:
             await websocket.close(code=4001, reason="Invalid API Key")
             return

@@ -1,44 +1,44 @@
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.models import (
     PlanUpgrade,
+    PlanUpgradePublic,
     UserPlan,
     UserPlanPublic,
+    UserPlansPublic,
+    UserQuotaPublic,
 )
 from app.services.quota_service import QuotaService
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
 
-@router.get("/list")
-def list_plans(*, session: SessionDep) -> dict[str, Any]:
+@router.get("/list", response_model=UserPlansPublic)
+def list_plans(*, session: SessionDep) -> UserPlansPublic:
     """List available plans"""
     statement = select(UserPlan)
     plans = session.exec(statement).all()
-    return {
-        "success": True,
-        "data": [UserPlanPublic.model_validate(p) for p in plans],
-    }
+    return UserPlansPublic(
+        data=[UserPlanPublic.model_validate(p) for p in plans], count=len(plans)
+    )
 
 
-@router.get("/quota")
-def get_quota(*, session: SessionDep, current_user: CurrentUser) -> dict[str, Any]:
+@router.get("/quota", response_model=UserQuotaPublic)
+def get_quota(*, session: SessionDep, current_user: CurrentUser) -> UserQuotaPublic:
     """Get user quota information"""
     quota_info = QuotaService.get_user_quota(session=session, user_id=current_user.id)
-    return {"success": True, "data": quota_info}
+    return UserQuotaPublic.model_validate(quota_info)
 
 
-@router.put("/upgrade")
+@router.put("/upgrade", response_model=PlanUpgradePublic)
 def upgrade_plan(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     upgrade_in: PlanUpgrade,
-) -> dict[str, Any]:
+) -> PlanUpgradePublic:
     """Change user plan (requires superuser or payment integration)"""
     # TODO: For now, only superusers can change plans
     # In the future, here will be integrated with payment system
@@ -63,8 +63,7 @@ def upgrade_plan(
     session.commit()
     session.refresh(quota)
 
-    return {
-        "success": True,
-        "message": f"Plan updated to {plan.name}",
-        "data": {"plan": plan.name, "plan_id": str(upgrade_in.plan_id)},
-    }
+    return PlanUpgradePublic(
+        message=f"Plan updated to {plan.name}",
+        data={"plan": plan.name, "plan_id": str(upgrade_in.plan_id)},
+    )
