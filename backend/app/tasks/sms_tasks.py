@@ -4,12 +4,14 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from sqlalchemy import desc as sa_desc
 from sqlmodel import Session, select
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.db import engine
 from app.models import SMSDevice, SMSMessage, SMSOutbox, UserQuota, WebhookConfig
+from app.services.quota_service import QuotaService
 from app.services.sms_service import AndroidSMSProvider
 from app.services.webhook_service import WebhookService
 from app.services.websocket_manager import WebSocketManager
@@ -34,8 +36,6 @@ def dispatch_outbox_messages() -> dict[str, Any]:
         try:
             with Session(engine) as session:
                 # Get pending messages from the outbox
-                from sqlalchemy import desc as sa_desc
-
                 statement = (
                     select(SMSOutbox)
                     .where(SMSOutbox.status == "pending")
@@ -108,8 +108,7 @@ def process_sms_ack(
 def process_incoming_sms(
     user_id: str, from_number: str, body: str, timestamp: str | None = None
 ) -> dict[str, Any]:
-    """Procesar SMS entrantes reportados por Android"""
-    import asyncio
+    """Process incoming SMS messages reported by Android"""
 
     async def _process() -> dict[str, Any]:
         with Session(engine) as session:
@@ -121,7 +120,7 @@ def process_incoming_sms(
                 timestamp=timestamp,
             )
 
-            # Buscar webhooks activos del usuario
+            # Retrieve active webhooks for the user
             statement = (
                 select(WebhookConfig)
                 .where(WebhookConfig.user_id == uuid.UUID(user_id))
@@ -129,14 +128,14 @@ def process_incoming_sms(
             )
             webhooks = session.exec(statement).all()
 
-            # Enviar webhooks de forma asíncrona
+            # Send webhooks asynchronously
             webhook_results = []
             for webhook in webhooks:
-                # Verificar si el evento está en la lista
+                # Retrieve webhook details
                 try:
                     events = json.loads(webhook.events)
                     if "sms_received" in events:
-                        # Enviar webhook de forma asíncrona
+                        # Send webhook asynchronously
                         send_webhook_notification.delay(
                             str(webhook.id), str(message.id)
                         )
@@ -155,18 +154,17 @@ def process_incoming_sms(
 
 @celery_app.task  # type: ignore[misc]
 def send_webhook_notification(webhook_id: str, message_id: str) -> dict[str, Any]:
-    """Enviar notificación HTTP a webhook configurado cuando llega SMS"""
-    import asyncio
+    """Send HTTP notification to configured webhook when SMS arrives"""
 
     async def _send() -> dict[str, Any]:
         with Session(engine) as session:
             webhook = session.get(WebhookConfig, uuid.UUID(webhook_id))
             if not webhook:
-                return {"success": False, "error": "Webhook no encontrado"}
+                return {"success": False, "error": "Webhook not found"}
 
             message = session.get(SMSMessage, uuid.UUID(message_id))
             if not message:
-                return {"success": False, "error": "Mensaje no encontrado"}
+                return {"success": False, "error": "Message not found"}
 
             result = await WebhookService.send_webhook(webhook, message)
             if result.get("success"):
@@ -183,11 +181,11 @@ def send_webhook_notification(webhook_id: str, message_id: str) -> dict[str, Any
 def update_message_status(
     message_id: str, status: str, error_message: str | None = None
 ) -> dict[str, Any]:
-    """Actualizar estado de mensajes"""
+    """Update message status"""
     with Session(engine) as session:
         message = session.get(SMSMessage, uuid.UUID(message_id))
         if not message:
-            return {"success": False, "error": "Mensaje no encontrado"}
+            return {"success": False, "error": "Message not found"}
 
         message.status = status
         if error_message:
@@ -206,9 +204,9 @@ def update_message_status(
 
 @celery_app.task  # type: ignore[misc]
 def retry_failed_messages() -> dict[str, Any]:
-    """Reintentar mensajes fallidos"""
+    """Retry failed outgoing messages"""
     with Session(engine) as session:
-        # Buscar mensajes fallidos de las últimas 24 horas
+        # Retrieve failed outgoing messages from the last 24 hours
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         statement = (
             select(SMSMessage)
@@ -227,18 +225,9 @@ def retry_failed_messages() -> dict[str, Any]:
 
         session.commit()
 
-        # Disparar asignación
         dispatch_outbox_messages.delay()
 
         return {"retried": retried_count}
-
-
-@celery_app.task  # type: ignore[misc]
-def retry_webhook_delivery() -> dict[str, Any]:
-    """Reintentar envío de webhooks fallidos"""
-    # Esta tarea se puede implementar si guardamos intentos de webhook
-    # Por ahora, los webhooks se reintentan en process_incoming_sms
-    return {"success": True, "message": "Webhooks se procesan en tiempo real"}
 
 
 @celery_app.task  # type: ignore[misc]
@@ -264,16 +253,15 @@ def cleanup_offline_devices() -> dict[str, Any]:
 
 @celery_app.task  # type: ignore[misc]
 def reset_monthly_quotas() -> dict[str, Any]:
-    """Resetear contadores mensuales de SMS (tarea periódica)"""
+    """Reset monthly SMS counters (periodic task)"""
     with Session(engine) as session:
         statement = select(UserQuota)
         quotas = session.exec(statement).all()
 
         reset_count = 0
         for quota in quotas:
-            # Resetear si es el día configurado
             if quota.last_reset_date:
-                if quota.last_reset_date.day == 1:  # Día 1 del mes
+                if quota.last_reset_date.day == 1:  # Day 1 of the month
                     quota.sms_sent_this_month = 0
                     quota.last_reset_date = datetime.now(timezone.utc)
                     session.add(quota)
@@ -285,9 +273,7 @@ def reset_monthly_quotas() -> dict[str, Any]:
 
 @celery_app.task  # type: ignore[misc]
 def check_user_quota(user_id: str, quota_type: str, count: int = 1) -> dict[str, Any]:
-    """Verificar límites de usuario antes de operaciones"""
-    from app.services.quota_service import QuotaService
-
+    """Check user limits before operations"""
     with Session(engine) as session:
         user_uuid = uuid.UUID(user_id)
         if quota_type == "sms":

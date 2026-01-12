@@ -1,28 +1,30 @@
 import uuid
 from abc import ABC, abstractmethod
+from datetime import datetime
 
+from sqlalchemy import desc, nulls_last
 from sqlmodel import Session, select
 
 from app.models import SMSDevice, SMSMessage
 
 
 class SMSProvider(ABC):
-    """Clase base abstracta para proveedores SMS"""
+    """Abstract base class for SMS providers"""
 
     @abstractmethod
     def send_message(self, message: SMSMessage) -> bool:
-        """Enviar mensaje SMS"""
+        """Send SMS"""
         pass
 
 
 class AndroidSMSProvider(SMSProvider):
-    """Proveedor que asigna mensajes a dispositivos Android"""
+    """Provider that assigns messages to Android devices"""
 
     def __init__(self, session: Session):
         self.session = session
 
     def send_message(self, message: SMSMessage) -> bool:
-        """Asignar mensaje a dispositivo disponible"""
+        """Assign message to available device"""
         result = self.assign_message_to_device(session=self.session, message=message)
         return result is not None
 
@@ -30,15 +32,14 @@ class AndroidSMSProvider(SMSProvider):
     def assign_message_to_device(
         *, session: Session, message: SMSMessage
     ) -> SMSDevice | None:
-        """Asignar mensaje a dispositivo disponible"""
-        # Si ya tiene device_id, usar ese
+        """Assign message to available device"""
+        # If you already have a device_id, use that one.
         if message.device_id:
             device = session.get(SMSDevice, message.device_id)
             if device and device.status == "online":
                 return device
 
-        # Buscar dispositivo online del mismo usuario
-        from sqlalchemy import desc, nulls_last
+        # Search for device online by the same user
 
         statement = (
             select(SMSDevice)
@@ -66,8 +67,7 @@ class AndroidSMSProvider(SMSProvider):
         body: str,
         timestamp: str | None = None,
     ) -> SMSMessage:
-        """Procesar SMS entrantes desde Android"""
-        from datetime import datetime
+        """Process incoming SMS messages from Android"""
 
         message = SMSMessage(
             user_id=user_id,

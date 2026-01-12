@@ -3,6 +3,7 @@ import { Check, Copy } from "lucide-react"
 import type { SMSMessagePublic } from "@/client"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { Button } from "../ui/button"
+import { SMSActionsMenu } from "./SMSActionsMenu"
 
 function CopyId({ id }: { id: string }) {
   const [copiedText, copy] = useCopyToClipboard()
@@ -35,10 +36,10 @@ export const columns: ColumnDef<SMSMessagePublic>[] = [
     cell: ({ row }) => <CopyId id={row.original.id} />,
   },
   {
-    accessorKey: "from_number",
-    header: "From Number",
+    accessorKey: "device_id",
+    header: "Device ID",
     cell: ({ row }) => (
-      <span className="font-medium">{row.original.from_number}</span>
+      <span className="font-medium">{row.original.device_id}</span>
     ),
   },
   {
@@ -47,11 +48,25 @@ export const columns: ColumnDef<SMSMessagePublic>[] = [
     cell: ({ row }) => <span className="font-medium">{row.original.to}</span>,
   },
   {
+    accessorKey: "message_type",
+    header: "Message Type",
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.message_type}</span>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.status}</span>
+    ),
+  },
+  {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
-    cell: () => (
+    cell: ({ row }) => (
       <div className="flex justify-end">
-        {/*<ItemActionsMenu item={row.original} />*/}
+        <SMSActionsMenu sms={row.original} />
       </div>
     ),
   },
