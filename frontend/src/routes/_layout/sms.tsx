@@ -7,6 +7,7 @@ import { SmsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingItems from "@/components/Pending/PendingItems"
 import { columns } from "@/components/Sms/columns"
+import SendSMS from "@/components/Sms/SendSMS"
 
 function getSmsQueryOptions() {
   return {
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_layout/sms")({
   }),
 })
 
-function ItemsTableContent() {
+function SMSTableContent() {
   const { data: sms } = useSuspenseQuery(getSmsQueryOptions())
 
   if (sms.data.length === 0) {
@@ -47,7 +48,7 @@ function ItemsTableContent() {
 function SmsTable() {
   return (
     <Suspense fallback={<PendingItems />}>
-      <ItemsTableContent />
+      <SMSTableContent />
     </Suspense>
   )
 }
@@ -60,6 +61,7 @@ function Sms() {
           <h1 className="text-2xl font-bold tracking-tight">SMS</h1>
           <p className="text-muted-foreground">Create and manage your SMS</p>
         </div>
+        <SendSMS />
       </div>
       <SmsTable />
     </div>
