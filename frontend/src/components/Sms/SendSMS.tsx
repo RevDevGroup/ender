@@ -2,10 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod/mini"
+import { Controller, useForm } from "react-hook-form"
+import { z } from "zod"
 
 import { type SMSMessageCreate, SmsService } from "@/client"
+import { LoadingButton } from "@/components/Common/LoadingButton"
+import { MultiSelect } from "@/components/Common/MultiSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,22 +19,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useDeviceList } from "@/hooks/useDeviceList"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  to: z.e164(),
-  body: z.string(),
+  to: z.e164().min(1, "Recipient is required"),
+  from: z.array(z.string()).min(1, "Device is required"),
+  body: z.string().min(1, "Message body is required"),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -41,13 +37,14 @@ const SendSMS = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const { data: devices } = useDeviceList()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
-    criteriaMode: "all",
     defaultValues: {
       to: "",
+      from: [],
       body: "",
     },
   })
@@ -74,7 +71,7 @@ const SendSMS = () => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="my-4">
-          <Plus className="mr-2" />
+          <Plus className="h-4 w-4" />
           Send SMS
         </Button>
       </DialogTrigger>
@@ -85,61 +82,91 @@ const SendSMS = () => {
             Fill in the form below to add a sms to be sent.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="to"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      To <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Phone number"
-                        type="phone"
-                        {...field}
-                        required
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name="body"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SMS Body</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Message Body"
-                        type="text"
-                        {...field}
-                        required
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          {/* Recipient Field */}
+          <Controller
+            name="to"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>
+                  To <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  placeholder="Phone number"
+                  type="tel"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
                 )}
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
-                Save
-              </LoadingButton>
-            </DialogFooter>
-          </form>
-        </Form>
+              </Field>
+            )}
+          />
+
+          {/* Device Selection Field */}
+          <Controller
+            name="from"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>
+                  Devices <span className="text-destructive">*</span>
+                </FieldLabel>
+                <MultiSelect
+                  options={(devices?.data || []).map((device) => ({
+                    label: device.name || device.id,
+                    value: device.id,
+                  }))}
+                  onValueChange={field.onChange}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          {/* Message Body Field */}
+          <Controller
+            name="body"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>
+                  SMS Body <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  placeholder="Message Body"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                variant="outline"
+                type="button"
+                disabled={mutation.isPending}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <LoadingButton type="submit" loading={mutation.isPending}>
+              Save
+            </LoadingButton>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
