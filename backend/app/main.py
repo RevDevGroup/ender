@@ -1,4 +1,8 @@
+from contextlib import asynccontextmanager
+
 import sentry_sdk
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
@@ -6,6 +10,14 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.api.ws import ws_router
 from app.core.config import settings
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Run migrations on startup
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    yield
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -19,6 +31,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    lifespan=lifespan,
 )
 
 # Set all CORS enabled origins
