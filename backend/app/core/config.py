@@ -95,9 +95,9 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
 
     # Celery and Redis configuration
-    CELERY_BROKER_URL: str = "redis://redis:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://redis:6379/0"
-    REDIS_URL: str = "redis://redis:6379/0"
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+    REDIS_URL: str
 
     # WebSocket configuration
     WEBSOCKET_HEARTBEAT_TIMEOUT: int = 300  # 5 minutes in seconds
