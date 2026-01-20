@@ -78,7 +78,7 @@ typing-extensions==4.15.0
 typing-inspection==0.4.2
 tzdata==2025.3
 tzlocal==5.3.1
-urllib3==2.2.3
+urllib3==2.6.3
 uvicorn==0.30.6
 uvloop==0.20.0
 vine==5.1.0
