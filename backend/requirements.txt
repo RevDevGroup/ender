@@ -5,7 +5,7 @@ anyio==4.6.0
 bcrypt==4.3.0
 billiard==4.2.4
 cachetools==5.5.0
-celery==5.6.1
+celery==5.6.2
 certifi==2024.8.30
 cfgv==3.4.0
 chardet==5.2.0
