@@ -94,14 +94,8 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
-    # Celery and Redis configuration
-    CELERY_BROKER_URL: str
-    CELERY_RESULT_BACKEND: str
-    REDIS_URL: str
-
-    # WebSocket configuration
-    WEBSOCKET_HEARTBEAT_TIMEOUT: int = 300  # 5 minutes in seconds
-    WEBSOCKET_PING_INTERVAL: int = 60  # 60 seconds for ping/pong
+    # Firebase configuration
+    FIREBASE_SERVICE_ACCOUNT_JSON: str | None = None
 
     # Quota configuration
     QUOTA_RESET_DAY: int = 1  # Day of month to reset counters, default: 1

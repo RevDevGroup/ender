@@ -1,24 +1,26 @@
 import uuid
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app import crud
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentDevice, CurrentUser, SessionDep
 from app.models import (
     Message,
-    SMSBulkCreate,
-    SMSBulkSendPublic,
     SMSDeviceCreate,
     SMSDeviceCreatePublic,
     SMSDevicePublic,
     SMSDevicesPublic,
     SMSDeviceUpdate,
+    SMSIncoming,
     SMSMessageCreate,
     SMSMessagePublic,
     SMSMessageSendPublic,
     SMSMessagesPublic,
+    SMSReport,
 )
 from app.services.quota_service import QuotaService
+from app.services.sms_service import SMSService
 
 router = APIRouter(prefix="/sms", tags=["sms"])
 
@@ -27,68 +29,24 @@ router = APIRouter(prefix="/sms", tags=["sms"])
 @router.post(
     "/send", status_code=status.HTTP_201_CREATED, response_model=SMSMessageSendPublic
 )
-def send_sms(
+async def send_sms(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     message_in: SMSMessageCreate,
+    background_tasks: BackgroundTasks,
 ) -> SMSMessageSendPublic:
-    """Send SMS"""
-    # Check limits
-    QuotaService.check_sms_quota(session=session, user_id=current_user.id, count=1)
-
-    # Create message and outbox entry in a transaction
-    try:
-        message = crud.create_sms_outbox_message(
-            session=session, message_in=message_in, user_id=current_user.id
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    # Increment counter
-    QuotaService.increment_sms_count(session=session, user_id=current_user.id, count=1)
-
-    return SMSMessageSendPublic(message_id=message.id, status=message.status)
-
-
-@router.post(
-    "/send-bulk", status_code=status.HTTP_201_CREATED, response_model=SMSBulkSendPublic
-)
-def send_bulk_sms(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    bulk_in: SMSBulkCreate,
-) -> SMSBulkSendPublic:
-    """Send SMS to multiple recipients"""
-    # Check limits
-    QuotaService.check_sms_quota(
-        session=session, user_id=current_user.id, count=len(bulk_in.recipients)
+    """Send SMS (Single or Bulk)"""
+    messages = await SMSService.send_sms(
+        session=session,
+        current_user=current_user,
+        message_in=message_in,
+        background_tasks=background_tasks,
     )
 
-    # Create messages and outbox entries
-    message_ids = []
-    for recipient in bulk_in.recipients:
-        message_in = SMSMessageCreate(
-            to=recipient, body=bulk_in.body, device_id=bulk_in.device_id
-        )
-        try:
-            message = crud.create_sms_outbox_message(
-                session=session, message_in=message_in, user_id=current_user.id
-            )
-            message_ids.append(message.id)
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    # Increment counter
-    QuotaService.increment_sms_count(
-        session=session, user_id=current_user.id, count=len(bulk_in.recipients)
-    )
-
-    return SMSBulkSendPublic(
-        total_recipients=len(bulk_in.recipients),
-        status="processing",
-        message_ids=message_ids,
+    return SMSMessageSendPublic(
+        message_ids=[m.id for m in messages],
+        status="sent" if len(message_in.recipients) == 1 else "processing",
     )
 
 
@@ -252,3 +210,57 @@ def delete_device(
     # Decrement counter
     QuotaService.decrement_device_count(session=session, user_id=current_user.id)
     return Message(message="Device deleted")
+
+
+# Device Callback Endpoints
+@router.post("/report", response_model=Message)
+async def report_sms_status(
+    *,
+    session: SessionDep,
+    _device: CurrentDevice,
+    report: SMSReport,
+) -> Message:
+    """Callback for Android device to report SMS sending status (ACK)"""
+    result = await SMSService.process_sms_ack(
+        session=session,
+        message_id=str(report.message_id),
+        status=report.status,
+        error_message=report.error_message,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return Message(message="Status updated")
+
+
+@router.post("/incoming", response_model=Message)
+async def report_incoming_sms(
+    *,
+    session: SessionDep,
+    device: CurrentDevice,
+    incoming: SMSIncoming,
+    background_tasks: BackgroundTasks,
+) -> Message:
+    """Callback for Android device to report received SMS"""
+    await SMSService.handle_incoming_sms(
+        session=session,
+        user_id=device.user_id,
+        from_number=incoming.from_number,
+        body=incoming.body,
+        background_tasks=background_tasks,
+        timestamp=incoming.timestamp,
+    )
+    return Message(message="Incoming SMS registered")
+
+
+@router.post("/heartbeat", response_model=Message)
+def device_heartbeat(
+    *,
+    session: SessionDep,
+    device: CurrentDevice,
+) -> Message:
+    """Update device last heartbeat and status"""
+    device.last_heartbeat = datetime.now(timezone.utc)
+    device.status = "online"
+    session.add(device)
+    session.commit()
+    return Message(message="Heartbeat received")

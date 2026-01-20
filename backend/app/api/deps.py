@@ -3,7 +3,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
@@ -17,6 +17,8 @@ from app.models import SMSDevice, TokenPayload, User
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -59,7 +61,7 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
 
 
 def get_device_by_api_key(session: SessionDep, api_key: str) -> SMSDevice:
-    """Validar API key y obtener dispositivo"""
+    """Validate api key and get the device"""
 
     device = crud.get_sms_device_by_api_key(session=session, api_key=api_key)
     if not device:
@@ -71,10 +73,19 @@ def get_device_by_api_key(session: SessionDep, api_key: str) -> SMSDevice:
 
 
 def verify_device_active(device: SMSDevice) -> SMSDevice:
-    """Verificar que el dispositivo esté activo y online"""
+    """Verify that the device is active and online"""
     if device.status not in ["online", "idle"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Device is not active",
         )
     return device
+
+
+def get_current_device(
+    session: SessionDep, api_key: Annotated[str, Depends(api_key_header)]
+) -> SMSDevice:
+    return get_device_by_api_key(session=session, api_key=api_key)
+
+
+CurrentDevice = Annotated[SMSDevice, Depends(get_current_device)]

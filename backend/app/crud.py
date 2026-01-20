@@ -1,7 +1,9 @@
+import json
 import secrets
 import uuid
 from typing import Any
 
+from sqlalchemy import desc as sa_desc
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
@@ -12,7 +14,6 @@ from app.models import (
     SMSMessage,
     SMSMessageCreate,
     SMSMessageUpdate,
-    SMSOutbox,
     User,
     UserCreate,
     UserUpdate,
@@ -66,7 +67,7 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
 def create_sms_device(
     *, session: Session, device_in: SMSDeviceCreate, user_id: uuid.UUID
 ) -> SMSDevice:
-    """Create SMS device with generated API key"""
+    """Create SMS device with backend-generated API key (FCM Token)"""
     api_key = secrets.token_urlsafe(32)
     db_device = SMSDevice.model_validate(
         device_in, update={"user_id": user_id, "api_key": api_key}
@@ -119,46 +120,32 @@ def delete_sms_device(*, session: Session, device_id: uuid.UUID) -> SMSDevice | 
     return device
 
 
-def create_sms_outbox_message(
+def create_sms_messages(
     *, session: Session, message_in: SMSMessageCreate, user_id: uuid.UUID
-) -> SMSMessage:
+) -> list[SMSMessage]:
     """
-    Create an SMS message and its corresponding outbox entry in a single transaction.
+    Create SMS messages in a single transaction.
     """
     validate_sms_device(
         session=session, device_id=message_in.device_id, user_id=user_id
     )
 
-    db_message = SMSMessage.model_validate(message_in, update={"user_id": user_id})
-    session.add(db_message)
-
-    outbox_payload = {
-        "type": "task",
-        "message_id": str(db_message.id),
-        "to": db_message.to,
-        "body": db_message.body,
-    }
-    db_outbox = SMSOutbox(
-        sms_message=db_message,
-        device_id=db_message.device_id,
-        payload=outbox_payload,
-        status="pending",
-    )
-    session.add(db_outbox)
+    db_messages = []
+    for recipient in message_in.recipients:
+        db_message = SMSMessage(
+            to=recipient,
+            body=message_in.body,
+            device_id=message_in.device_id,
+            user_id=user_id,
+        )
+        session.add(db_message)
+        db_messages.append(db_message)
 
     session.commit()
+    for m in db_messages:
+        session.refresh(m)
 
-    session.refresh(db_message)
-    session.refresh(db_outbox)
-
-    outbox_payload["message_id"] = str(db_message.id)
-    outbox_payload["outbox_id"] = str(db_outbox.id)
-    db_outbox.payload = outbox_payload
-    session.add(db_outbox)
-    session.commit()
-    session.refresh(db_outbox)
-
-    return db_message
+    return db_messages
 
 
 def get_sms_message(*, session: Session, message_id: uuid.UUID) -> SMSMessage | None:
@@ -178,7 +165,6 @@ def get_sms_messages_by_user(
     statement = select(SMSMessage).where(SMSMessage.user_id == user_id)
     if message_type:
         statement = statement.where(SMSMessage.message_type == message_type)
-    from sqlalchemy import desc as sa_desc
 
     statement = (
         statement.order_by(sa_desc(SMSMessage.created_at)).offset(skip).limit(limit)  # type: ignore[arg-type]
@@ -202,7 +188,6 @@ def create_webhook_config(
     *, session: Session, webhook_in: WebhookConfigCreate, user_id: uuid.UUID
 ) -> WebhookConfig:
     """Create webhook configuration"""
-    import json
 
     if isinstance(webhook_in.events, list):
         webhook_in.events = json.dumps(webhook_in.events)
@@ -241,7 +226,6 @@ def update_webhook_config(
     webhook_in: WebhookConfigUpdate,
 ) -> WebhookConfig:
     """Update webhook configuration"""
-    import json
 
     webhook_data = webhook_in.model_dump(exclude_unset=True)
     if "events" in webhook_data and isinstance(webhook_data["events"], list):

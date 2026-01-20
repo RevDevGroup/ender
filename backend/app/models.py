@@ -1,9 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
 from pydantic import EmailStr
-from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -195,14 +193,22 @@ class SMSMessageBase(SQLModel):
     message_type: str = Field(default="outgoing", max_length=50)  # outgoing, incoming
 
 
-class SMSMessageCreate(SMSMessageBase):
-    device_id: uuid.UUID | None = None
-
-
-class SMSBulkCreate(SQLModel):
+class SMSMessageCreate(SQLModel):
     recipients: list[str] = Field(min_items=1, max_items=1000)
     body: str = Field(max_length=1600)
     device_id: uuid.UUID | None = None
+
+
+class SMSReport(SQLModel):
+    message_id: uuid.UUID
+    status: str = Field(max_length=50)
+    error_message: str | None = Field(default=None, max_length=500)
+
+
+class SMSIncoming(SQLModel):
+    from_number: str = Field(max_length=20)
+    body: str = Field(max_length=1600)
+    timestamp: str | None = Field(default=None)
 
 
 class PlanUpgrade(SQLModel):
@@ -254,42 +260,14 @@ class SMSMessagesPublic(SQLModel):
 
 
 class SMSMessageSendPublic(SQLModel):
-    message_id: uuid.UUID
-    status: str
-
-
-class SMSBulkSendPublic(SQLModel):
-    total_recipients: int
-    status: str
     message_ids: list[uuid.UUID]
+    status: str
 
 
 class SMSDeviceCreatePublic(SQLModel):
     device_id: uuid.UUID
     api_key: str
     status: str
-
-
-class SMSOutbox(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    sms_message_id: uuid.UUID = Field(foreign_key="smsmessage.id", index=True)
-    device_id: uuid.UUID | None = Field(foreign_key="smsdevice.id", nullable=True)
-    payload: dict[str, Any] = Field(sa_column=Column(JSON))
-    status: str = Field(
-        default="pending", max_length=50, index=True
-    )  # pending, sending, sent, failed, retry
-    attempts: int = Field(default=0)
-    next_attempt_at: datetime | None = Field(default=None)
-    last_error: str | None = Field(default=None, max_length=500)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
-    )
-    sending_at: datetime | None = Field(default=None)
-
-    sms_message: SMSMessage = Relationship()
-    device: SMSDevice | None = Relationship()
 
 
 class WebhookConfigBase(SQLModel):
