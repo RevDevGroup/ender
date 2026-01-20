@@ -61,7 +61,7 @@ python-dotenv==1.0.1
 python-multipart==0.0.20
 pyyaml==6.0.2
 redis==5.3.1
-requests==2.32.3
+requests==2.32.4
 rich==13.8.1
 ruff==0.6.7
 sentry-sdk==1.45.1
