@@ -72,8 +72,8 @@ class FCMService:
         Orchestrates sending notifications to a device for a list of messages.
         """
 
-        if not device.api_key:
-            logger.warning(f"Device {device.id} has no api_key (FCM token).")
+        if not device.fcm_token:
+            logger.warning(f"Device {device.id} has no FCM token registered.")
             return
 
         for message in messages:
@@ -84,7 +84,7 @@ class FCMService:
                 "body": message.body,
             }
             background_tasks.add_task(
-                cls.send_sms_notification, device.api_key, payload
+                cls.send_sms_notification, device.fcm_token, payload
             )
 
     @classmethod
