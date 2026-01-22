@@ -148,11 +148,13 @@ class SMSDeviceUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=255)
     phone_number: str | None = Field(default=None, max_length=20)
     status: str | None = Field(default=None, max_length=50)
+    fcm_token: str | None = Field(default=None, max_length=255)
 
 
 class SMSDevice(SMSDeviceBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     api_key: str = Field(unique=True, index=True, max_length=255)
+    fcm_token: str | None = Field(default=None, max_length=255)
     user_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
@@ -209,6 +211,10 @@ class SMSIncoming(SQLModel):
     from_number: str = Field(max_length=20)
     body: str = Field(max_length=1600)
     timestamp: str | None = Field(default=None)
+
+
+class FCMTokenUpdate(SQLModel):
+    fcm_token: str = Field(max_length=255)
 
 
 class PlanUpgrade(SQLModel):

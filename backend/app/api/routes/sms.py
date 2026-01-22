@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from app import crud
 from app.api.deps import CurrentDevice, CurrentUser, SessionDep
 from app.models import (
+    FCMTokenUpdate,
     Message,
     SMSDeviceCreate,
     SMSDeviceCreatePublic,
@@ -250,6 +251,20 @@ async def report_incoming_sms(
         timestamp=incoming.timestamp,
     )
     return Message(message="Incoming SMS registered")
+
+
+@router.post("/fcm-token", response_model=Message)
+def update_fcm_token(
+    *,
+    session: SessionDep,
+    device: CurrentDevice,
+    token_in: FCMTokenUpdate,
+) -> Message:
+    """Update device FCM token using API Key"""
+    device.fcm_token = token_in.fcm_token
+    session.add(device)
+    session.commit()
+    return Message(message="FCM token updated")
 
 
 @router.post("/heartbeat", response_model=Message)
