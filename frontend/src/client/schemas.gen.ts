@@ -55,6 +55,19 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const FCMTokenUpdateSchema = {
+    properties: {
+        fcm_token: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Fcm Token'
+        }
+    },
+    type: 'object',
+    required: ['fcm_token'],
+    title: 'FCMTokenUpdate'
+} as const;
+
 export const HTTPValidationErrorSchema = {
     properties: {
         detail: {
@@ -129,87 +142,6 @@ export const PlanUpgradePublicSchema = {
     type: 'object',
     required: ['message', 'data'],
     title: 'PlanUpgradePublic'
-} as const;
-
-export const PrivateUserCreateSchema = {
-    properties: {
-        email: {
-            type: 'string',
-            title: 'Email'
-        },
-        password: {
-            type: 'string',
-            title: 'Password'
-        },
-        full_name: {
-            type: 'string',
-            title: 'Full Name'
-        },
-        is_verified: {
-            type: 'boolean',
-            title: 'Is Verified',
-            default: false
-        }
-    },
-    type: 'object',
-    required: ['email', 'password', 'full_name'],
-    title: 'PrivateUserCreate'
-} as const;
-
-export const SMSBulkCreateSchema = {
-    properties: {
-        recipients: {
-            items: {
-                type: 'string'
-            },
-            type: 'array',
-            title: 'Recipients'
-        },
-        body: {
-            type: 'string',
-            maxLength: 1600,
-            title: 'Body'
-        },
-        device_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'uuid'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Device Id'
-        }
-    },
-    type: 'object',
-    required: ['recipients', 'body'],
-    title: 'SMSBulkCreate'
-} as const;
-
-export const SMSBulkSendPublicSchema = {
-    properties: {
-        total_recipients: {
-            type: 'integer',
-            title: 'Total Recipients'
-        },
-        status: {
-            type: 'string',
-            title: 'Status'
-        },
-        message_ids: {
-            items: {
-                type: 'string',
-                format: 'uuid'
-            },
-            type: 'array',
-            title: 'Message Ids'
-        }
-    },
-    type: 'object',
-    required: ['total_recipients', 'status', 'message_ids'],
-    title: 'SMSBulkSendPublic'
 } as const;
 
 export const SMSDeviceCreateSchema = {
@@ -350,6 +282,18 @@ export const SMSDeviceUpdateSchema = {
                 }
             ],
             title: 'Status'
+        },
+        fcm_token: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Fcm Token'
         }
     },
     type: 'object',
@@ -375,23 +319,11 @@ export const SMSDevicesPublicSchema = {
     title: 'SMSDevicesPublic'
 } as const;
 
-export const SMSMessageCreateSchema = {
+export const SMSIncomingSchema = {
     properties: {
-        to: {
+        from_number: {
             type: 'string',
             maxLength: 20,
-            title: 'To'
-        },
-        from_number: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 20
-                },
-                {
-                    type: 'null'
-                }
-            ],
             title: 'From Number'
         },
         body: {
@@ -399,17 +331,36 @@ export const SMSMessageCreateSchema = {
             maxLength: 1600,
             title: 'Body'
         },
-        status: {
-            type: 'string',
-            maxLength: 50,
-            title: 'Status',
-            default: 'pending'
+        timestamp: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timestamp'
+        }
+    },
+    type: 'object',
+    required: ['from_number', 'body'],
+    title: 'SMSIncoming'
+} as const;
+
+export const SMSMessageCreateSchema = {
+    properties: {
+        recipients: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Recipients'
         },
-        message_type: {
+        body: {
             type: 'string',
-            maxLength: 50,
-            title: 'Message Type',
-            default: 'outgoing'
+            maxLength: 1600,
+            title: 'Body'
         },
         device_id: {
             anyOf: [
@@ -425,7 +376,7 @@ export const SMSMessageCreateSchema = {
         }
     },
     type: 'object',
-    required: ['to', 'body'],
+    required: ['recipients', 'body'],
     title: 'SMSMessageCreate'
 } as const;
 
@@ -544,10 +495,13 @@ export const SMSMessagePublicSchema = {
 
 export const SMSMessageSendPublicSchema = {
     properties: {
-        message_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Message Id'
+        message_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Message Ids'
         },
         status: {
             type: 'string',
@@ -555,7 +509,7 @@ export const SMSMessageSendPublicSchema = {
         }
     },
     type: 'object',
-    required: ['message_id', 'status'],
+    required: ['message_ids', 'status'],
     title: 'SMSMessageSendPublic'
 } as const;
 
@@ -576,6 +530,36 @@ export const SMSMessagesPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'SMSMessagesPublic'
+} as const;
+
+export const SMSReportSchema = {
+    properties: {
+        message_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Message Id'
+        },
+        status: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Status'
+        },
+        error_message: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Error Message'
+        }
+    },
+    type: 'object',
+    required: ['message_id', 'status'],
+    title: 'SMSReport'
 } as const;
 
 export const TokenSchema = {

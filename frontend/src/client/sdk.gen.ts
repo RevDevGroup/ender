@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PlansListPlansResponse, PlansGetQuotaResponse, PlansUpgradePlanData, PlansUpgradePlanResponse, PrivateCreateUserData, PrivateCreateUserResponse, SmsSendSmsData, SmsSendSmsResponse, SmsSendBulkSmsData, SmsSendBulkSmsResponse, SmsListMessagesData, SmsListMessagesResponse, SmsGetMessageData, SmsGetMessageResponse, SmsListIncomingMessagesData, SmsListIncomingMessagesResponse, SmsCreateDeviceData, SmsCreateDeviceResponse, SmsListDevicesData, SmsListDevicesResponse, SmsGetDeviceData, SmsGetDeviceResponse, SmsUpdateDeviceData, SmsUpdateDeviceResponse, SmsDeleteDeviceData, SmsDeleteDeviceResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksListWebhooksData, WebhooksListWebhooksResponse, WebhooksGetWebhookData, WebhooksGetWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse } from './types.gen';
+import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PlansListPlansResponse, PlansGetQuotaResponse, PlansUpgradePlanData, PlansUpgradePlanResponse, SmsSendSmsData, SmsSendSmsResponse, SmsListMessagesData, SmsListMessagesResponse, SmsGetMessageData, SmsGetMessageResponse, SmsListIncomingMessagesData, SmsListIncomingMessagesResponse, SmsReportIncomingSmsData, SmsReportIncomingSmsResponse, SmsCreateDeviceData, SmsCreateDeviceResponse, SmsListDevicesData, SmsListDevicesResponse, SmsGetDeviceData, SmsGetDeviceResponse, SmsUpdateDeviceData, SmsUpdateDeviceResponse, SmsDeleteDeviceData, SmsDeleteDeviceResponse, SmsReportSmsStatusData, SmsReportSmsStatusResponse, SmsUpdateFcmTokenData, SmsUpdateFcmTokenResponse, SmsDeviceHeartbeatResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksListWebhooksData, WebhooksListWebhooksResponse, WebhooksGetWebhookData, WebhooksGetWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse } from './types.gen';
 
 export class LoginService {
     /**
@@ -150,32 +150,10 @@ export class PlansService {
     }
 }
 
-export class PrivateService {
-    /**
-     * Create User
-     * Create a new user.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns UserPublic Successful Response
-     * @throws ApiError
-     */
-    public static createUser(data: PrivateCreateUserData): CancelablePromise<PrivateCreateUserResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/private/users/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
-
 export class SmsService {
     /**
      * Send Sms
-     * Send SMS
+     * Send SMS (Single or Bulk)
      * @param data The data for the request.
      * @param data.requestBody
      * @returns SMSMessageSendPublic Successful Response
@@ -185,26 +163,6 @@ export class SmsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/sms/send',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Send Bulk Sms
-     * Send SMS to multiple recipients
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns SMSBulkSendPublic Successful Response
-     * @throws ApiError
-     */
-    public static sendBulkSms(data: SmsSendBulkSmsData): CancelablePromise<SmsSendBulkSmsResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/sms/send-bulk',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -276,6 +234,26 @@ export class SmsService {
                 skip: data.skip,
                 limit: data.limit
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Report Incoming Sms
+     * Callback for Android device to report received SMS
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static reportIncomingSms(data: SmsReportIncomingSmsData): CancelablePromise<SmsReportIncomingSmsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/incoming',
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -388,6 +366,59 @@ export class SmsService {
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * Report Sms Status
+     * Callback for Android device to report SMS sending status (ACK)
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static reportSmsStatus(data: SmsReportSmsStatusData): CancelablePromise<SmsReportSmsStatusResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/report',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Fcm Token
+     * Update device FCM token using API Key
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static updateFcmToken(data: SmsUpdateFcmTokenData): CancelablePromise<SmsUpdateFcmTokenResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/fcm-token',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Device Heartbeat
+     * Update device last heartbeat and status
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deviceHeartbeat(): CancelablePromise<SmsDeviceHeartbeatResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/sms/heartbeat'
         });
     }
 }

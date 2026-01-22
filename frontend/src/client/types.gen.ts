@@ -9,6 +9,10 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type FCMTokenUpdate = {
+    fcm_token: string;
+};
+
 export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
@@ -31,25 +35,6 @@ export type PlanUpgradePublic = {
     data: {
         [key: string]: (string);
     };
-};
-
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
-export type SMSBulkCreate = {
-    recipients: Array<(string)>;
-    body: string;
-    device_id?: (string | null);
-};
-
-export type SMSBulkSendPublic = {
-    total_recipients: number;
-    status: string;
-    message_ids: Array<(string)>;
 };
 
 export type SMSDeviceCreate = {
@@ -84,14 +69,18 @@ export type SMSDeviceUpdate = {
     name?: (string | null);
     phone_number?: (string | null);
     status?: (string | null);
+    fcm_token?: (string | null);
+};
+
+export type SMSIncoming = {
+    from_number: string;
+    body: string;
+    timestamp?: (string | null);
 };
 
 export type SMSMessageCreate = {
-    to: string;
-    from_number?: (string | null);
+    recipients: Array<(string)>;
     body: string;
-    status?: string;
-    message_type?: string;
     device_id?: (string | null);
 };
 
@@ -113,13 +102,19 @@ export type SMSMessagePublic = {
 };
 
 export type SMSMessageSendPublic = {
-    message_id: string;
+    message_ids: Array<(string)>;
     status: string;
 };
 
 export type SMSMessagesPublic = {
     data: Array<SMSMessagePublic>;
     count: number;
+};
+
+export type SMSReport = {
+    message_id: string;
+    status: string;
+    error_message?: (string | null);
 };
 
 export type Token = {
@@ -268,23 +263,11 @@ export type PlansUpgradePlanData = {
 
 export type PlansUpgradePlanResponse = (PlanUpgradePublic);
 
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
 export type SmsSendSmsData = {
     requestBody: SMSMessageCreate;
 };
 
 export type SmsSendSmsResponse = (SMSMessageSendPublic);
-
-export type SmsSendBulkSmsData = {
-    requestBody: SMSBulkCreate;
-};
-
-export type SmsSendBulkSmsResponse = (SMSBulkSendPublic);
 
 export type SmsListMessagesData = {
     limit?: number;
@@ -306,6 +289,12 @@ export type SmsListIncomingMessagesData = {
 };
 
 export type SmsListIncomingMessagesResponse = (SMSMessagesPublic);
+
+export type SmsReportIncomingSmsData = {
+    requestBody: SMSIncoming;
+};
+
+export type SmsReportIncomingSmsResponse = (Message);
 
 export type SmsCreateDeviceData = {
     requestBody: SMSDeviceCreate;
@@ -338,6 +327,20 @@ export type SmsDeleteDeviceData = {
 };
 
 export type SmsDeleteDeviceResponse = (Message);
+
+export type SmsReportSmsStatusData = {
+    requestBody: SMSReport;
+};
+
+export type SmsReportSmsStatusResponse = (Message);
+
+export type SmsUpdateFcmTokenData = {
+    requestBody: FCMTokenUpdate;
+};
+
+export type SmsUpdateFcmTokenResponse = (Message);
+
+export type SmsDeviceHeartbeatResponse = (Message);
 
 export type UsersReadUsersData = {
     limit?: number;
