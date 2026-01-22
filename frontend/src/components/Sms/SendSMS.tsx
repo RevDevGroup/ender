@@ -21,12 +21,15 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { TagInput } from "@/components/ui/tag-input"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useDeviceList } from "@/hooks/useDeviceList"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  to: z.e164().min(1, "Recipient is required"),
+  recipients: z
+    .array(z.e164().min(1, "Recipient is required"))
+    .min(1, "At least one recipient is required"),
   from: z.array(z.string()).min(1, "Device is required"),
   body: z.string().min(1, "Message body is required"),
 })
@@ -43,7 +46,7 @@ const SendSMS = () => {
     resolver: zodResolver(formSchema),
     mode: "onBlur",
     defaultValues: {
-      to: "",
+      recipients: [],
       from: [],
       body: "",
     },
@@ -64,7 +67,11 @@ const SendSMS = () => {
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    mutation.mutate({
+      recipients: data.recipients,
+      body: data.body,
+      device_id: data.from[0],
+    })
   }
 
   return (
@@ -86,18 +93,17 @@ const SendSMS = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           {/* Recipient Field */}
           <Controller
-            name="to"
+            name="recipients"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>
                   To <span className="text-destructive">*</span>
                 </FieldLabel>
-                <Input
+                <TagInput
                   {...field}
                   id={field.name}
-                  placeholder="Phone number"
-                  type="tel"
+                  placeholder="Phone numbers (space separated)"
                   aria-invalid={fieldState.invalid}
                 />
                 {fieldState.invalid && (
@@ -122,6 +128,7 @@ const SendSMS = () => {
                     value: device.id,
                   }))}
                   onValueChange={field.onChange}
+                  defaultValue={field.value}
                 />
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
