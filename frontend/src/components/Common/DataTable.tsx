@@ -6,13 +6,19 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import {
-  ChevronLeft,
-  ChevronRight,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination"
 import {
   Select,
   SelectContent,
@@ -34,6 +40,41 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
+function generatePaginationItems(
+  currentPage: number,
+  totalPages: number,
+): (number | "ellipsis")[] {
+  const items: (number | "ellipsis")[] = []
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      items.push(i)
+    }
+    return items
+  }
+
+  items.push(1)
+
+  if (currentPage > 3) {
+    items.push("ellipsis")
+  }
+
+  const start = Math.max(2, currentPage - 1)
+  const end = Math.min(totalPages - 1, currentPage + 1)
+
+  for (let i = start; i <= end; i++) {
+    items.push(i)
+  }
+
+  if (currentPage < totalPages - 2) {
+    items.push("ellipsis")
+  }
+
+  items.push(totalPages)
+
+  return items
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -44,6 +85,10 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  const currentPage = table.getState().pagination.pageIndex + 1
+  const totalPages = table.getPageCount()
+  const paginationItems = generatePaginationItems(currentPage, totalPages)
 
   return (
     <div className="flex flex-col gap-4">
@@ -90,8 +135,8 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
 
-      {table.getPageCount() > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t bg-muted/20">
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="text-sm text-muted-foreground">
               Showing{" "}
@@ -132,61 +177,75 @@ export function DataTable<TData, TValue>({
             </div>
           </div>
 
-          <div className="flex items-center gap-x-6">
-            <div className="flex items-center gap-x-1 text-sm text-muted-foreground">
-              <span>Page</span>
-              <span className="font-medium text-foreground">
-                {table.getState().pagination.pageIndex + 1}
-              </span>
-              <span>of</span>
-              <span className="font-medium text-foreground">
-                {table.getPageCount()}
-              </span>
-            </div>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => table.setPageIndex(0)}
+                  disabled={!table.getCanPreviousPage()}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="size-4" />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  aria-label="Go to previous page"
+                >
+                  <ChevronLeftIcon className="size-4" />
+                </Button>
+              </PaginationItem>
 
-            <div className="flex items-center gap-x-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+              {paginationItems.map((item, index) =>
+                item === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={item}>
+                    <Button
+                      variant={currentPage === item ? "outline" : "ghost"}
+                      size="icon"
+                      onClick={() => table.setPageIndex(item - 1)}
+                      aria-label={`Go to page ${item}`}
+                      aria-current={currentPage === item ? "page" : undefined}
+                    >
+                      {item}
+                    </Button>
+                  </PaginationItem>
+                ),
+              )}
+
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                  aria-label="Go to next page"
+                >
+                  <ChevronRightIcon className="size-4" />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => table.setPageIndex(totalPages - 1)}
+                  disabled={!table.getCanNextPage()}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="size-4" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

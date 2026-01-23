@@ -1,0 +1,73 @@
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
+import { Smartphone } from "lucide-react"
+import { Suspense } from "react"
+
+import { SmsService } from "@/client"
+import { DataTable } from "@/components/Common/DataTable"
+import AddDevice from "@/components/Devices/AddDevice"
+import { columns } from "@/components/Devices/columns"
+import PendingDevices from "@/components/Pending/PendingDevices"
+
+function getDevicesQueryOptions() {
+  return {
+    queryFn: () => SmsService.listDevices({ skip: 0, limit: 100 }),
+    queryKey: ["devices"],
+  }
+}
+
+export const Route = createFileRoute("/_layout/devices")({
+  component: Devices,
+  head: () => ({
+    meta: [
+      {
+        title: "Devices - Ender Labs",
+      },
+    ],
+  }),
+})
+
+function DevicesTableContent() {
+  const { data: devices } = useSuspenseQuery(getDevicesQueryOptions())
+
+  if (devices.data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-12">
+        <div className="rounded-full bg-muted p-4 mb-4">
+          <Smartphone className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold">No devices registered</h3>
+        <p className="text-muted-foreground">
+          Add a device to start sending SMS messages
+        </p>
+      </div>
+    )
+  }
+
+  return <DataTable columns={columns} data={devices.data} />
+}
+
+function DevicesTable() {
+  return (
+    <Suspense fallback={<PendingDevices />}>
+      <DevicesTableContent />
+    </Suspense>
+  )
+}
+
+function Devices() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Devices</h1>
+          <p className="text-muted-foreground">
+            Manage your registered SMS devices
+          </p>
+        </div>
+        <AddDevice />
+      </div>
+      <DevicesTable />
+    </div>
+  )
+}

@@ -17,6 +17,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSmsRouteImport } from './routes/_layout/sms'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutDevicesRouteImport } from './routes/_layout/devices'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -58,6 +59,11 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutDevicesRoute = LayoutDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/devices': typeof LayoutDevicesRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/': typeof LayoutIndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/devices': typeof LayoutDevicesRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/': typeof LayoutIndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/devices': typeof LayoutDevicesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/sms': typeof LayoutSmsRoute
   '/_layout/': typeof LayoutIndexRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/devices'
     | '/settings'
     | '/sms'
     | '/'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/devices'
     | '/settings'
     | '/sms'
     | '/'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/devices'
     | '/_layout/settings'
     | '/_layout/sms'
     | '/_layout/'
@@ -196,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/devices': {
+      id: '/_layout/devices'
+      path: '/devices'
+      fullPath: '/devices'
+      preLoaderRoute: typeof LayoutDevicesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -208,6 +227,7 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutDevicesRoute: typeof LayoutDevicesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSmsRoute: typeof LayoutSmsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
@@ -215,6 +235,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutDevicesRoute: LayoutDevicesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSmsRoute: LayoutSmsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
