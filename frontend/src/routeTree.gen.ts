@@ -15,6 +15,7 @@ import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutWebhooksRouteImport } from './routes/_layout/webhooks'
 import { Route as LayoutSmsRouteImport } from './routes/_layout/sms'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutDevicesRouteImport } from './routes/_layout/devices'
@@ -49,6 +50,11 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutWebhooksRoute = LayoutWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutSmsRoute = LayoutSmsRouteImport.update({
   id: '/sms',
   path: '/sms',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/devices': typeof LayoutDevicesRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
+  '/webhooks': typeof LayoutWebhooksRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/devices': typeof LayoutDevicesRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
+  '/webhooks': typeof LayoutWebhooksRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_layout/devices': typeof LayoutDevicesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/sms': typeof LayoutSmsRoute
+  '/_layout/webhooks': typeof LayoutWebhooksRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/devices'
     | '/settings'
     | '/sms'
+    | '/webhooks'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/devices'
     | '/settings'
     | '/sms'
+    | '/webhooks'
     | '/'
   id:
     | '__root__'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_layout/devices'
     | '/_layout/settings'
     | '/_layout/sms'
+    | '/_layout/webhooks'
     | '/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/webhooks': {
+      id: '/_layout/webhooks'
+      path: '/webhooks'
+      fullPath: '/webhooks'
+      preLoaderRoute: typeof LayoutWebhooksRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/sms': {
       id: '/_layout/sms'
       path: '/sms'
@@ -230,6 +249,7 @@ interface LayoutRouteChildren {
   LayoutDevicesRoute: typeof LayoutDevicesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSmsRoute: typeof LayoutSmsRoute
+  LayoutWebhooksRoute: typeof LayoutWebhooksRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
@@ -238,6 +258,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutDevicesRoute: LayoutDevicesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSmsRoute: LayoutSmsRoute,
+  LayoutWebhooksRoute: LayoutWebhooksRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 
