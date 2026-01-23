@@ -1,9 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { SMSDevicePublic } from "@/client"
+import { DeviceActionsMenu } from "@/components/Devices/DeviceActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { DeviceActionsMenu } from "./DeviceActionsMenu"
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "Never"

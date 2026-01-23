@@ -1,20 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Webhook } from "lucide-react"
 import { Suspense } from "react"
 
-import { WebhooksService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingWebhooks from "@/components/Pending/PendingWebhooks"
 import AddWebhook from "@/components/Webhooks/AddWebhook"
 import { columns } from "@/components/Webhooks/columns"
-
-function getWebhooksQueryOptions() {
-  return {
-    queryFn: () => WebhooksService.listWebhooks({ skip: 0, limit: 100 }),
-    queryKey: ["webhooks"],
-  }
-}
+import { useWebhookListSuspense } from "@/hooks/useWebhookList"
 
 export const Route = createFileRoute("/_layout/webhooks")({
   component: Webhooks,
@@ -28,7 +20,7 @@ export const Route = createFileRoute("/_layout/webhooks")({
 })
 
 function WebhooksTableContent() {
-  const { data: webhooks } = useSuspenseQuery(getWebhooksQueryOptions())
+  const { data: webhooks } = useWebhookListSuspense()
 
   if (webhooks.data.length === 0) {
     return (

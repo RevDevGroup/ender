@@ -1,20 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Smartphone } from "lucide-react"
 import { Suspense } from "react"
 
-import { SmsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import AddDevice from "@/components/Devices/AddDevice"
 import { columns } from "@/components/Devices/columns"
 import PendingDevices from "@/components/Pending/PendingDevices"
-
-function getDevicesQueryOptions() {
-  return {
-    queryFn: () => SmsService.listDevices({ skip: 0, limit: 100 }),
-    queryKey: ["devices"],
-  }
-}
+import { useDeviceListSuspense } from "@/hooks/useDeviceList"
 
 export const Route = createFileRoute("/_layout/devices")({
   component: Devices,
@@ -28,7 +20,7 @@ export const Route = createFileRoute("/_layout/devices")({
 })
 
 function DevicesTableContent() {
-  const { data: devices } = useSuspenseQuery(getDevicesQueryOptions())
+  const { data: devices } = useDeviceListSuspense()
 
   if (devices.data.length === 0) {
     return (

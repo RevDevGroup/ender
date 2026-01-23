@@ -1,20 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Search } from "lucide-react"
 import { Suspense } from "react"
 
-import { SmsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingItems from "@/components/Pending/PendingItems"
 import { columns } from "@/components/Sms/columns"
 import SendSMS from "@/components/Sms/SendSMS"
-
-function getSmsQueryOptions() {
-  return {
-    queryFn: () => SmsService.listMessages({ skip: 0, limit: 100 }),
-    queryKey: ["sms"],
-  }
-}
+import { useSMSListSuspense } from "@/hooks/useSMSList"
 
 export const Route = createFileRoute("/_layout/sms")({
   component: Sms,
@@ -28,7 +20,7 @@ export const Route = createFileRoute("/_layout/sms")({
 })
 
 function SMSTableContent() {
-  const { data: sms } = useSuspenseQuery(getSmsQueryOptions())
+  const { data: sms } = useSMSListSuspense()
 
   if (sms.data.length === 0) {
     return (
