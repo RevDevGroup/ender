@@ -3,25 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import type { SMSDevicePublic } from "@/client"
 import { DeviceActionsMenu } from "@/components/Devices/DeviceActionsMenu"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "Never"
-  return new Date(dateString).toLocaleString()
-}
-
-function getStatusVariant(
-  status: string,
-): "default" | "secondary" | "destructive" {
-  switch (status.toLowerCase()) {
-    case "online":
-      return "default"
-    case "offline":
-      return "secondary"
-    default:
-      return "secondary"
-  }
-}
+import { cn, formatDate, getStatusVariant } from "@/lib/utils"
 
 export const columns: ColumnDef<SMSDevicePublic>[] = [
   {
@@ -40,7 +22,7 @@ export const columns: ColumnDef<SMSDevicePublic>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status
+      const status = row.original.status ?? "offline"
       return (
         <div className="flex items-center gap-2">
           <span

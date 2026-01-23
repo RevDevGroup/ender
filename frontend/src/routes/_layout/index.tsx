@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { MessageSquare, Smartphone, Webhook } from "lucide-react"
+import {
+  MessageSquare,
+  MessageSquareText,
+  Smartphone,
+  Webhook,
+} from "lucide-react"
 import QuotaCard from "@/components/Plans/QuotaCard"
 import {
   Card,
@@ -64,7 +69,9 @@ function StatCard({
 
 function Dashboard() {
   const { user: currentUser } = useAuth()
-  const { data: smsData, isLoading: smsLoading } = useSMSList()
+  const { data: smsData, isLoading: smsLoading } = useSMSList("outgoing")
+  const { data: incomingSmsData, isLoading: incomingSmsLoading } =
+    useSMSList("incoming")
   const { data: devicesData, isLoading: devicesLoading } = useDeviceList()
   const { data: webhooksData, isLoading: webhooksLoading } = useWebhookList()
 
@@ -81,12 +88,20 @@ function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="SMS Messages"
+          title="SMS Sent"
           description="Total messages sent"
           value={smsData?.count}
           icon={MessageSquare}
           href="/sms"
           isLoading={smsLoading}
+        />
+        <StatCard
+          title="SMS Received"
+          description="Total messages received"
+          value={incomingSmsData?.count}
+          icon={MessageSquareText}
+          href="/sms"
+          isLoading={incomingSmsLoading}
         />
         <StatCard
           title="Devices"
