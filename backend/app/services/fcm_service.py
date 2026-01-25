@@ -76,12 +76,15 @@ class FCMService:
             logger.warning(f"Device {device.id} has no FCM token registered.")
             return
 
+        # Group messages by body to send one notification per unique body
+        body_groups: dict[str, list[str]] = defaultdict(list)
         for message in messages:
+            body_groups[message.body].append(message.to)
+
+        for body, recipients in body_groups.items():
             payload = {
-                "type": "task",
-                "message_id": str(message.id),
-                "to": message.to,
-                "body": message.body,
+                "recipients": json.dumps(recipients),
+                "body": body,
             }
             background_tasks.add_task(
                 cls.send_sms_notification, device.fcm_token, payload
