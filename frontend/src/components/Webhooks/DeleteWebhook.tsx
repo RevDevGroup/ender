@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { WebhooksService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,8 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useDeleteWebhook } from "@/hooks/useWebhookMutations"
 
 interface DeleteWebhookProps {
   id: string
@@ -26,29 +23,17 @@ interface DeleteWebhookProps {
 
 const DeleteWebhook = ({ id, onSuccess }: DeleteWebhookProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteWebhook = async (webhookId: string) => {
-    await WebhooksService.deleteWebhook({ webhookId })
-  }
-
-  const mutation = useMutation({
-    mutationFn: deleteWebhook,
-    onSuccess: () => {
-      showSuccessToast("The webhook was deleted successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["webhooks"] })
-    },
-  })
+  const deleteWebhookMutation = useDeleteWebhook()
 
   const onSubmit = async () => {
-    mutation.mutate(id)
+    deleteWebhookMutation.mutate(id, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -73,14 +58,17 @@ const DeleteWebhook = ({ id, onSuccess }: DeleteWebhookProps) => {
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button variant="outline" disabled={mutation.isPending}>
+              <Button
+                variant="outline"
+                disabled={deleteWebhookMutation.isPending}
+              >
                 Cancel
               </Button>
             </DialogClose>
             <LoadingButton
               variant="destructive"
               type="submit"
-              loading={mutation.isPending}
+              loading={deleteWebhookMutation.isPending}
             >
               Delete
             </LoadingButton>

@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { ApiKeysService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,8 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useDeleteApiKey } from "@/hooks/useApiKeyMutations"
 
 interface DeleteApiKeyProps {
   id: string
@@ -26,29 +23,17 @@ interface DeleteApiKeyProps {
 
 const DeleteApiKey = ({ id, onSuccess }: DeleteApiKeyProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteApiKey = async (apiKeyId: string) => {
-    await ApiKeysService.deleteApiKey({ apiKeyId })
-  }
-
-  const mutation = useMutation({
-    mutationFn: deleteApiKey,
-    onSuccess: () => {
-      showSuccessToast("API key deleted successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["api-keys"] })
-    },
-  })
+  const deleteApiKeyMutation = useDeleteApiKey()
 
   const onSubmit = async () => {
-    mutation.mutate(id)
+    deleteApiKeyMutation.mutate(id, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -73,14 +58,17 @@ const DeleteApiKey = ({ id, onSuccess }: DeleteApiKeyProps) => {
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button variant="outline" disabled={mutation.isPending}>
+              <Button
+                variant="outline"
+                disabled={deleteApiKeyMutation.isPending}
+              >
                 Cancel
               </Button>
             </DialogClose>
             <LoadingButton
               variant="destructive"
               type="submit"
-              loading={mutation.isPending}
+              loading={deleteApiKeyMutation.isPending}
             >
               Delete
             </LoadingButton>

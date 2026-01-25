@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pencil } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type SMSDevicePublic, SmsService } from "@/client"
+import type { SMSDevicePublic, SMSDeviceUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,8 +26,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useUpdateDevice } from "@/hooks/useDeviceMutations"
 
 const formSchema = z.object({
   name: z
@@ -50,8 +48,6 @@ interface EditDeviceProps {
 
 const EditDevice = ({ device, onSuccess }: EditDeviceProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -63,22 +59,15 @@ const EditDevice = ({ device, onSuccess }: EditDeviceProps) => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      SmsService.updateDevice({ deviceId: device.id, requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("Device updated successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] })
-    },
-  })
+  const updateDeviceMutation = useUpdateDevice(device.id)
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: SMSDeviceUpdate) => {
+    updateDeviceMutation.mutate(data, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -145,11 +134,17 @@ const EditDevice = ({ device, onSuccess }: EditDeviceProps) => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
+                <Button
+                  variant="outline"
+                  disabled={updateDeviceMutation.isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
+              <LoadingButton
+                type="submit"
+                loading={updateDeviceMutation.isPending}
+              >
                 Save
               </LoadingButton>
             </DialogFooter>

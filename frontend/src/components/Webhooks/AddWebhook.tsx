@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type WebhookConfigCreate, WebhooksService } from "@/client"
+import type { WebhookConfigCreate } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -29,8 +28,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useCreateWebhook } from "@/hooks/useWebhookMutations"
 
 const formSchema = z.object({
   url: z
@@ -46,8 +44,6 @@ type FormData = z.infer<typeof formSchema>
 
 const AddWebhook = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -61,22 +57,15 @@ const AddWebhook = () => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: WebhookConfigCreate) =>
-      WebhooksService.createWebhook({ requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("Webhook created successfully")
-      form.reset()
-      setIsOpen(false)
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["webhooks"] })
-    },
-  })
+  const createWebhookMutation = useCreateWebhook()
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: WebhookConfigCreate) => {
+    createWebhookMutation.mutate(data, {
+      onSuccess: () => {
+        form.reset()
+        setIsOpen(false)
+      },
+    })
   }
 
   return (
@@ -183,11 +172,17 @@ const AddWebhook = () => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
+                <Button
+                  variant="outline"
+                  disabled={createWebhookMutation.isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
+              <LoadingButton
+                type="submit"
+                loading={createWebhookMutation.isPending}
+              >
                 Create Webhook
               </LoadingButton>
             </DialogFooter>

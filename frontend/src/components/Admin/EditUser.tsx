@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pencil } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type UserPublic, UsersService } from "@/client"
+import type { UserPublic } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,8 +27,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useUpdateUser } from "@/hooks/useUserMutations"
 
 const formSchema = z
   .object({
@@ -58,8 +56,6 @@ interface EditUserProps {
 
 const EditUser = ({ user, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -73,19 +69,7 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      UsersService.updateUser({ userId: user.id, requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("User updated successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
-  })
+  const updateUserMutation = useUpdateUser(user.id)
 
   const onSubmit = (data: FormData) => {
     // exclude confirm_password from submission data and remove password if empty
@@ -93,7 +77,12 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
     if (!submitData.password) {
       delete submitData.password
     }
-    mutation.mutate(submitData)
+    updateUserMutation.mutate(submitData, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -221,11 +210,17 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
+                <Button
+                  variant="outline"
+                  disabled={updateUserMutation.isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
+              <LoadingButton
+                type="submit"
+                loading={updateUserMutation.isPending}
+              >
                 Save
               </LoadingButton>
             </DialogFooter>

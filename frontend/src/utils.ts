@@ -7,10 +7,23 @@ function extractErrorMessage(err: ApiError): string {
   }
 
   const errDetail = (err.body as any)?.detail
+
+  // Handle array of validation errors
   if (Array.isArray(errDetail) && errDetail.length > 0) {
     return errDetail[0].msg
   }
-  return errDetail || "Something went wrong."
+
+  // Handle object with message property (e.g., quota errors)
+  if (errDetail && typeof errDetail === "object" && errDetail.message) {
+    return errDetail.message
+  }
+
+  // Handle string detail
+  if (typeof errDetail === "string") {
+    return errDetail
+  }
+
+  return "Something went wrong."
 }
 
 export const handleError = function (

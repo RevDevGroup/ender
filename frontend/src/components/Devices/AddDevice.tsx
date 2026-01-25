@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
+import { Cuer } from "cuer"
+import { Check, Copy, Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type SMSDeviceCreate, SmsService } from "@/client"
+import type { SMSDeviceCreate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,8 +27,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useCreateDevice } from "@/hooks/useDeviceMutations"
 
 const formSchema = z.object({
   name: z
@@ -43,11 +43,12 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
+const QR_PAYLOAD_VERSION = "0.1"
+
 const AddDevice = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [apiKey, setApiKey] = useState<string | null>(null)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
+  const [copiedText, copyToClipboard] = useCopyToClipboard()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -59,22 +60,15 @@ const AddDevice = () => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: SMSDeviceCreate) =>
-      SmsService.createDevice({ requestBody: data }),
-    onSuccess: (response) => {
-      showSuccessToast("Device created successfully")
-      setApiKey(response.api_key)
-      form.reset()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] })
-    },
-  })
+  const createDeviceMutation = useCreateDevice()
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: SMSDeviceCreate) => {
+    createDeviceMutation.mutate(data, {
+      onSuccess: (response) => {
+        setApiKey(response.api_key)
+        form.reset()
+      },
+    })
   }
 
   const handleClose = (open: boolean) => {
@@ -83,6 +77,15 @@ const AddDevice = () => {
       form.reset()
     }
     setIsOpen(open)
+  }
+
+  const getQrPayload = (deviceApiKey: string) => {
+    const payload = {
+      server_instance: import.meta.env.VITE_API_URL,
+      api_key: deviceApiKey,
+      version: QR_PAYLOAD_VERSION,
+    }
+    return JSON.stringify(payload)
   }
 
   return (
@@ -103,12 +106,32 @@ const AddDevice = () => {
                 only be shown once.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <div className="rounded-lg border bg-muted p-4">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
-                  API Key
+            <div className="flex flex-col gap-4 py-4">
+              <div className="flex flex-col items-center gap-3">
+                <div className="rounded-lg border bg-white p-4">
+                  <Cuer.Root value={getQrPayload(apiKey)} size={200}>
+                    <Cuer.Finder fill="black" />
+                    <Cuer.Cells fill="black" />
+                  </Cuer.Root>
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Scan this QR code with the Ender Modem app to connect
+                  automatically
                 </p>
-                <code className="text-sm break-all">{apiKey}</code>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input value={apiKey} readOnly className="font-mono text-sm" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(apiKey)}
+                >
+                  {copiedText ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </div>
             <DialogFooter>
@@ -172,11 +195,17 @@ const AddDevice = () => {
 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="outline" disabled={mutation.isPending}>
+                    <Button
+                      variant="outline"
+                      disabled={createDeviceMutation.isPending}
+                    >
                       Cancel
                     </Button>
                   </DialogClose>
-                  <LoadingButton type="submit" loading={mutation.isPending}>
+                  <LoadingButton
+                    type="submit"
+                    loading={createDeviceMutation.isPending}
+                  >
                     Create Device
                   </LoadingButton>
                 </DialogFooter>

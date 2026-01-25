@@ -1,12 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Cuer } from "cuer"
 import { Check, Copy, Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type ApiKeyCreate, ApiKeysService } from "@/client"
+import type { ApiKeyCreate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,9 +28,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useCreateApiKey } from "@/hooks/useApiKeyMutations"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -44,8 +42,6 @@ const QR_PAYLOAD_VERSION = "0.1"
 const AddApiKey = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [createdKey, setCreatedKey] = useState<string | null>(null)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const [copiedText, copyToClipboard] = useCopyToClipboard()
 
   const form = useForm<FormData>({
@@ -57,26 +53,21 @@ const AddApiKey = () => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: ApiKeyCreate) =>
-      ApiKeysService.createApiKey({ requestBody: data }),
-    onSuccess: (data) => {
-      showSuccessToast("API key created successfully")
-      setCreatedKey(data.key)
-      queryClient.invalidateQueries({ queryKey: ["api-keys"] })
-    },
-    onError: handleError.bind(showErrorToast),
-  })
+  const createApiKeyMutation = useCreateApiKey()
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: ApiKeyCreate) => {
+    createApiKeyMutation.mutate(data, {
+      onSuccess: (response) => {
+        setCreatedKey(response.key)
+      },
+    })
   }
 
   const handleClose = (open: boolean) => {
     if (!open) {
       form.reset()
       setCreatedKey(null)
-      mutation.reset()
+      createApiKeyMutation.reset()
     }
     setIsOpen(open)
   }
@@ -111,7 +102,10 @@ const AddApiKey = () => {
             <div className="flex flex-col gap-4 py-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="rounded-lg border bg-white p-4">
-                  <Cuer value={getQrPayload(createdKey)} size={200} />
+                  <Cuer.Root value={getQrPayload(createdKey)} size={200}>
+                    <Cuer.Finder fill="black" />
+                    <Cuer.Cells fill="black" />
+                  </Cuer.Root>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
                   Scan this QR code with the app to connect automatically
@@ -180,11 +174,17 @@ const AddApiKey = () => {
 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="outline" disabled={mutation.isPending}>
+                    <Button
+                      variant="outline"
+                      disabled={createApiKeyMutation.isPending}
+                    >
                       Cancel
                     </Button>
                   </DialogClose>
-                  <LoadingButton type="submit" loading={mutation.isPending}>
+                  <LoadingButton
+                    type="submit"
+                    loading={createApiKeyMutation.isPending}
+                  >
                     Create
                   </LoadingButton>
                 </DialogFooter>

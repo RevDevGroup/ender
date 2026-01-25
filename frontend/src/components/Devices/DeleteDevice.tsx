@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { SmsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,8 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useDeleteDevice } from "@/hooks/useDeviceMutations"
 
 interface DeleteDeviceProps {
   id: string
@@ -26,29 +23,17 @@ interface DeleteDeviceProps {
 
 const DeleteDevice = ({ id, onSuccess }: DeleteDeviceProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteDevice = async (deviceId: string) => {
-    await SmsService.deleteDevice({ deviceId })
-  }
-
-  const mutation = useMutation({
-    mutationFn: deleteDevice,
-    onSuccess: () => {
-      showSuccessToast("The device was deleted successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] })
-    },
-  })
+  const deleteDeviceMutation = useDeleteDevice()
 
   const onSubmit = async () => {
-    mutation.mutate(id)
+    deleteDeviceMutation.mutate(id, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -73,14 +58,17 @@ const DeleteDevice = ({ id, onSuccess }: DeleteDeviceProps) => {
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button variant="outline" disabled={mutation.isPending}>
+              <Button
+                variant="outline"
+                disabled={deleteDeviceMutation.isPending}
+              >
                 Cancel
               </Button>
             </DialogClose>
             <LoadingButton
               variant="destructive"
               type="submit"
-              loading={mutation.isPending}
+              loading={deleteDeviceMutation.isPending}
             >
               Delete
             </LoadingButton>

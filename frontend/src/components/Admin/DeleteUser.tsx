@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { UsersService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,8 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useDeleteUser } from "@/hooks/useUserMutations"
 
 interface DeleteUserProps {
   id: string
@@ -26,29 +23,17 @@ interface DeleteUserProps {
 
 const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteUser = async (id: string) => {
-    await UsersService.deleteUser({ userId: id })
-  }
-
-  const mutation = useMutation({
-    mutationFn: deleteUser,
-    onSuccess: () => {
-      showSuccessToast("The user was deleted successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries()
-    },
-  })
+  const deleteUserMutation = useDeleteUser()
 
   const onSubmit = async () => {
-    mutation.mutate(id)
+    deleteUserMutation.mutate(id, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -74,14 +59,14 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button variant="outline" disabled={mutation.isPending}>
+              <Button variant="outline" disabled={deleteUserMutation.isPending}>
                 Cancel
               </Button>
             </DialogClose>
             <LoadingButton
               variant="destructive"
               type="submit"
-              loading={mutation.isPending}
+              loading={deleteUserMutation.isPending}
             >
               Delete
             </LoadingButton>

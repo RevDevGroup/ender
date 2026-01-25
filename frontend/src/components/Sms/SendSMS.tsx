@@ -1,11 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type SMSMessageCreate, SmsService } from "@/client"
 import { LoadingButton } from "@/components/Common/LoadingButton"
 import { MultiSelect } from "@/components/Common/MultiSelect"
 import { Button } from "@/components/ui/button"
@@ -22,9 +20,8 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { TagInput } from "@/components/ui/tag-input"
-import useCustomToast from "@/hooks/useCustomToast"
 import { useDeviceList } from "@/hooks/useDeviceList"
-import { handleError } from "@/utils"
+import { useSendSMS } from "@/hooks/useSMSMutations"
 
 const formSchema = z.object({
   recipients: z
@@ -38,8 +35,6 @@ type FormData = z.infer<typeof formSchema>
 
 const SendSMS = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
   const { data: devices } = useDeviceList()
 
   const form = useForm<FormData>({
@@ -52,26 +47,22 @@ const SendSMS = () => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: SMSMessageCreate) =>
-      SmsService.sendSms({ requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("SMS sent successfully")
-      form.reset()
-      setIsOpen(false)
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["SMS"] })
-    },
-  })
+  const sendSMSMutation = useSendSMS()
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate({
-      recipients: data.recipients,
-      body: data.body,
-      device_id: data.from[0],
-    })
+    sendSMSMutation.mutate(
+      {
+        recipients: data.recipients,
+        body: data.body,
+        device_id: data.from[0],
+      },
+      {
+        onSuccess: () => {
+          form.reset()
+          setIsOpen(false)
+        },
+      },
+    )
   }
 
   return (
@@ -164,12 +155,12 @@ const SendSMS = () => {
               <Button
                 variant="outline"
                 type="button"
-                disabled={mutation.isPending}
+                disabled={sendSMSMutation.isPending}
               >
                 Cancel
               </Button>
             </DialogClose>
-            <LoadingButton type="submit" loading={mutation.isPending}>
+            <LoadingButton type="submit" loading={sendSMSMutation.isPending}>
               Save
             </LoadingButton>
           </DialogFooter>

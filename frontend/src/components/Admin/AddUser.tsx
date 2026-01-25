@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type UserCreate, UsersService } from "@/client"
+import type { UserCreate } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,8 +27,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useCreateUser } from "@/hooks/useUserMutations"
 
 const formSchema = z
   .object({
@@ -54,8 +52,6 @@ type FormData = z.infer<typeof formSchema>
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -71,29 +67,22 @@ const AddUser = () => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("User created successfully")
-      form.reset()
-      setIsOpen(false)
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
-  })
+  const createUserMutation = useCreateUser()
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: UserCreate) => {
+    createUserMutation.mutate(data, {
+      onSuccess: () => {
+        form.reset()
+        setIsOpen(false)
+      },
+    })
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="my-4">
-          <Plus className="mr-2" />
+          <Plus />
           Add User
         </Button>
       </DialogTrigger>
@@ -220,11 +209,17 @@ const AddUser = () => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
+                <Button
+                  variant="outline"
+                  disabled={createUserMutation.isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
+              <LoadingButton
+                type="submit"
+                loading={createUserMutation.isPending}
+              >
                 Save
               </LoadingButton>
             </DialogFooter>

@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pencil } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type WebhookConfigPublic, WebhooksService } from "@/client"
+import type { WebhookConfigPublic, WebhookConfigUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -29,8 +28,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { useUpdateWebhook } from "@/hooks/useWebhookMutations"
 
 const formSchema = z.object({
   url: z
@@ -51,8 +49,6 @@ interface EditWebhookProps {
 
 const EditWebhook = ({ webhook, onSuccess }: EditWebhookProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -66,25 +62,15 @@ const EditWebhook = ({ webhook, onSuccess }: EditWebhookProps) => {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      WebhooksService.updateWebhook({
-        webhookId: webhook.id,
-        requestBody: data,
-      }),
-    onSuccess: () => {
-      showSuccessToast("Webhook updated successfully")
-      setIsOpen(false)
-      onSuccess()
-    },
-    onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["webhooks"] })
-    },
-  })
+  const updateWebhookMutation = useUpdateWebhook(webhook.id)
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+  const onSubmit = (data: WebhookConfigUpdate) => {
+    updateWebhookMutation.mutate(data, {
+      onSuccess: () => {
+        setIsOpen(false)
+        onSuccess()
+      },
+    })
   }
 
   return (
@@ -193,11 +179,17 @@ const EditWebhook = ({ webhook, onSuccess }: EditWebhookProps) => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
+                <Button
+                  variant="outline"
+                  disabled={updateWebhookMutation.isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
+              <LoadingButton
+                type="submit"
+                loading={updateWebhookMutation.isPending}
+              >
                 Save
               </LoadingButton>
             </DialogFooter>
