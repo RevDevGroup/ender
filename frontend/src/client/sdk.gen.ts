@@ -3,7 +3,94 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PlansListPlansResponse, PlansGetQuotaResponse, PlansUpgradePlanData, PlansUpgradePlanResponse, SmsSendSmsData, SmsSendSmsResponse, SmsListMessagesData, SmsListMessagesResponse, SmsGetMessageData, SmsGetMessageResponse, SmsListIncomingMessagesData, SmsListIncomingMessagesResponse, SmsReportIncomingSmsData, SmsReportIncomingSmsResponse, SmsCreateDeviceData, SmsCreateDeviceResponse, SmsListDevicesData, SmsListDevicesResponse, SmsGetDeviceData, SmsGetDeviceResponse, SmsUpdateDeviceData, SmsUpdateDeviceResponse, SmsDeleteDeviceData, SmsDeleteDeviceResponse, SmsReportSmsStatusData, SmsReportSmsStatusResponse, SmsUpdateFcmTokenData, SmsUpdateFcmTokenResponse, SmsDeviceHeartbeatResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksListWebhooksData, WebhooksListWebhooksResponse, WebhooksGetWebhookData, WebhooksGetWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse } from './types.gen';
+import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyResponse, ApiKeysListApiKeysData, ApiKeysListApiKeysResponse, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyResponse, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PlansListPlansResponse, PlansGetQuotaResponse, PlansUpgradePlanData, PlansUpgradePlanResponse, SmsSendSmsData, SmsSendSmsResponse, SmsListMessagesData, SmsListMessagesResponse, SmsGetMessageData, SmsGetMessageResponse, SmsListIncomingMessagesData, SmsListIncomingMessagesResponse, SmsReportIncomingSmsData, SmsReportIncomingSmsResponse, SmsCreateDeviceData, SmsCreateDeviceResponse, SmsListDevicesData, SmsListDevicesResponse, SmsGetDeviceData, SmsGetDeviceResponse, SmsUpdateDeviceData, SmsUpdateDeviceResponse, SmsDeleteDeviceData, SmsDeleteDeviceResponse, SmsReportSmsStatusData, SmsReportSmsStatusResponse, SmsUpdateFcmTokenData, SmsUpdateFcmTokenResponse, SmsDeviceHeartbeatResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksListWebhooksData, WebhooksListWebhooksResponse, WebhooksGetWebhookData, WebhooksGetWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse } from './types.gen';
+
+export class ApiKeysService {
+    /**
+     * Create Api Key
+     * Generate a new API key for integrations
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ApiKeyCreatePublic Successful Response
+     * @throws ApiError
+     */
+    public static createApiKey(data: ApiKeysCreateApiKeyData): CancelablePromise<ApiKeysCreateApiKeyResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/api-keys',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Api Keys
+     * List all API keys for the current user
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns ApiKeysPublic Successful Response
+     * @throws ApiError
+     */
+    public static listApiKeys(data: ApiKeysListApiKeysData = {}): CancelablePromise<ApiKeysListApiKeysResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/api-keys',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Revoke Api Key
+     * Revoke an API key (deactivate without deleting)
+     * @param data The data for the request.
+     * @param data.apiKeyId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static revokeApiKey(data: ApiKeysRevokeApiKeyData): CancelablePromise<ApiKeysRevokeApiKeyResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/api-keys/{api_key_id}/revoke',
+            path: {
+                api_key_id: data.apiKeyId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Api Key
+     * Delete an API key permanently
+     * @param data The data for the request.
+     * @param data.apiKeyId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteApiKey(data: ApiKeysDeleteApiKeyData): CancelablePromise<ApiKeysDeleteApiKeyResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/api-keys/{api_key_id}',
+            path: {
+                api_key_id: data.apiKeyId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
 
 export class LoginService {
     /**

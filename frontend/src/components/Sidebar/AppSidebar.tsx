@@ -1,4 +1,11 @@
-import { Home, MessageSquare, Smartphone, Users, Webhook } from "lucide-react"
+import {
+  Home,
+  Key,
+  MessageSquare,
+  Smartphone,
+  Users,
+  Webhook,
+} from "lucide-react"
 
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
@@ -17,6 +24,7 @@ const baseItems: Item[] = [
   { icon: MessageSquare, title: "SMS", path: "/sms" },
   { icon: Smartphone, title: "Devices", path: "/devices" },
   { icon: Webhook, title: "Webhooks", path: "/webhooks" },
+  { icon: Key, title: "Integrations", path: "/integrations" },
 ]
 
 export function AppSidebar() {

@@ -18,6 +18,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutWebhooksRouteImport } from './routes/_layout/webhooks'
 import { Route as LayoutSmsRouteImport } from './routes/_layout/sms'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutIntegrationsRouteImport } from './routes/_layout/integrations'
 import { Route as LayoutDevicesRouteImport } from './routes/_layout/devices'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
@@ -65,6 +66,11 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutIntegrationsRoute = LayoutIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutDevicesRoute = LayoutDevicesRouteImport.update({
   id: '/devices',
   path: '/devices',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/devices': typeof LayoutDevicesRoute
+  '/integrations': typeof LayoutIntegrationsRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/webhooks': typeof LayoutWebhooksRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/devices': typeof LayoutDevicesRoute
+  '/integrations': typeof LayoutIntegrationsRoute
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/webhooks': typeof LayoutWebhooksRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/devices': typeof LayoutDevicesRoute
+  '/_layout/integrations': typeof LayoutIntegrationsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/sms': typeof LayoutSmsRoute
   '/_layout/webhooks': typeof LayoutWebhooksRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/devices'
+    | '/integrations'
     | '/settings'
     | '/sms'
     | '/webhooks'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/devices'
+    | '/integrations'
     | '/settings'
     | '/sms'
     | '/webhooks'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_layout/admin'
     | '/_layout/devices'
+    | '/_layout/integrations'
     | '/_layout/settings'
     | '/_layout/sms'
     | '/_layout/webhooks'
@@ -227,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/integrations': {
+      id: '/_layout/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof LayoutIntegrationsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/devices': {
       id: '/_layout/devices'
       path: '/devices'
@@ -247,6 +266,7 @@ declare module '@tanstack/react-router' {
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutDevicesRoute: typeof LayoutDevicesRoute
+  LayoutIntegrationsRoute: typeof LayoutIntegrationsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSmsRoute: typeof LayoutSmsRoute
   LayoutWebhooksRoute: typeof LayoutWebhooksRoute
@@ -256,6 +276,7 @@ interface LayoutRouteChildren {
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
   LayoutDevicesRoute: LayoutDevicesRoute,
+  LayoutIntegrationsRoute: LayoutIntegrationsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSmsRoute: LayoutSmsRoute,
   LayoutWebhooksRoute: LayoutWebhooksRoute,
