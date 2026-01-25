@@ -4,34 +4,32 @@ version = "0.1.0"
 description = ""
 requires-python = ">=3.13.4,<3.14"
 dependencies = [
-    "fastapi[standard]>=0.115.0",
-    "uvicorn[standard]>=0.32.0",
-    "python-multipart<1.0.0,>=0.0.7",
-    "email-validator<3.0.0.0,>=2.1.0.post1",
-    "tenacity<9.0.0,>=8.2.3",
-    "pydantic>2.0",
+    "fastapi[standard]>=0.128.0",
+    "uvicorn[standard]>=0.40.0",
+    "python-multipart<1.0.0,>=0.0.21",
+    "email-validator<3.0.0.0,>=2.3.0",
+    "tenacity<10.0.0,>=9.1.2",
+    "pydantic<3.0.0,>=2.12.5",
     "emails<1.0,>=0.6",
-    "jinja2<4.0.0,>=3.1.4",
-    "alembic<2.0.0,>=1.12.1",
-    "httpx<1.0.0,>=0.25.1",
-    "psycopg[binary]<4.0.0,>=3.1.13",
-    "sqlmodel<1.0.0,>=0.0.21",
-    # Pin bcrypt until passlib supports the latest
-    "bcrypt==4.3.0",
-    "pydantic-settings<3.0.0,>=2.2.1",
-    "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
-    "pyjwt<3.0.0,>=2.8.0",
+    "jinja2<4.0.0,>=3.1.6",
+    "alembic<2.0.0,>=1.18.1",
+    "httpx<1.0.0,>=0.28.1",
+    "psycopg[binary]<4.0.0,>=3.3.2",
+    "sqlmodel<1.0.0,>=0.0.31",
+    "bcrypt==5.0.0",
+    "pydantic-settings<3.0.0,>=2.12.0",
+    "sentry-sdk[fastapi]<3.0.0,>=2.50.0",
+    "pyjwt<3.0.0,>=2.10.1",
     "firebase-admin>=7.1.0,<8.0.0",
 ]
 
 [tool.uv]
 dev-dependencies = [
-    "pytest<8.0.0,>=7.4.3",
-    "mypy<2.0.0,>=1.8.0",
-    "ruff<1.0.0,>=0.2.2",
-    "pre-commit<4.0.0,>=3.6.2",
-    "types-passlib<2.0.0.0,>=1.7.7.20240106",
-    "coverage<8.0.0,>=7.4.3",
+    "pytest<10.0.0,>=9.0.2",
+    "mypy<2.0.0,>=1.19.1",
+    "ruff<1.0.0,>=0.14.14",
+    "pre-commit<5.0.0,>=4.5.1",
+    "coverage<8.0.0,>=7.13.1",
 ]
 
 [build-system]
