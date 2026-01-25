@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
@@ -49,10 +49,10 @@ class UserPlanBase(SQLModel):
 
 class UserPlan(UserPlanBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
 
     quotas: list["UserQuota"] = Relationship(back_populates="plan")
@@ -61,9 +61,7 @@ class UserPlan(UserPlanBase, table=True):
 class UserQuotaBase(SQLModel):
     sms_sent_this_month: int = Field(default=0)
     devices_registered: int = Field(default=0)
-    last_reset_date: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    last_reset_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class UserQuota(UserQuotaBase, table=True):
@@ -74,10 +72,10 @@ class UserQuota(UserQuotaBase, table=True):
     plan_id: uuid.UUID = Field(
         foreign_key="userplan.id", nullable=False, ondelete="RESTRICT"
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
 
     user: "User" = Relationship(back_populates="quota")
@@ -97,6 +95,7 @@ class User(UserBase, table=True):
     webhook_configs: list["WebhookConfig"] = Relationship(
         back_populates="user", cascade_delete=True
     )
+    api_keys: list["ApiKey"] = Relationship(back_populates="user", cascade_delete=True)
     quota: UserQuota | None = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
@@ -159,10 +158,10 @@ class SMSDevice(SMSDeviceBase, table=True):
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     last_heartbeat: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
 
     user: "User" = Relationship(back_populates="sms_devices")
@@ -236,10 +235,10 @@ class SMSMessage(SMSMessageBase, table=True):
     )
     webhook_sent: bool = Field(default=False)
     error_message: str | None = Field(default=None, max_length=500)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
     sent_at: datetime | None = Field(default=None)
     delivered_at: datetime | None = Field(default=None)
@@ -299,10 +298,10 @@ class WebhookConfig(WebhookConfigBase, table=True):
     user_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
 
     user: "User" = Relationship(back_populates="webhook_configs")
@@ -347,3 +346,44 @@ class UserQuotaPublic(SQLModel):
 class PlanUpgradePublic(SQLModel):
     message: str
     data: dict[str, str]
+
+
+# API Key Models (for integrations like n8n, Zapier, etc.)
+class ApiKeyBase(SQLModel):
+    name: str = Field(max_length=255)
+    is_active: bool = Field(default=True)
+
+
+class ApiKeyCreate(SQLModel):
+    name: str = Field(max_length=255)
+
+
+class ApiKey(ApiKeyBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    key: str = Field(unique=True, index=True, max_length=255)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    last_used_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    user: "User" = Relationship(back_populates="api_keys")
+
+
+class ApiKeyPublic(ApiKeyBase):
+    id: uuid.UUID
+    key_prefix: str  # Only show first 8 chars for security
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class ApiKeyCreatePublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    key: str  # Full key shown only on creation
+    created_at: datetime
+
+
+class ApiKeysPublic(SQLModel):
+    data: list[ApiKeyPublic]
+    count: int

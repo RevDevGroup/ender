@@ -21,7 +21,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     with Session(engine) as session:
         yield session
 
@@ -89,3 +89,77 @@ def get_current_device(
 
 
 CurrentDevice = Annotated[SMSDevice, Depends(get_current_device)]
+
+
+# Integration API Key authentication
+integration_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def get_user_by_integration_api_key(
+    session: SessionDep,
+    api_key: Annotated[str | None, Depends(integration_api_key_header)],
+) -> User | None:
+    """Get user from integration API key (returns None if not provided or invalid)"""
+    if not api_key:
+        return None
+
+    db_api_key = crud.get_api_key_by_key(session=session, key=api_key)
+    if not db_api_key or not db_api_key.is_active:
+        return None
+
+    # Update last used timestamp
+    crud.update_api_key_last_used(session=session, db_api_key=db_api_key)
+
+    user = session.get(User, db_api_key.user_id)
+    if not user or not user.is_active:
+        return None
+
+    return user
+
+
+def get_current_user_or_integration(
+    session: SessionDep,
+    token: Annotated[
+        str | None,
+        Depends(
+            OAuth2PasswordBearer(
+                tokenUrl=f"{settings.API_V1_STR}/login/access-token", auto_error=False
+            )
+        ),
+    ] = None,
+    api_key: Annotated[str | None, Depends(integration_api_key_header)] = None,
+) -> User:
+    """
+    Authenticate via JWT token OR integration API key.
+    Allows endpoints to accept both authentication methods.
+    """
+    # Try API key first (for integrations)
+    if api_key:
+        db_api_key = crud.get_api_key_by_key(session=session, key=api_key)
+        if db_api_key and db_api_key.is_active:
+            crud.update_api_key_last_used(session=session, db_api_key=db_api_key)
+            user = session.get(User, db_api_key.user_id)
+            if user and user.is_active:
+                return user
+
+    # Try JWT token
+    if token:
+        try:
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+            )
+            token_data = TokenPayload(**payload)
+            user = session.get(User, token_data.sub)
+            if user and user.is_active:
+                return user
+        except (InvalidTokenError, ValidationError):
+            pass
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+CurrentUserOrIntegration = Annotated[User, Depends(get_current_user_or_integration)]

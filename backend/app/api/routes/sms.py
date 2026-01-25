@@ -1,10 +1,15 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app import crud
-from app.api.deps import CurrentDevice, CurrentUser, SessionDep
+from app.api.deps import (
+    CurrentDevice,
+    CurrentUser,
+    CurrentUserOrIntegration,
+    SessionDep,
+)
 from app.models import (
     FCMTokenUpdate,
     Message,
@@ -33,7 +38,7 @@ router = APIRouter(prefix="/sms", tags=["sms"])
 async def send_sms(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUserOrIntegration,
     message_in: SMSMessageCreate,
     background_tasks: BackgroundTasks,
 ) -> SMSMessageSendPublic:
@@ -274,7 +279,7 @@ def device_heartbeat(
     device: CurrentDevice,
 ) -> Message:
     """Update device last heartbeat and status"""
-    device.last_heartbeat = datetime.now(timezone.utc)
+    device.last_heartbeat = datetime.now(UTC)
     device.status = "online"
     session.add(device)
     session.commit()

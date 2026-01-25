@@ -1,6 +1,7 @@
 import json
 import secrets
 import uuid
+from datetime import UTC
 from typing import Any
 
 from sqlalchemy import desc as sa_desc
@@ -8,6 +9,8 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    ApiKey,
+    ApiKeyCreate,
     SMSDevice,
     SMSDeviceCreate,
     SMSDeviceUpdate,
@@ -247,3 +250,68 @@ def delete_webhook_config(
         session.delete(webhook)
         session.commit()
     return webhook
+
+
+# API Key CRUD operations
+def create_api_key(
+    *, session: Session, api_key_in: ApiKeyCreate, user_id: uuid.UUID
+) -> ApiKey:
+    """Create API key for integrations"""
+    key = f"ek_{secrets.token_urlsafe(32)}"
+    db_api_key = ApiKey(
+        name=api_key_in.name,
+        key=key,
+        user_id=user_id,
+    )
+    session.add(db_api_key)
+    session.commit()
+    session.refresh(db_api_key)
+    return db_api_key
+
+
+def get_api_key(*, session: Session, api_key_id: uuid.UUID) -> ApiKey | None:
+    """Get API key by ID"""
+    return session.get(ApiKey, api_key_id)
+
+
+def get_api_key_by_key(*, session: Session, key: str) -> ApiKey | None:
+    """Get API key by the key string"""
+    statement = select(ApiKey).where(ApiKey.key == key)
+    return session.exec(statement).first()
+
+
+def get_api_keys_by_user(
+    *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[ApiKey]:
+    """List API keys for a user"""
+    statement = (
+        select(ApiKey).where(ApiKey.user_id == user_id).offset(skip).limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def revoke_api_key(*, session: Session, db_api_key: ApiKey) -> ApiKey:
+    """Revoke (deactivate) an API key"""
+    db_api_key.is_active = False
+    session.add(db_api_key)
+    session.commit()
+    session.refresh(db_api_key)
+    return db_api_key
+
+
+def delete_api_key(*, session: Session, api_key_id: uuid.UUID) -> ApiKey | None:
+    """Delete API key"""
+    api_key = session.get(ApiKey, api_key_id)
+    if api_key:
+        session.delete(api_key)
+        session.commit()
+    return api_key
+
+
+def update_api_key_last_used(*, session: Session, db_api_key: ApiKey) -> None:
+    """Update the last_used_at timestamp"""
+    from datetime import datetime
+
+    db_api_key.last_used_at = datetime.now(UTC)
+    session.add(db_api_key)
+    session.commit()
