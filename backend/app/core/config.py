@@ -1,6 +1,6 @@
 import secrets
 import warnings
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     AnyUrl,
@@ -12,7 +12,6 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -100,6 +99,22 @@ class Settings(BaseSettings):
     # Quota configuration
     QUOTA_RESET_DAY: int = 1  # Day of month to reset counters, default: 1
     DEFAULT_PLAN: str = "free"  # Default plan for new users
+
+    # QStash configuration (Upstash message queue)
+    # In local environment, use QStash CLI: npx @upstash/qstash-cli dev
+    QSTASH_URL: str = (
+        "http://localhost:8080"  # Local dev server, override for production
+    )
+    QSTASH_TOKEN: str | None = None
+    QSTASH_CURRENT_SIGNING_KEY: str | None = None
+    QSTASH_NEXT_SIGNING_KEY: str | None = None
+    SERVER_BASE_URL: str | None = None  # Public URL for QStash callbacks
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_local_qstash(self) -> bool:
+        """Check if using local QStash dev server."""
+        return self.ENVIRONMENT == "local"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

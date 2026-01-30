@@ -116,6 +116,7 @@ export type SMSMessagePublic = {
     status?: string;
     message_type?: string;
     id: string;
+    batch_id: (string | null);
     device_id: (string | null);
     user_id: string;
     webhook_sent: boolean;

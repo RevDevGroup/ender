@@ -24,7 +24,6 @@ from app.models import (
     WebhookConfigCreate,
     WebhookConfigUpdate,
 )
-from app.utils import validate_sms_device
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -124,23 +123,43 @@ def delete_sms_device(*, session: Session, device_id: uuid.UUID) -> SMSDevice | 
 
 
 def create_sms_messages(
-    *, session: Session, message_in: SMSMessageCreate, user_id: uuid.UUID
+    *,
+    session: Session,
+    message_in: SMSMessageCreate,
+    user_id: uuid.UUID,
+    devices: list[SMSDevice] | None = None,
 ) -> list[SMSMessage]:
     """
-    Create SMS messages in a single transaction.
+    Create SMS messages for each recipient.
+    If devices provided, recipients are distributed via round robin and status is 'assigned'.
+    If no devices, messages are created with status 'queued' (no device_id).
+    Returns list of created messages.
     """
-    validate_sms_device(
-        session=session, device_id=message_in.device_id, user_id=user_id
-    )
+    # Generate batch_id if multiple recipients
+    batch_id = uuid.uuid4() if len(message_in.recipients) > 1 else None
 
     db_messages = []
-    for recipient in message_in.recipients:
-        db_message = SMSMessage(
-            to=recipient,
-            body=message_in.body,
-            device_id=message_in.device_id,
-            user_id=user_id,
-        )
+    for i, recipient in enumerate(message_in.recipients):
+        if devices:
+            device = devices[i % len(devices)]
+            db_message = SMSMessage(
+                to=recipient,
+                body=message_in.body,
+                batch_id=batch_id,
+                device_id=device.id,
+                user_id=user_id,
+                status="assigned",
+            )
+        else:
+            # No devices available - queue the message
+            db_message = SMSMessage(
+                to=recipient,
+                body=message_in.body,
+                batch_id=batch_id,
+                device_id=None,
+                user_id=user_id,
+                status="queued",
+            )
         session.add(db_message)
         db_messages.append(db_message)
 
@@ -149,6 +168,35 @@ def create_sms_messages(
         session.refresh(m)
 
     return db_messages
+
+
+def get_queued_messages_by_user(
+    *, session: Session, user_id: uuid.UUID, limit: int = 100
+) -> list[SMSMessage]:
+    """Get queued messages (no device assigned) for a user"""
+    statement = (
+        select(SMSMessage)
+        .where(SMSMessage.user_id == user_id)
+        .where(SMSMessage.status == "queued")
+        .where(SMSMessage.device_id == None)  # noqa: E711
+        .order_by(SMSMessage.created_at)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def assign_device_to_messages(
+    *, session: Session, messages: list[SMSMessage], device: SMSDevice
+) -> list[SMSMessage]:
+    """Assign a device to queued messages and update status to 'assigned'"""
+    for msg in messages:
+        msg.device_id = device.id
+        msg.status = "assigned"
+        session.add(msg)
+    session.commit()
+    for msg in messages:
+        session.refresh(msg)
+    return messages
 
 
 def get_sms_message(*, session: Session, message_id: uuid.UUID) -> SMSMessage | None:

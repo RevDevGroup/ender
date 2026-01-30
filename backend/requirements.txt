@@ -103,3 +103,4 @@ uvloop==0.22.1
 virtualenv==20.36.1
 watchfiles==1.1.1
 websockets==16.0
+qstash>=3.2.0

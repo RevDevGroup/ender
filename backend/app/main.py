@@ -9,6 +9,9 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.services.fcm_service import FCMService
+from app.services.notification_dispatcher import NotificationDispatcher
+from app.services.qstash_service import QStashService
 
 
 @asynccontextmanager
@@ -16,6 +19,12 @@ async def lifespan(_app: FastAPI):
     # Run migrations on startup
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
+
+    # Initialize services
+    FCMService.initialize()
+    QStashService.initialize()
+    NotificationDispatcher.initialize()
+
     yield
 
 

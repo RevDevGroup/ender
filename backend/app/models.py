@@ -227,6 +227,7 @@ class SMSMessageUpdate(SQLModel):
 
 class SMSMessage(SMSMessageBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    batch_id: uuid.UUID | None = Field(default=None, index=True)  # Groups bulk messages
     device_id: uuid.UUID | None = Field(
         foreign_key="smsdevice.id", nullable=True, ondelete="SET NULL"
     )
@@ -249,6 +250,7 @@ class SMSMessage(SMSMessageBase, table=True):
 
 class SMSMessagePublic(SMSMessageBase):
     id: uuid.UUID
+    batch_id: uuid.UUID | None
     device_id: uuid.UUID | None
     user_id: uuid.UUID
     webhook_sent: bool
@@ -265,7 +267,9 @@ class SMSMessagesPublic(SQLModel):
 
 
 class SMSMessageSendPublic(SQLModel):
+    batch_id: uuid.UUID | None  # None if single recipient
     message_ids: list[uuid.UUID]
+    recipients_count: int
     status: str
 
 

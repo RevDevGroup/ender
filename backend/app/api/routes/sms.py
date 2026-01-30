@@ -40,19 +40,22 @@ async def send_sms(
     session: SessionDep,
     current_user: CurrentUserOrIntegration,
     message_in: SMSMessageCreate,
-    background_tasks: BackgroundTasks,
 ) -> SMSMessageSendPublic:
-    """Send SMS (Single or Bulk)"""
+    """Send SMS (Single or Bulk). Messages are queued if no devices are online."""
     messages = await SMSService.send_sms(
         session=session,
         current_user=current_user,
         message_in=message_in,
-        background_tasks=background_tasks,
     )
 
+    # Check if messages were queued (no device assigned) or processing
+    is_queued = messages and messages[0].status == "queued"
+
     return SMSMessageSendPublic(
+        batch_id=messages[0].batch_id if messages else None,
         message_ids=[m.id for m in messages],
-        status="sent" if len(message_in.recipients) == 1 else "processing",
+        recipients_count=len(messages),
+        status="queued" if is_queued else "processing",
     )
 
 
@@ -230,7 +233,7 @@ async def report_sms_status(
     result = await SMSService.process_sms_ack(
         session=session,
         message_id=str(report.message_id),
-        status=report.status,
+        ack_status=report.status,
         error_message=report.error_message,
     )
     if not result.get("success"):
@@ -273,14 +276,27 @@ def update_fcm_token(
 
 
 @router.post("/heartbeat", response_model=Message)
-def device_heartbeat(
+async def device_heartbeat(
     *,
     session: SessionDep,
     device: CurrentDevice,
 ) -> Message:
-    """Update device last heartbeat and status"""
+    """Update device last heartbeat and status. Process queued messages if device was offline."""
+    was_offline = device.status != "online"
+
     device.last_heartbeat = datetime.now(UTC)
     device.status = "online"
     session.add(device)
     session.commit()
+
+    # If device just came online, process any queued messages
+    if was_offline:
+        queued_messages = await SMSService.process_queued_messages(
+            session=session, device=device
+        )
+        if queued_messages:
+            return Message(
+                message=f"Heartbeat received. Processing {len(queued_messages)} queued messages."
+            )
+
     return Message(message="Heartbeat received")

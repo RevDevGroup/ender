@@ -2,10 +2,9 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Search } from "lucide-react"
 import { useState } from "react"
 
-import { DataTable } from "@/components/Common/DataTable"
 import PendingItems from "@/components/Pending/PendingItems"
-import { columns } from "@/components/Sms/columns"
 import SendSMS from "@/components/Sms/SendSMS"
+import { SMSTable } from "@/components/Sms/SMSTable"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type SMSMessageType, useSMSList } from "@/hooks/useSMSList"
 
@@ -45,7 +44,7 @@ function SMSTableContent({ messageType }: { messageType: SMSMessageType }) {
     )
   }
 
-  return <DataTable columns={columns} data={sms.data} />
+  return <SMSTable data={sms.data} />
 }
 
 function Sms() {

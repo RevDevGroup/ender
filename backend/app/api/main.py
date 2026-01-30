@@ -1,6 +1,16 @@
 from fastapi import APIRouter
 
-from app.api.routes import api_keys, login, plans, private, sms, users, utils, webhooks
+from app.api.routes import (
+    api_keys,
+    internal,
+    login,
+    plans,
+    private,
+    sms,
+    users,
+    utils,
+    webhooks,
+)
 from app.core.config import settings
 
 api_router = APIRouter()
@@ -11,6 +21,7 @@ api_router.include_router(sms.router)
 api_router.include_router(plans.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(api_keys.router)
+api_router.include_router(internal.router, prefix="/internal", tags=["internal"])
 
 
 if settings.ENVIRONMENT == "local":

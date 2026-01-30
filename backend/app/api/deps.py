@@ -1,8 +1,9 @@
+import logging
 from collections.abc import Generator
-from typing import Annotated
+from typing import Annotated, Any
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -13,6 +14,9 @@ from app.core import security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import SMSDevice, TokenPayload, User
+from app.services.qstash_service import QStashService
+
+logger = logging.getLogger(__name__)
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -163,3 +167,28 @@ def get_current_user_or_integration(
 
 
 CurrentUserOrIntegration = Annotated[User, Depends(get_current_user_or_integration)]
+
+
+async def get_verified_qstash_payload(request: Request) -> dict[str, Any]:
+    """
+    Verify QStash webhook signature and return parsed body.
+
+    Raises HTTPException if signature is invalid.
+    """
+    signature = request.headers.get("Upstash-Signature", "")
+    body = await request.body()
+
+    if not QStashService.verify_signature(body, signature, str(request.url)):
+        logger.warning("Invalid QStash signature received")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty request body")
+
+    try:
+        return await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+
+VerifiedQStashPayload = Annotated[dict[str, Any], Depends(get_verified_qstash_payload)]
