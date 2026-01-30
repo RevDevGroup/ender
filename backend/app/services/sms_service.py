@@ -5,7 +5,6 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import desc, nulls_last
 from sqlmodel import Session, select
 
 from app import crud
@@ -56,9 +55,8 @@ class SMSService:
         devices: list[SMSDevice] | None = None
         if message_in.device_id:
             device = session.get(SMSDevice, message_in.device_id)
-            if device and device.status == "online":
+            if device:
                 devices = [device]
-            # If specified device is offline, messages will be queued
         else:
             active_devices = SMSService.get_active_devices(
                 session=session, user_id=current_user.id
@@ -89,42 +87,9 @@ class SMSService:
         return messages
 
     @staticmethod
-    async def process_queued_messages(
-        *, session: Session, device: SMSDevice
-    ) -> list[SMSMessage]:
-        """
-        Process queued messages when a device comes online.
-        Assigns the device to queued messages and dispatches notifications.
-        """
-        from app import crud
-
-        # Get queued messages for this user
-        queued = crud.get_queued_messages_by_user(
-            session=session, user_id=device.user_id, limit=100
-        )
-
-        if not queued:
-            return []
-
-        # Assign device to all queued messages
-        messages = crud.assign_device_to_messages(
-            session=session, messages=queued, device=device
-        )
-
-        # Dispatch notifications
-        await NotificationDispatcher.dispatch(session=session, messages=messages)
-
-        return messages
-
-    @staticmethod
     def get_active_devices(*, session: Session, user_id: uuid.UUID) -> list[SMSDevice]:
-        """Get all online devices for a user"""
-        statement = (
-            select(SMSDevice)
-            .where(SMSDevice.user_id == user_id)
-            .where(SMSDevice.status == "online")
-            .order_by(nulls_last(desc(SMSDevice.last_heartbeat)))
-        )
+        """Get all devices for a user"""
+        statement = select(SMSDevice).where(SMSDevice.user_id == user_id)
         return list(session.exec(statement).all())
 
     @staticmethod
@@ -293,24 +258,6 @@ class SMSService:
 
         session.commit()
         return {"retried": retried_count}
-
-    @staticmethod
-    async def cleanup_offline_devices(session: Session) -> dict[str, Any]:
-        """Mark devices as offline if their last heartbeat is too old."""
-        five_minutes_ago = datetime.now(UTC) - timedelta(minutes=5)
-        statement = (
-            select(SMSDevice)
-            .where(SMSDevice.status == "online")
-            .where(SMSDevice.last_heartbeat < five_minutes_ago)  # type: ignore[operator]
-        )
-        offline_devices = session.exec(statement).all()
-
-        for device in offline_devices:
-            device.status = "offline"
-            session.add(device)
-
-        session.commit()
-        return {"offline_count": len(offline_devices)}
 
     @staticmethod
     async def reset_monthly_quotas(session: Session) -> dict[str, Any]:

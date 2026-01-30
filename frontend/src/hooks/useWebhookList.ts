@@ -3,7 +3,12 @@ import { WebhooksService } from "@/client"
 
 export const webhookListQueryOptions = queryOptions({
   queryKey: ["webhooks"],
-  queryFn: () => WebhooksService.listWebhooks({ skip: 0, limit: 100 }),
+  queryFn: async () => {
+    const response = await WebhooksService.webhooksListWebhooks({
+      query: { skip: 0, limit: 100 },
+    })
+    return response.data
+  },
   staleTime: 60_000,
 })
 

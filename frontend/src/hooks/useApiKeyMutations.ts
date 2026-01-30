@@ -9,8 +9,10 @@ export function useCreateApiKey() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: ApiKeyCreate) =>
-      ApiKeysService.createApiKey({ requestBody: data }),
+    mutationFn: async (data: ApiKeyCreate) => {
+      const response = await ApiKeysService.apiKeysCreateApiKey({ body: data })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("API key created successfully")
       queryClient.invalidateQueries({ queryKey: ["api-keys"] })
@@ -24,7 +26,12 @@ export function useDeleteApiKey() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (apiKeyId: string) => ApiKeysService.deleteApiKey({ apiKeyId }),
+    mutationFn: async (apiKeyId: string) => {
+      const response = await ApiKeysService.apiKeysDeleteApiKey({
+        path: { api_key_id: apiKeyId },
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("API key deleted successfully")
     },
@@ -40,7 +47,12 @@ export function useRevokeApiKey() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (apiKeyId: string) => ApiKeysService.revokeApiKey({ apiKeyId }),
+    mutationFn: async (apiKeyId: string) => {
+      const response = await ApiKeysService.apiKeysRevokeApiKey({
+        path: { api_key_id: apiKeyId },
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("API key revoked successfully")
     },

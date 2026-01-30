@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import {
-  type SMSDeviceCreate,
-  type SMSDeviceUpdate,
+  type SmsDeviceCreate,
+  type SmsDeviceUpdate,
   SmsService,
 } from "@/client"
 import { handleError } from "@/utils"
@@ -13,8 +13,10 @@ export function useCreateDevice() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: SMSDeviceCreate) =>
-      SmsService.createDevice({ requestBody: data }),
+    mutationFn: async (data: SmsDeviceCreate) => {
+      const response = await SmsService.smsCreateDevice({ body: data })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("Device created successfully")
     },
@@ -30,8 +32,13 @@ export function useUpdateDevice(deviceId: string) {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: SMSDeviceUpdate) =>
-      SmsService.updateDevice({ deviceId, requestBody: data }),
+    mutationFn: async (data: SmsDeviceUpdate) => {
+      const response = await SmsService.smsUpdateDevice({
+        path: { device_id: deviceId },
+        body: data,
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("Device updated successfully")
     },
@@ -47,7 +54,12 @@ export function useDeleteDevice() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (deviceId: string) => SmsService.deleteDevice({ deviceId }),
+    mutationFn: async (deviceId: string) => {
+      const response = await SmsService.smsDeleteDevice({
+        path: { device_id: deviceId },
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("The device was deleted successfully")
     },

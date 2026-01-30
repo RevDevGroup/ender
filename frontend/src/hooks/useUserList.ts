@@ -3,7 +3,12 @@ import { UsersService } from "@/client"
 
 export const userListQueryOptions = queryOptions({
   queryKey: ["users"],
-  queryFn: () => UsersService.readUsers({ skip: 0, limit: 100 }),
+  queryFn: async () => {
+    const response = await UsersService.usersReadUsers({
+      query: { skip: 0, limit: 100 },
+    })
+    return response.data
+  },
   staleTime: 60_000,
 })
 

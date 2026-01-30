@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
@@ -145,7 +144,6 @@ def create_device(
     return SMSDeviceCreatePublic(
         device_id=device.id,
         api_key=device.api_key,
-        status=device.status,
     )
 
 
@@ -273,30 +271,3 @@ def update_fcm_token(
     session.add(device)
     session.commit()
     return Message(message="FCM token updated")
-
-
-@router.post("/heartbeat", response_model=Message)
-async def device_heartbeat(
-    *,
-    session: SessionDep,
-    device: CurrentDevice,
-) -> Message:
-    """Update device last heartbeat and status. Process queued messages if device was offline."""
-    was_offline = device.status != "online"
-
-    device.last_heartbeat = datetime.now(UTC)
-    device.status = "online"
-    session.add(device)
-    session.commit()
-
-    # If device just came online, process any queued messages
-    if was_offline:
-        queued_messages = await SMSService.process_queued_messages(
-            session=session, device=device
-        )
-        if queued_messages:
-            return Message(
-                message=f"Heartbeat received. Processing {len(queued_messages)} queued messages."
-            )
-
-    return Message(message="Heartbeat received")

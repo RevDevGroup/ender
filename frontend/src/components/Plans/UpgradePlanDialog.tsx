@@ -88,7 +88,7 @@ function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
 
   const mutation = useMutation({
     mutationFn: (planId: string) =>
-      PlansService.upgradePlan({ requestBody: { plan_id: planId } }),
+      PlansService.plansUpgradePlan({ body: { plan_id: planId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quota"] })
       showSuccessToast("Plan updated successfully")

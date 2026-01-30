@@ -136,7 +136,6 @@ class NewPassword(SQLModel):
 class SMSDeviceBase(SQLModel):
     name: str = Field(max_length=255)
     phone_number: str = Field(max_length=20)
-    status: str = Field(default="offline", max_length=50)  # offline, online, idle, busy
 
 
 class SMSDeviceCreate(SMSDeviceBase):
@@ -146,8 +145,6 @@ class SMSDeviceCreate(SMSDeviceBase):
 class SMSDeviceUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=255)
     phone_number: str | None = Field(default=None, max_length=20)
-    status: str | None = Field(default=None, max_length=50)
-    fcm_token: str | None = Field(default=None, max_length=255)
 
 
 class SMSDevice(SMSDeviceBase, table=True):
@@ -157,7 +154,6 @@ class SMSDevice(SMSDeviceBase, table=True):
     user_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    last_heartbeat: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -173,8 +169,6 @@ class SMSDevice(SMSDeviceBase, table=True):
 class SMSDevicePublic(SMSDeviceBase):
     id: uuid.UUID
     user_id: uuid.UUID
-    status: str = Field(default="offline", max_length=50)  # offline, online, idle, busy
-    last_heartbeat: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -276,7 +270,6 @@ class SMSMessageSendPublic(SQLModel):
 class SMSDeviceCreatePublic(SQLModel):
     device_id: uuid.UUID
     api_key: str
-    status: str
 
 
 class WebhookConfigBase(SQLModel):

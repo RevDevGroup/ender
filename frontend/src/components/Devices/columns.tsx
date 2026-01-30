@@ -1,11 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
-import type { SMSDevicePublic } from "@/client"
+import type { SmsDevicePublic } from "@/client"
 import { DeviceActionsMenu } from "@/components/Devices/DeviceActionsMenu"
-import { Badge } from "@/components/ui/badge"
-import { cn, formatDate, getStatusVariant } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 
-export const columns: ColumnDef<SMSDevicePublic>[] = [
+export const columns: ColumnDef<SmsDevicePublic>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -16,33 +15,6 @@ export const columns: ColumnDef<SMSDevicePublic>[] = [
     header: "Phone Number",
     cell: ({ row }) => (
       <span className="text-muted-foreground">{row.original.phone_number}</span>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.original.status ?? "offline"
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "size-2 rounded-full",
-              status === "online" ? "bg-green-500" : "bg-gray-400",
-            )}
-          />
-          <Badge variant={getStatusVariant(status)}>{status}</Badge>
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "last_heartbeat",
-    header: "Last Heartbeat",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {formatDate(row.original.last_heartbeat)}
-      </span>
     ),
   },
   {

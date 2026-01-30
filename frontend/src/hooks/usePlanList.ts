@@ -3,7 +3,10 @@ import { PlansService } from "@/client"
 
 export const planListQueryOptions = queryOptions({
   queryKey: ["plans"],
-  queryFn: () => PlansService.listPlans(),
+  queryFn: async () => {
+    const response = await PlansService.plansListPlans()
+    return response.data
+  },
   staleTime: 300_000, // 5 minutes - plans don't change often
 })
 

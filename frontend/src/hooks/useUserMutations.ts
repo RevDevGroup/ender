@@ -9,8 +9,10 @@ export function useCreateUser() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
+    mutationFn: async (data: UserCreate) => {
+      const response = await UsersService.usersCreateUser({ body: data })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("User created successfully")
     },
@@ -26,8 +28,13 @@ export function useUpdateUser(userId: string) {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: UserUpdate) =>
-      UsersService.updateUser({ userId, requestBody: data }),
+    mutationFn: async (data: UserUpdate) => {
+      const response = await UsersService.usersUpdateUser({
+        path: { user_id: userId },
+        body: data,
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("User updated successfully")
     },
@@ -43,7 +50,12 @@ export function useDeleteUser() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (userId: string) => UsersService.deleteUser({ userId }),
+    mutationFn: async (userId: string) => {
+      const response = await UsersService.usersDeleteUser({
+        path: { user_id: userId },
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("The user was deleted successfully")
     },

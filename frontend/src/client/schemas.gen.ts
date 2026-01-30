@@ -9,7 +9,9 @@ export const ApiKeyCreateSchema = {
         }
     },
     type: 'object',
-    required: ['name'],
+    required: [
+        'name'
+    ],
     title: 'ApiKeyCreate'
 } as const;
 
@@ -35,7 +37,12 @@ export const ApiKeyCreatePublicSchema = {
         }
     },
     type: 'object',
-    required: ['id', 'name', 'key', 'created_at'],
+    required: [
+        'id',
+        'name',
+        'key',
+        'created_at'
+    ],
     title: 'ApiKeyCreatePublic'
 } as const;
 
@@ -79,7 +86,13 @@ export const ApiKeyPublicSchema = {
         }
     },
     type: 'object',
-    required: ['name', 'id', 'key_prefix', 'last_used_at', 'created_at'],
+    required: [
+        'name',
+        'id',
+        'key_prefix',
+        'last_used_at',
+        'created_at'
+    ],
     title: 'ApiKeyPublic'
 } as const;
 
@@ -87,7 +100,7 @@ export const ApiKeysPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/ApiKeyPublic'
+                $ref: '#/components/schemas/ApiKeyPublic'
             },
             type: 'array',
             title: 'Data'
@@ -98,7 +111,10 @@ export const ApiKeysPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'ApiKeysPublic'
 } as const;
 
@@ -155,7 +171,10 @@ export const Body_login_login_access_tokenSchema = {
         }
     },
     type: 'object',
-    required: ['username', 'password'],
+    required: [
+        'username',
+        'password'
+    ],
     title: 'Body_login-login_access_token'
 } as const;
 
@@ -168,7 +187,9 @@ export const FCMTokenUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['fcm_token'],
+    required: [
+        'fcm_token'
+    ],
     title: 'FCMTokenUpdate'
 } as const;
 
@@ -176,7 +197,7 @@ export const HTTPValidationErrorSchema = {
     properties: {
         detail: {
             items: {
-                '$ref': '#/components/schemas/ValidationError'
+                $ref: '#/components/schemas/ValidationError'
             },
             type: 'array',
             title: 'Detail'
@@ -194,7 +215,9 @@ export const MessageSchema = {
         }
     },
     type: 'object',
-    required: ['message'],
+    required: [
+        'message'
+    ],
     title: 'Message'
 } as const;
 
@@ -212,7 +235,10 @@ export const NewPasswordSchema = {
         }
     },
     type: 'object',
-    required: ['token', 'new_password'],
+    required: [
+        'token',
+        'new_password'
+    ],
     title: 'NewPassword'
 } as const;
 
@@ -225,7 +251,9 @@ export const PlanUpgradeSchema = {
         }
     },
     type: 'object',
-    required: ['plan_id'],
+    required: [
+        'plan_id'
+    ],
     title: 'PlanUpgrade'
 } as const;
 
@@ -244,8 +272,40 @@ export const PlanUpgradePublicSchema = {
         }
     },
     type: 'object',
-    required: ['message', 'data'],
+    required: [
+        'message',
+        'data'
+    ],
     title: 'PlanUpgradePublic'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: [
+        'email',
+        'password',
+        'full_name'
+    ],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const SMSDeviceCreateSchema = {
@@ -259,16 +319,13 @@ export const SMSDeviceCreateSchema = {
             type: 'string',
             maxLength: 20,
             title: 'Phone Number'
-        },
-        status: {
-            type: 'string',
-            maxLength: 50,
-            title: 'Status',
-            default: 'offline'
         }
     },
     type: 'object',
-    required: ['name', 'phone_number'],
+    required: [
+        'name',
+        'phone_number'
+    ],
     title: 'SMSDeviceCreate'
 } as const;
 
@@ -282,14 +339,13 @@ export const SMSDeviceCreatePublicSchema = {
         api_key: {
             type: 'string',
             title: 'Api Key'
-        },
-        status: {
-            type: 'string',
-            title: 'Status'
         }
     },
     type: 'object',
-    required: ['device_id', 'api_key', 'status'],
+    required: [
+        'device_id',
+        'api_key'
+    ],
     title: 'SMSDeviceCreatePublic'
 } as const;
 
@@ -305,12 +361,6 @@ export const SMSDevicePublicSchema = {
             maxLength: 20,
             title: 'Phone Number'
         },
-        status: {
-            type: 'string',
-            maxLength: 50,
-            title: 'Status',
-            default: 'offline'
-        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -320,18 +370,6 @@ export const SMSDevicePublicSchema = {
             type: 'string',
             format: 'uuid',
             title: 'User Id'
-        },
-        last_heartbeat: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Last Heartbeat'
         },
         created_at: {
             type: 'string',
@@ -345,7 +383,14 @@ export const SMSDevicePublicSchema = {
         }
     },
     type: 'object',
-    required: ['name', 'phone_number', 'id', 'user_id', 'last_heartbeat', 'created_at', 'updated_at'],
+    required: [
+        'name',
+        'phone_number',
+        'id',
+        'user_id',
+        'created_at',
+        'updated_at'
+    ],
     title: 'SMSDevicePublic'
 } as const;
 
@@ -374,30 +419,6 @@ export const SMSDeviceUpdateSchema = {
                 }
             ],
             title: 'Phone Number'
-        },
-        status: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 50
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Status'
-        },
-        fcm_token: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Fcm Token'
         }
     },
     type: 'object',
@@ -408,7 +429,7 @@ export const SMSDevicesPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/SMSDevicePublic'
+                $ref: '#/components/schemas/SMSDevicePublic'
             },
             type: 'array',
             title: 'Data'
@@ -419,7 +440,10 @@ export const SMSDevicesPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'SMSDevicesPublic'
 } as const;
 
@@ -448,7 +472,10 @@ export const SMSIncomingSchema = {
         }
     },
     type: 'object',
-    required: ['from_number', 'body'],
+    required: [
+        'from_number',
+        'body'
+    ],
     title: 'SMSIncoming'
 } as const;
 
@@ -480,7 +507,10 @@ export const SMSMessageCreateSchema = {
         }
     },
     type: 'object',
-    required: ['recipients', 'body'],
+    required: [
+        'recipients',
+        'body'
+    ],
     title: 'SMSMessageCreate'
 } as const;
 
@@ -524,6 +554,18 @@ export const SMSMessagePublicSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Id'
+        },
+        batch_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Batch Id'
         },
         device_id: {
             anyOf: [
@@ -593,12 +635,37 @@ export const SMSMessagePublicSchema = {
         }
     },
     type: 'object',
-    required: ['to', 'body', 'id', 'device_id', 'user_id', 'webhook_sent', 'error_message', 'created_at', 'updated_at', 'sent_at', 'delivered_at'],
+    required: [
+        'to',
+        'body',
+        'id',
+        'batch_id',
+        'device_id',
+        'user_id',
+        'webhook_sent',
+        'error_message',
+        'created_at',
+        'updated_at',
+        'sent_at',
+        'delivered_at'
+    ],
     title: 'SMSMessagePublic'
 } as const;
 
 export const SMSMessageSendPublicSchema = {
     properties: {
+        batch_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Batch Id'
+        },
         message_ids: {
             items: {
                 type: 'string',
@@ -607,13 +674,22 @@ export const SMSMessageSendPublicSchema = {
             type: 'array',
             title: 'Message Ids'
         },
+        recipients_count: {
+            type: 'integer',
+            title: 'Recipients Count'
+        },
         status: {
             type: 'string',
             title: 'Status'
         }
     },
     type: 'object',
-    required: ['message_ids', 'status'],
+    required: [
+        'batch_id',
+        'message_ids',
+        'recipients_count',
+        'status'
+    ],
     title: 'SMSMessageSendPublic'
 } as const;
 
@@ -621,7 +697,7 @@ export const SMSMessagesPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/SMSMessagePublic'
+                $ref: '#/components/schemas/SMSMessagePublic'
             },
             type: 'array',
             title: 'Data'
@@ -632,7 +708,10 @@ export const SMSMessagesPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'SMSMessagesPublic'
 } as const;
 
@@ -662,7 +741,10 @@ export const SMSReportSchema = {
         }
     },
     type: 'object',
-    required: ['message_id', 'status'],
+    required: [
+        'message_id',
+        'status'
+    ],
     title: 'SMSReport'
 } as const;
 
@@ -679,7 +761,9 @@ export const TokenSchema = {
         }
     },
     type: 'object',
-    required: ['access_token'],
+    required: [
+        'access_token'
+    ],
     title: 'Token'
 } as const;
 
@@ -699,7 +783,10 @@ export const UpdatePasswordSchema = {
         }
     },
     type: 'object',
-    required: ['current_password', 'new_password'],
+    required: [
+        'current_password',
+        'new_password'
+    ],
     title: 'UpdatePassword'
 } as const;
 
@@ -741,7 +828,10 @@ export const UserCreateSchema = {
         }
     },
     type: 'object',
-    required: ['email', 'password'],
+    required: [
+        'email',
+        'password'
+    ],
     title: 'UserCreate'
 } as const;
 
@@ -784,7 +874,12 @@ export const UserPlanPublicSchema = {
         }
     },
     type: 'object',
-    required: ['name', 'id', 'created_at', 'updated_at'],
+    required: [
+        'name',
+        'id',
+        'created_at',
+        'updated_at'
+    ],
     title: 'UserPlanPublic'
 } as const;
 
@@ -792,7 +887,7 @@ export const UserPlansPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/UserPlanPublic'
+                $ref: '#/components/schemas/UserPlanPublic'
             },
             type: 'array',
             title: 'Data'
@@ -803,7 +898,10 @@ export const UserPlansPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'UserPlansPublic'
 } as const;
 
@@ -844,7 +942,10 @@ export const UserPublicSchema = {
         }
     },
     type: 'object',
-    required: ['email', 'id'],
+    required: [
+        'email',
+        'id'
+    ],
     title: 'UserPublic'
 } as const;
 
@@ -883,7 +984,14 @@ export const UserQuotaPublicSchema = {
         }
     },
     type: 'object',
-    required: ['plan', 'sms_sent_this_month', 'max_sms_per_month', 'devices_registered', 'max_devices', 'reset_date'],
+    required: [
+        'plan',
+        'sms_sent_this_month',
+        'max_sms_per_month',
+        'devices_registered',
+        'max_devices',
+        'reset_date'
+    ],
     title: 'UserQuotaPublic'
 } as const;
 
@@ -915,7 +1023,10 @@ export const UserRegisterSchema = {
         }
     },
     type: 'object',
-    required: ['email', 'password'],
+    required: [
+        'email',
+        'password'
+    ],
     title: 'UserRegister'
 } as const;
 
@@ -1010,7 +1121,7 @@ export const UsersPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/UserPublic'
+                $ref: '#/components/schemas/UserPublic'
             },
             type: 'array',
             title: 'Data'
@@ -1021,7 +1132,10 @@ export const UsersPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'UsersPublic'
 } as const;
 
@@ -1051,7 +1165,11 @@ export const ValidationErrorSchema = {
         }
     },
     type: 'object',
-    required: ['loc', 'msg', 'type'],
+    required: [
+        'loc',
+        'msg',
+        'type'
+    ],
     title: 'ValidationError'
 } as const;
 
@@ -1087,7 +1205,9 @@ export const WebhookConfigCreateSchema = {
         }
     },
     type: 'object',
-    required: ['url'],
+    required: [
+        'url'
+    ],
     title: 'WebhookConfigCreate'
 } as const;
 
@@ -1143,7 +1263,13 @@ export const WebhookConfigPublicSchema = {
         }
     },
     type: 'object',
-    required: ['url', 'id', 'user_id', 'created_at', 'updated_at'],
+    required: [
+        'url',
+        'id',
+        'user_id',
+        'created_at',
+        'updated_at'
+    ],
     title: 'WebhookConfigPublic'
 } as const;
 
@@ -1205,7 +1331,7 @@ export const WebhookConfigsPublicSchema = {
     properties: {
         data: {
             items: {
-                '$ref': '#/components/schemas/WebhookConfigPublic'
+                $ref: '#/components/schemas/WebhookConfigPublic'
             },
             type: 'array',
             title: 'Data'
@@ -1216,6 +1342,9 @@ export const WebhookConfigsPublicSchema = {
         }
     },
     type: 'object',
-    required: ['data', 'count'],
+    required: [
+        'data',
+        'count'
+    ],
     title: 'WebhookConfigsPublic'
 } as const;

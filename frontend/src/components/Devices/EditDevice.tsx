@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { SMSDevicePublic, SMSDeviceUpdate } from "@/client"
+import type { SmsDevicePublic, SmsDeviceUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -42,7 +42,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface EditDeviceProps {
-  device: SMSDevicePublic
+  device: SmsDevicePublic
   onSuccess: () => void
 }
 
@@ -61,7 +61,7 @@ const EditDevice = ({ device, onSuccess }: EditDeviceProps) => {
 
   const updateDeviceMutation = useUpdateDevice(device.id)
 
-  const onSubmit = (data: SMSDeviceUpdate) => {
+  const onSubmit = (data: SmsDeviceUpdate) => {
     updateDeviceMutation.mutate(data, {
       onSuccess: () => {
         setIsOpen(false)

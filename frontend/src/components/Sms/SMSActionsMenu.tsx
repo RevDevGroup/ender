@@ -1,7 +1,7 @@
 import { EllipsisVertical } from "lucide-react"
 import { useState } from "react"
 
-import type { SMSMessagePublic } from "@/client"
+import type { SmsMessagePublic } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
 import SMSDetails from "./SMSDetails"
 
 interface SMSActionsMenuProps {
-  sms: SMSMessagePublic
+  sms: SmsMessagePublic
 }
 
 export const SMSActionsMenu = ({ sms }: SMSActionsMenuProps) => {

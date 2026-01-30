@@ -76,16 +76,6 @@ def get_device_by_api_key(session: SessionDep, api_key: str) -> SMSDevice:
     return device
 
 
-def verify_device_active(device: SMSDevice) -> SMSDevice:
-    """Verify that the device is active and online"""
-    if device.status not in ["online", "idle"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Device is not active",
-        )
-    return device
-
-
 def get_current_device(
     session: SessionDep, api_key: Annotated[str, Depends(api_key_header)]
 ) -> SMSDevice:

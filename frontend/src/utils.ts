@@ -1,26 +1,25 @@
 import { AxiosError } from "axios"
-import type { ApiError } from "./client"
 
-function extractErrorMessage(err: ApiError): string {
+function extractErrorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
+    const errDetail = err.response?.data?.detail
+
+    // Handle array of validation errors
+    if (Array.isArray(errDetail) && errDetail.length > 0) {
+      return errDetail[0].msg
+    }
+
+    // Handle object with message property (e.g., quota errors)
+    if (errDetail && typeof errDetail === "object" && errDetail.message) {
+      return errDetail.message
+    }
+
+    // Handle string detail
+    if (typeof errDetail === "string") {
+      return errDetail
+    }
+
     return err.message
-  }
-
-  const errDetail = (err.body as any)?.detail
-
-  // Handle array of validation errors
-  if (Array.isArray(errDetail) && errDetail.length > 0) {
-    return errDetail[0].msg
-  }
-
-  // Handle object with message property (e.g., quota errors)
-  if (errDetail && typeof errDetail === "object" && errDetail.message) {
-    return errDetail.message
-  }
-
-  // Handle string detail
-  if (typeof errDetail === "string") {
-    return errDetail
   }
 
   return "Something went wrong."
@@ -28,7 +27,7 @@ function extractErrorMessage(err: ApiError): string {
 
 export const handleError = function (
   this: (msg: string) => void,
-  err: ApiError,
+  err: unknown,
 ) {
   const errorMessage = extractErrorMessage(err)
   this(errorMessage)

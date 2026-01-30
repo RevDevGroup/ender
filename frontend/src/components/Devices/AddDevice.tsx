@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { SMSDeviceCreate } from "@/client"
+import type { SmsDeviceCreate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -62,7 +62,7 @@ const AddDevice = () => {
 
   const createDeviceMutation = useCreateDevice()
 
-  const onSubmit = (data: SMSDeviceCreate) => {
+  const onSubmit = (data: SmsDeviceCreate) => {
     createDeviceMutation.mutate(data, {
       onSuccess: (response) => {
         setApiKey(response.api_key)

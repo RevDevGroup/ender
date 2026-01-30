@@ -3,7 +3,10 @@ import { PlansService } from "@/client"
 
 export const quotaQueryOptions = queryOptions({
   queryKey: ["quota"],
-  queryFn: () => PlansService.getQuota(),
+  queryFn: async () => {
+    const response = await PlansService.plansGetQuota()
+    return response.data
+  },
   staleTime: 60_000,
 })
 

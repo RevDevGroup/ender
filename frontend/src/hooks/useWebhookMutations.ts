@@ -13,8 +13,12 @@ export function useCreateWebhook() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: WebhookConfigCreate) =>
-      WebhooksService.createWebhook({ requestBody: data }),
+    mutationFn: async (data: WebhookConfigCreate) => {
+      const response = await WebhooksService.webhooksCreateWebhook({
+        body: data,
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("Webhook created successfully")
     },
@@ -30,8 +34,13 @@ export function useUpdateWebhook(webhookId: string) {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (data: WebhookConfigUpdate) =>
-      WebhooksService.updateWebhook({ webhookId, requestBody: data }),
+    mutationFn: async (data: WebhookConfigUpdate) => {
+      const response = await WebhooksService.webhooksUpdateWebhook({
+        path: { webhook_id: webhookId },
+        body: data,
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("Webhook updated successfully")
     },
@@ -47,8 +56,12 @@ export function useDeleteWebhook() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   return useMutation({
-    mutationFn: (webhookId: string) =>
-      WebhooksService.deleteWebhook({ webhookId }),
+    mutationFn: async (webhookId: string) => {
+      const response = await WebhooksService.webhooksDeleteWebhook({
+        path: { webhook_id: webhookId },
+      })
+      return response.data
+    },
     onSuccess: () => {
       showSuccessToast("The webhook was deleted successfully")
     },
