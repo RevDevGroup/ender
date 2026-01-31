@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request, status
 
 from app import crud
 from app.api.deps import (
@@ -9,6 +9,7 @@ from app.api.deps import (
     CurrentUserOrIntegration,
     SessionDep,
 )
+from app.core.rate_limit import RateLimits, limiter
 from app.models import (
     FCMTokenUpdate,
     Message,
@@ -34,7 +35,9 @@ router = APIRouter(prefix="/sms", tags=["sms"])
 @router.post(
     "/send", status_code=status.HTTP_201_CREATED, response_model=SMSMessageSendPublic
 )
+@limiter.limit(RateLimits.SMS_SEND)
 async def send_sms(
+    request: Request,  # noqa: ARG001 - Required by SlowAPI limiter
     *,
     session: SessionDep,
     current_user: CurrentUserOrIntegration,

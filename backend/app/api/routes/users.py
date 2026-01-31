@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -13,6 +13,7 @@ from app.api.deps import (
     get_current_active_superuser,
 )
 from app.core.config import settings
+from app.core.rate_limit import RateLimits, limiter
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Message,
@@ -171,7 +172,9 @@ async def send_verification_email_task(email: str) -> None:
 
 
 @router.post("/signup", response_model=UserPublic)
+@limiter.limit(RateLimits.AUTH_SIGNUP)
 async def register_user(
+    request: Request,  # noqa: ARG001 - Required by SlowAPI limiter
     session: SessionDep,
     user_in: UserRegister,
     background_tasks: BackgroundTasks,
@@ -198,7 +201,12 @@ async def register_user(
 
 
 @router.post("/verify-email", response_model=Message)
-def verify_email(session: SessionDep, token: str) -> Any:
+@limiter.limit(RateLimits.AUTH_EMAIL_VERIFICATION)
+def verify_email(
+    request: Request,  # noqa: ARG001 - Required by SlowAPI limiter
+    session: SessionDep,
+    token: str,
+) -> Any:
     """
     Verify user email with token from verification email.
     """
@@ -228,7 +236,9 @@ def verify_email(session: SessionDep, token: str) -> Any:
 
 
 @router.post("/resend-verification", response_model=Message)
+@limiter.limit(RateLimits.AUTH_EMAIL_VERIFICATION)
 async def resend_verification_email(
+    request: Request,  # noqa: ARG001 - Required by SlowAPI limiter
     session: SessionDep,
     email: str,
     background_tasks: BackgroundTasks,

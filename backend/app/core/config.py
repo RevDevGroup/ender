@@ -122,6 +122,10 @@ class Settings(BaseSettings):
     QSTASH_QUEUE_NAME: str = "sms-notifications"
     QSTASH_QUEUE_PARALLELISM: int = 2  # Free tier limit is 2
 
+    # Rate limiting configuration
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 60  # Default requests per minute
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def is_local_qstash(self) -> bool:
