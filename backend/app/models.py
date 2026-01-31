@@ -11,6 +11,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    email_verified: bool = False
 
 
 # Properties to receive via API on creation
@@ -86,6 +87,7 @@ class UserQuota(UserQuotaBase, table=True):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
+    email_verified_at: datetime | None = Field(default=None)
     sms_devices: list["SMSDevice"] = Relationship(
         back_populates="user", cascade_delete=True
     )

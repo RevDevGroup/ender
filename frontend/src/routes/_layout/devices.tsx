@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_layout/devices")({
 function DevicesTableContent() {
   const { data: devices } = useDeviceListSuspense()
 
-  if (devices.data.length === 0) {
+  if (!devices?.data || devices.data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -36,7 +36,7 @@ function DevicesTableContent() {
     )
   }
 
-  return <DataTable columns={columns} data={devices.data} />
+  return <DataTable columns={columns} data={devices?.data ?? []} />
 }
 
 function DevicesTable() {

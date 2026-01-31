@@ -1,7 +1,9 @@
+import logging
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -24,7 +26,16 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
-from app.utils import generate_new_account_email, send_email
+from app.services.email import get_email_service
+from app.utils import (
+    generate_email_verification_email,
+    generate_email_verification_token,
+    generate_new_account_email,
+    send_email,
+    verify_email_verification_token,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -142,10 +153,33 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     return Message(message="User deleted successfully")
 
 
+async def send_verification_email_task(email: str) -> None:
+    """Background task to send verification email."""
+    try:
+        token = generate_email_verification_token(email)
+        email_data = generate_email_verification_email(email_to=email, token=token)
+        email_service = get_email_service()
+        await email_service.send_email(
+            to=email,
+            subject=email_data.subject,
+            html_content=email_data.html_content,
+            tags=["verification"],
+        )
+        logger.info(f"Verification email sent to {email}")
+    except Exception as e:
+        logger.error(f"Failed to send verification email to {email}: {e}")
+
+
 @router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister) -> Any:
+async def register_user(
+    session: SessionDep,
+    user_in: UserRegister,
+    background_tasks: BackgroundTasks,
+) -> Any:
     """
     Create new user without the need to be logged in.
+
+    A verification email will be sent to the user's email address.
     """
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
@@ -155,7 +189,67 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         )
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
+
+    # Send verification email in background
+    if settings.emails_enabled:
+        background_tasks.add_task(send_verification_email_task, user.email)
+
     return user
+
+
+@router.post("/verify-email", response_model=Message)
+def verify_email(session: SessionDep, token: str) -> Any:
+    """
+    Verify user email with token from verification email.
+    """
+    email = verify_email_verification_token(token)
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired verification token",
+        )
+
+    user = crud.get_user_by_email(session=session, email=email)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    if user.email_verified:
+        return Message(message="Email already verified")
+
+    user.email_verified = True
+    user.email_verified_at = datetime.now(UTC)
+    session.add(user)
+    session.commit()
+
+    return Message(message="Email verified successfully")
+
+
+@router.post("/resend-verification", response_model=Message)
+async def resend_verification_email(
+    session: SessionDep,
+    email: str,
+    background_tasks: BackgroundTasks,
+) -> Any:
+    """
+    Resend verification email.
+    """
+    user = crud.get_user_by_email(session=session, email=email)
+
+    # Always return success to prevent email enumeration
+    if not user or user.email_verified:
+        return Message(
+            message="If the email exists and is not verified, a verification email has been sent"
+        )
+
+    if settings.emails_enabled:
+        background_tasks.add_task(send_verification_email_task, email)
+
+    return Message(
+        message="If the email exists and is not verified, a verification email has been sent"
+    )
 
 
 @router.get("/{user_id}", response_model=UserPublic)

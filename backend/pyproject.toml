@@ -22,6 +22,7 @@ dependencies = [
     "pyjwt<3.0.0,>=2.10.1",
     "firebase-admin>=7.1.0,<8.0.0",
     "qstash>=3.2.0",
+    "maileroo>=1.0.0",
 ]
 
 [tool.uv]

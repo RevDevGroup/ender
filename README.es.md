@@ -13,7 +13,7 @@ Ender es una plataforma full-stack para gestión y envío de SMS a través de di
 - **Migraciones**: Alembic
 - **Push Notifications**: Firebase Cloud Messaging (FCM)
 - **Cola de mensajes**: QStash (Upstash)
-- **Email**: SMTP con Mailcatcher para desarrollo local
+- **Email**: Agnóstico de proveedor (Maileroo, SMTP) con Mailcatcher para dev local
 - **Tests**: Pytest con coverage
 - **Calidad de código**: Ruff, MyPy, pre-commit hooks
 
@@ -191,6 +191,20 @@ QSTASH_URL=http://localhost:8080
 QSTASH_CURRENT_SIGNING_KEY=<signing-key>
 QSTASH_NEXT_SIGNING_KEY=<next-signing-key>
 SERVER_BASE_URL=http://localhost:8000
+
+# Proveedor de Email (smtp o maileroo)
+EMAIL_PROVIDER=smtp
+EMAILS_FROM_EMAIL=noreply@tudominio.com
+EMAILS_FROM_NAME=Ender
+
+# Para SMTP (desarrollo local con Mailcatcher)
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_TLS=false
+
+# Para Maileroo (producción)
+# EMAIL_PROVIDER=maileroo
+# MAILEROO_API_KEY=<tu-api-key-de-maileroo>
 ```
 
 ### Generar Secret Key

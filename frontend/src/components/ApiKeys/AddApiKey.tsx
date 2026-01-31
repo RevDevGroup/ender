@@ -58,7 +58,7 @@ const AddApiKey = () => {
   const onSubmit = (data: ApiKeyCreate) => {
     createApiKeyMutation.mutate(data, {
       onSuccess: (response) => {
-        setCreatedKey(response.key)
+        setCreatedKey(response?.key ?? null)
       },
     })
   }

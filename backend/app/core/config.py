@@ -83,10 +83,20 @@ class Settings(BaseSettings):
         return self
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+
+    # Email provider configuration
+    # Options: "smtp", "maileroo"
+    # To add new providers, implement EmailProvider in app/services/email/
+    EMAIL_PROVIDER: str = "smtp"
+    MAILEROO_API_KEY: str | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def emails_enabled(self) -> bool:
+        if self.EMAIL_PROVIDER == "maileroo":
+            return bool(self.MAILEROO_API_KEY and self.EMAILS_FROM_EMAIL)
+        # Default to SMTP
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"

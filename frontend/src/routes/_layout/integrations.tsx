@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_layout/integrations")({
 function ApiKeysTableContent() {
   const { data: apiKeys } = useApiKeyListSuspense()
 
-  if (apiKeys.data.length === 0) {
+  if (!apiKeys?.data || apiKeys.data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -36,7 +36,7 @@ function ApiKeysTableContent() {
     )
   }
 
-  return <DataTable columns={columns} data={apiKeys.data} />
+  return <DataTable columns={columns} data={apiKeys?.data ?? []} />
 }
 
 function ApiKeysTable() {

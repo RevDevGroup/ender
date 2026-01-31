@@ -493,6 +493,10 @@ export type UserCreate = {
      */
     full_name?: string | null;
     /**
+     * Email Verified
+     */
+    email_verified?: boolean;
+    /**
      * Password
      */
     password: string;
@@ -567,6 +571,10 @@ export type UserPublic = {
      */
     full_name?: string | null;
     /**
+     * Email Verified
+     */
+    email_verified?: boolean;
+    /**
      * Id
      */
     id: string;
@@ -640,6 +648,10 @@ export type UserUpdate = {
      * Full Name
      */
     full_name?: string | null;
+    /**
+     * Email Verified
+     */
+    email_verified?: boolean;
     /**
      * Password
      */
@@ -1079,6 +1091,66 @@ export type UsersRegisterUserResponses = {
 };
 
 export type UsersRegisterUserResponse = UsersRegisterUserResponses[keyof UsersRegisterUserResponses];
+
+export type UsersVerifyEmailData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Token
+         */
+        token: string;
+    };
+    url: '/api/v1/users/verify-email';
+};
+
+export type UsersVerifyEmailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersVerifyEmailError = UsersVerifyEmailErrors[keyof UsersVerifyEmailErrors];
+
+export type UsersVerifyEmailResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type UsersVerifyEmailResponse = UsersVerifyEmailResponses[keyof UsersVerifyEmailResponses];
+
+export type UsersResendVerificationEmailData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Email
+         */
+        email: string;
+    };
+    url: '/api/v1/users/resend-verification';
+};
+
+export type UsersResendVerificationEmailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersResendVerificationEmailError = UsersResendVerificationEmailErrors[keyof UsersResendVerificationEmailErrors];
+
+export type UsersResendVerificationEmailResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type UsersResendVerificationEmailResponse = UsersResendVerificationEmailResponses[keyof UsersResendVerificationEmailResponses];
 
 export type UsersDeleteUserData = {
     body?: never;
@@ -1883,46 +1955,6 @@ export type InternalProcessNotificationResponses = {
 };
 
 export type InternalProcessNotificationResponse = InternalProcessNotificationResponses[keyof InternalProcessNotificationResponses];
-
-export type InternalHandleQueueCallbackData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/internal/queue/callback';
-};
-
-export type InternalHandleQueueCallbackResponses = {
-    /**
-     * Response Internal-Handle Queue Callback
-     *
-     * Successful Response
-     */
-    200: {
-        [key: string]: string;
-    };
-};
-
-export type InternalHandleQueueCallbackResponse = InternalHandleQueueCallbackResponses[keyof InternalHandleQueueCallbackResponses];
-
-export type InternalHandleQueueFailureData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/internal/queue/failure';
-};
-
-export type InternalHandleQueueFailureResponses = {
-    /**
-     * Response Internal-Handle Queue Failure
-     *
-     * Successful Response
-     */
-    200: {
-        [key: string]: string;
-    };
-};
-
-export type InternalHandleQueueFailureResponse = InternalHandleQueueFailureResponses[keyof InternalHandleQueueFailureResponses];
 
 export type PrivateCreateUserData = {
     body: PrivateUserCreate;

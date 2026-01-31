@@ -65,7 +65,7 @@ const AddDevice = () => {
   const onSubmit = (data: SmsDeviceCreate) => {
     createDeviceMutation.mutate(data, {
       onSuccess: (response) => {
-        setApiKey(response.api_key)
+        setApiKey(response?.api_key ?? null)
         form.reset()
       },
     })

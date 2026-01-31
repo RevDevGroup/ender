@@ -59,6 +59,7 @@ dependencies = [
     { name = "firebase-admin" },
     { name = "httpx" },
     { name = "jinja2" },
+    { name = "maileroo" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -90,6 +91,7 @@ requires-dist = [
     { name = "firebase-admin", specifier = ">=7.1.0,<8.0.0" },
     { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
     { name = "jinja2", specifier = ">=3.1.6,<4.0.0" },
+    { name = "maileroo", specifier = ">=1.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.2,<4.0.0" },
     { name = "pydantic", specifier = ">=2.12.5,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.12.0,<3.0.0" },
@@ -884,6 +886,19 @@ wheels = [
 ]
 
 [[package]]
+name = "maileroo"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-magic", marker = "sys_platform != 'win32'" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/ef/68b930f0e5937fa649f9164998ec33a5849c80cd50e604b017bcd9cf40e0/maileroo-1.0.0.tar.gz", hash = "sha256:970c006781c25a84b464ef425e7ca4d0e4fbce5da0e1dbb7f2814ae0cc1493f1", size = 12426, upload-time = "2025-08-17T07:49:58.584Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/2a/fd96e267794db93fe9d2b3c24eaaa038a60fd237823ee9163328a280de5b/maileroo-1.0.0-py3-none-any.whl", hash = "sha256:09fd0c6d798f7e092bbc700df30d1078baae7ea723fe1b3c8e99bfef7e88aa21", size = 10662, upload-time = "2025-08-17T07:49:57.074Z" },
+]
+
+[[package]]
 name = "mako"
 version = "1.3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -1301,6 +1316,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f0/26/19cadc79a718c5edbec86fd4919a6b6d3f681039a2f6d66d14be94e75fb9/python_dotenv-1.2.1.tar.gz", hash = "sha256:42667e897e16ab0d66954af0e60a9caa94f0fd4ecf3aaf6d2d260eec1aa36ad6", size = 44221, upload-time = "2025-10-26T15:12:10.434Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl", hash = "sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61", size = 21230, upload-time = "2025-10-26T15:12:09.109Z" },
+]
+
+[[package]]
+name = "python-magic"
+version = "0.4.27"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/db/0b3e28ac047452d079d375ec6798bf76a036a08182dbb39ed38116a49130/python-magic-0.4.27.tar.gz", hash = "sha256:c1ba14b08e4a5f5c31a302b7721239695b2f0f058d125bd5ce1ee36b9d9d3c3b", size = 14677, upload-time = "2022-06-07T20:16:59.508Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/73/9f872cb81fc5c3bb48f7227872c28975f998f3e7c2b1c16e95e6432bbb90/python_magic-0.4.27-py2.py3-none-any.whl", hash = "sha256:c212960ad306f700aa0d01e5d7a325d20548ff97eb9920dcd29513174f0294d3", size = 13840, upload-time = "2022-06-07T20:16:57.763Z" },
 ]
 
 [[package]]

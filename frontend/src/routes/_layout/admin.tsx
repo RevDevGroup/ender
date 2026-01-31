@@ -24,10 +24,12 @@ function UsersTableContent() {
   const { user: currentUser } = useAuth()
   const { data: users } = useUserListSuspense()
 
-  const tableData: UserTableData[] = users.data.map((user: UserPublic) => ({
-    ...user,
-    isCurrentUser: currentUser?.id === user.id,
-  }))
+  const tableData: UserTableData[] = (users?.data ?? []).map(
+    (user: UserPublic) => ({
+      ...user,
+      isCurrentUser: currentUser?.id === user.id,
+    }),
+  )
 
   return <DataTable columns={columns} data={tableData} />
 }

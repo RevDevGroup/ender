@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_layout/webhooks")({
 function WebhooksTableContent() {
   const { data: webhooks } = useWebhookListSuspense()
 
-  if (webhooks.data.length === 0) {
+  if (!webhooks?.data || webhooks.data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -36,7 +36,7 @@ function WebhooksTableContent() {
     )
   }
 
-  return <DataTable columns={columns} data={webhooks.data} />
+  return <DataTable columns={columns} data={webhooks?.data ?? []} />
 }
 
 function WebhooksTable() {

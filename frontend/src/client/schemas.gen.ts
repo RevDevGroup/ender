@@ -820,6 +820,11 @@ export const UserCreateSchema = {
             ],
             title: 'Full Name'
         },
+        email_verified: {
+            type: 'boolean',
+            title: 'Email Verified',
+            default: false
+        },
         password: {
             type: 'string',
             maxLength: 128,
@@ -934,6 +939,11 @@ export const UserPublicSchema = {
                 }
             ],
             title: 'Full Name'
+        },
+        email_verified: {
+            type: 'boolean',
+            title: 'Email Verified',
+            default: false
         },
         id: {
             type: 'string',
@@ -1066,6 +1076,11 @@ export const UserUpdateSchema = {
                 }
             ],
             title: 'Full Name'
+        },
+        email_verified: {
+            type: 'boolean',
+            title: 'Email Verified',
+            default: false
         },
         password: {
             anyOf: [

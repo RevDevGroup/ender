@@ -32,10 +32,10 @@ const useAuth = () => {
   const signUpMutation = useMutation({
     mutationFn: async (data: UserRegister) => {
       const response = await UsersService.usersRegisterUser({ body: data })
-      return response.data
+      return { ...response.data, email: data.email }
     },
-    onSuccess: () => {
-      navigate({ to: "/login" })
+    onSuccess: (data) => {
+      navigate({ to: "/check-email", search: { email: data?.email || "" } })
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
