@@ -1,15 +1,10 @@
 """
-QStash Service - Generic message queue for async task processing.
+QStash Service - Message queue for async task processing using Upstash QStash Queues.
 
-This service provides a decoupled way to enqueue tasks that will be
-processed asynchronously via webhooks. It supports any type of task,
-not just FCM notifications.
+This service uses QStash Queues for reliable, ordered message delivery with
+configurable parallelism and automatic retries.
 
-QStash is ALWAYS required:
-- In production: Uses Upstash QStash cloud service
-- In local development: Uses QStash CLI dev server (npx @upstash/qstash-cli dev)
-
-See: https://upstash.com/docs/qstash/howto/local-development
+See: https://upstash.com/docs/qstash/features/queues
 """
 
 import logging
@@ -24,13 +19,9 @@ logger = logging.getLogger(__name__)
 
 class QStashService:
     """
-    Generic service for enqueuing async tasks via Upstash QStash.
+    Service for enqueuing async tasks via Upstash QStash Queues.
 
-    QStash is always required for message queue functionality.
-    In local development, run the QStash CLI dev server:
-        npx @upstash/qstash-cli dev
-
-    The dev server provides test tokens automatically.
+    Uses dedicated queues for better control, visibility, and reliability.
     """
 
     _client: QStash | None = None
@@ -40,7 +31,7 @@ class QStashService:
 
     @classmethod
     def initialize(cls) -> None:
-        """Initialize the QStash client."""
+        """Initialize the QStash client and create queues."""
         if cls._initialized:
             return
 
@@ -52,9 +43,6 @@ class QStashService:
 
         try:
             if cls._is_local:
-                # Local development: use QStash CLI dev server
-                # The dev server generates test tokens automatically
-                # Run: npx @upstash/qstash-cli dev
                 cls._client = QStash(
                     token=settings.QSTASH_TOKEN or "test_token",
                     base_url=settings.QSTASH_URL,
@@ -63,7 +51,6 @@ class QStashService:
                     f"QStash initialized in LOCAL mode (dev server: {settings.QSTASH_URL})"
                 )
             else:
-                # Production: requires real QStash token
                 if not settings.QSTASH_TOKEN:
                     logger.error(
                         "QSTASH_TOKEN required in production - queue service disabled"
@@ -73,17 +60,34 @@ class QStashService:
                 cls._client = QStash(settings.QSTASH_TOKEN)
                 logger.info("QStash initialized in PRODUCTION mode")
 
-            # Configure signature verification (optional in local, required in prod)
+            # Configure signature verification
             if settings.QSTASH_CURRENT_SIGNING_KEY and settings.QSTASH_NEXT_SIGNING_KEY:
                 cls._receiver = Receiver(
                     current_signing_key=settings.QSTASH_CURRENT_SIGNING_KEY,
                     next_signing_key=settings.QSTASH_NEXT_SIGNING_KEY,
                 )
 
+            # Create/update the notifications queue
+            cls._setup_queues()
+
             cls._initialized = True
 
         except Exception as e:
             logger.error(f"Failed to initialize QStash: {e}")
+
+    @classmethod
+    def _setup_queues(cls) -> None:
+        """Create or update queues with desired configuration."""
+        if not cls._client:
+            return
+
+        try:
+            queue_name = settings.QSTASH_QUEUE_NAME
+            parallelism = settings.QSTASH_QUEUE_PARALLELISM
+            cls._client.queue.upsert(queue_name, parallelism=parallelism)
+            logger.info(f"Queue '{queue_name}' ready (parallelism={parallelism})")
+        except Exception as e:
+            logger.error(f"Failed to setup queue: {e}")
 
     @classmethod
     def is_available(cls) -> bool:
@@ -96,18 +100,19 @@ class QStashService:
         endpoint: str,
         payload: dict[str, Any],
         *,
-        retries: int = 5,
-        delay: str | None = None,
+        retries: int = 3,
         deduplication_id: str | None = None,
     ) -> str | None:
         """
-        Enqueue a task for async processing.
+        Enqueue a task to the notifications queue.
+
+        Failed messages after retries go to QStash's Dead Letter Queue (DLQ)
+        which can be monitored in the Upstash dashboard.
 
         Args:
-            endpoint: The webhook endpoint path (e.g., "/api/v1/internal/fcm-send")
+            endpoint: The webhook endpoint path
             payload: The JSON payload to send
-            retries: Number of retry attempts on failure
-            delay: Optional delay before processing (e.g., "10s", "1m")
+            retries: Number of retry attempts (default 3, then goes to DLQ)
             deduplication_id: Optional ID to prevent duplicate messages
 
         Returns:
@@ -118,29 +123,21 @@ class QStashService:
             return None
 
         webhook_url = f"{settings.SERVER_BASE_URL}{endpoint}"
-        callback_base = f"{settings.SERVER_BASE_URL}/api/v1/internal/queue"
 
         try:
-            kwargs: dict[str, Any] = {
-                "url": webhook_url,
-                "body": payload,
-                "retries": retries,
-                "callback": f"{callback_base}/callback",
-                "failure_callback": f"{callback_base}/failure",
-            }
-
-            if delay:
-                kwargs["delay"] = delay
-
-            if deduplication_id:
-                kwargs["deduplication_id"] = deduplication_id
-
-            response = cls._client.message.publish_json(**kwargs)
-            logger.info(f"Task enqueued: {response.message_id} -> {endpoint}")
+            queue_name = settings.QSTASH_QUEUE_NAME
+            response = cls._client.message.enqueue_json(
+                queue=queue_name,
+                url=webhook_url,
+                body=payload,
+                retries=retries,
+                deduplication_id=deduplication_id,
+            )
+            logger.info(f"Enqueued to '{queue_name}': {response.message_id}")
             return response.message_id
 
         except Exception as e:
-            logger.error(f"Failed to enqueue task to {endpoint}: {e}")
+            logger.error(f"Failed to enqueue: {e}")
             return None
 
     @classmethod

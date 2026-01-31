@@ -109,6 +109,8 @@ class Settings(BaseSettings):
     QSTASH_CURRENT_SIGNING_KEY: str | None = None
     QSTASH_NEXT_SIGNING_KEY: str | None = None
     SERVER_BASE_URL: str | None = None  # Public URL for QStash callbacks
+    QSTASH_QUEUE_NAME: str = "sms-notifications"
+    QSTASH_QUEUE_PARALLELISM: int = 2  # Free tier limit is 2
 
     @computed_field  # type: ignore[prop-decorator]
     @property
