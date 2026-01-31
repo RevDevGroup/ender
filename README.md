@@ -1,133 +1,135 @@
 # Ender - SMS Gateway Platform
 
-Ender es una plataforma full-stack para gestión y envío de SMS a través de dispositivos conectados. Permite enviar mensajes SMS usando dispositivos registrados (teléfonos Android o módems) como gateways, con gestión de cuotas, webhooks y soporte para múltiples usuarios.
+[Leer en Español](./README.es.md)
 
-## Stack Tecnológico
+Ender is a full-stack platform for SMS management and delivery through connected devices. It allows sending SMS messages using registered devices (Android phones or modems) as gateways, with quota management, webhooks, and multi-user support.
+
+## Tech Stack
 
 ### Backend
 - **Framework**: FastAPI (Python 3.13+)
-- **Base de datos**: PostgreSQL 17 con SQLModel ORM
-- **Autenticación**: JWT (JSON Web Tokens)
-- **Migraciones**: Alembic
+- **Database**: PostgreSQL 17 with SQLModel ORM
+- **Authentication**: JWT (JSON Web Tokens)
+- **Migrations**: Alembic
 - **Push Notifications**: Firebase Cloud Messaging (FCM)
-- **Cola de mensajes**: QStash (Upstash)
-- **Email**: SMTP con Mailcatcher para desarrollo local
-- **Tests**: Pytest con coverage
-- **Calidad de código**: Ruff, MyPy, pre-commit hooks
+- **Message Queue**: QStash (Upstash)
+- **Email**: SMTP with Mailcatcher for local development
+- **Tests**: Pytest with coverage
+- **Code Quality**: Ruff, MyPy, pre-commit hooks
 
 ### Frontend
-- **Framework**: React 19 con TypeScript
+- **Framework**: React 19 with TypeScript
 - **Build**: Vite
-- **Estado**: TanStack Query + TanStack Router
-- **Estilos**: Tailwind CSS + shadcn/ui
-- **Formularios**: React Hook Form + Zod
-- **Cliente API**: Auto-generado desde OpenAPI
-- **Tests E2E**: Playwright
+- **State**: TanStack Query + TanStack Router
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Forms**: React Hook Form + Zod
+- **API Client**: Auto-generated from OpenAPI
+- **E2E Tests**: Playwright
 
-### Infraestructura
-- **Contenedores**: Docker & Docker Compose
+### Infrastructure
+- **Containers**: Docker & Docker Compose
 - **CI/CD**: GitHub Actions
 
-## Funcionalidades Principales
+## Main Features
 
 ### SMS
-- Envío de SMS individuales y masivos
-- Distribución round-robin entre dispositivos
-- Cola de mensajes cuando no hay dispositivos online
-- Tracking de estado (pending, queued, processing, sent, delivered, failed)
-- Historial y reportes de SMS
-- Soporte para SMS entrantes
+- Single and bulk SMS sending
+- Round-robin distribution across devices
+- Message queuing when no devices are online
+- Status tracking (pending, queued, processing, sent, delivered, failed)
+- SMS history and reports
+- Incoming SMS support
 
-### Dispositivos
-- Registro de dispositivos con API keys únicas
-- Gestión de tokens FCM para push notifications
-- Monitoreo de estado de dispositivos
+### Devices
+- Device registration with unique API keys
+- FCM token management for push notifications
+- Device status monitoring
 
-### Cuotas y Planes
-- Múltiples planes de suscripción
-- Tracking de cuota mensual de SMS
-- Límites de dispositivos por plan
-- Reset automático de cuota configurable
+### Quotas and Plans
+- Multiple subscription plans
+- Monthly SMS quota tracking
+- Device limits per plan
+- Configurable automatic quota reset
 
 ### Webhooks
-- Configuración de webhooks para actualizaciones de estado
-- Entrega automática en eventos de SMS
+- Webhook configuration for status updates
+- Automatic delivery on SMS events
 
-### Integraciones
-- API keys múltiples por usuario
-- Códigos QR para onboarding de dispositivos
-- API pública para sistemas externos
+### Integrations
+- Multiple API keys per user
+- QR codes for device onboarding
+- Public API for external systems
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 ender/
-├── backend/                    # API FastAPI
+├── backend/                    # FastAPI API
 │   ├── app/
 │   │   ├── api/routes/         # Endpoints (login, users, sms, webhooks, etc.)
-│   │   ├── services/           # Lógica de negocio (SMS, FCM, Queue, Quota)
+│   │   ├── services/           # Business logic (SMS, FCM, Queue, Quota)
 │   │   ├── core/               # Config, DB, Security
-│   │   ├── models.py           # Modelos SQLModel
-│   │   └── crud.py             # Operaciones de base de datos
+│   │   ├── models.py           # SQLModel models
+│   │   └── crud.py             # Database operations
 │   ├── tests/
 │   └── scripts/
-├── frontend/                   # App React
+├── frontend/                   # React App
 │   ├── src/
-│   │   ├── routes/             # Páginas (TanStack Router)
-│   │   ├── components/         # Componentes React
-│   │   ├── client/             # Cliente API auto-generado
+│   │   ├── routes/             # Pages (TanStack Router)
+│   │   ├── components/         # React components
+│   │   ├── client/             # Auto-generated API client
 │   │   └── hooks/
-│   └── tests/                  # Tests Playwright
+│   └── tests/                  # Playwright tests
 ├── docker-compose.yml
-├── docker-compose.override.yml # Overrides para desarrollo
-└── .env                        # Variables de entorno
+├── docker-compose.override.yml # Development overrides
+└── .env                        # Environment variables
 ```
 
-## Inicio Rápido
+## Quick Start
 
-### Requisitos Previos
-- Docker y Docker Compose
-- Node.js (ver `.nvmrc`)
+### Prerequisites
+- Docker and Docker Compose
+- Node.js (see `.nvmrc`)
 - Python 3.13+
-- uv (gestor de paquetes Python)
+- uv (Python package manager)
 
-### Desarrollo con Docker Compose (Recomendado)
+### Development with Docker Compose (Recommended)
 
 ```bash
-# Iniciar stack completo con hot reload
+# Start full stack with hot reload
 docker compose watch
 
-# O sin watching
+# Or without watching
 docker compose up -d --wait
 ```
 
-**Servicios disponibles:**
-| Servicio | URL |
-|----------|-----|
+**Available services:**
+| Service | URL |
+|---------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000 |
 | API Docs (Swagger) | http://localhost:8000/docs |
 | Adminer (DB UI) | http://localhost:8080 |
 | Mailcatcher | http://localhost:1080 |
 
-### Desarrollo Manual
+### Manual Development
 
 #### Backend
 ```bash
 cd backend
 
-# Instalar dependencias
+# Install dependencies
 uv sync
 
-# Activar entorno virtual
+# Activate virtual environment
 source .venv/bin/activate
 
-# Ejecutar servidor de desarrollo
+# Run development server
 fastapi dev app/main.py
 
-# Ejecutar tests
+# Run tests
 pytest
-# o
+# or
 bash ./scripts/test.sh
 ```
 
@@ -135,63 +137,63 @@ bash ./scripts/test.sh
 ```bash
 cd frontend
 
-# Instalar versión de Node
-fnm use  # o nvm use
+# Install Node version
+fnm use  # or nvm use
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Servidor de desarrollo
+# Development server
 npm run dev
 
-# Generar cliente API desde OpenAPI
+# Generate API client from OpenAPI
 npm run generate-client
 
-# Tests E2E
+# E2E tests
 npx playwright test
 ```
 
-## Configuración
+## Configuration
 
-### Variables de Entorno Requeridas
+### Required Environment Variables
 
-Crea un archivo `.env` en la raíz del proyecto:
+Create a `.env` file in the project root:
 
 ```env
-# Base de datos
+# Database
 POSTGRES_SERVER=localhost
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=<tu-password>
+POSTGRES_PASSWORD=<your-password>
 POSTGRES_DB=ender
 POSTGRES_PORT=5432
 
-# Aplicación
+# Application
 PROJECT_NAME=ender
 ENVIRONMENT=local
-SECRET_KEY=<generar-con-comando-abajo>
+SECRET_KEY=<generate-with-command-below>
 FIRST_SUPERUSER=admin@example.com
-FIRST_SUPERUSER_PASSWORD=<tu-password>
+FIRST_SUPERUSER_PASSWORD=<your-password>
 
 # Frontend
 FRONTEND_HOST=http://localhost:5173
 BACKEND_CORS_ORIGINS=http://localhost,http://localhost:5173
 
-# Planes
+# Plans
 DEFAULT_PLAN=free
 QUOTA_RESET_DAY=1
 
-# Firebase (para push notifications)
-FIREBASE_SERVICE_ACCOUNT_JSON=<json-de-firebase>
+# Firebase (for push notifications)
+FIREBASE_SERVICE_ACCOUNT_JSON=<firebase-json>
 
-# QStash (cola de mensajes)
-QSTASH_TOKEN=<tu-token>
+# QStash (message queue)
+QSTASH_TOKEN=<your-token>
 QSTASH_URL=http://localhost:8080
 QSTASH_CURRENT_SIGNING_KEY=<signing-key>
 QSTASH_NEXT_SIGNING_KEY=<next-signing-key>
 SERVER_BASE_URL=http://localhost:8000
 ```
 
-### Generar Secret Key
+### Generate Secret Key
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -201,44 +203,44 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ### Backend
 ```bash
-# Ejecutar todos los tests
+# Run all tests
 docker compose exec backend pytest
 
-# Con coverage
+# With coverage
 docker compose exec backend bash scripts/tests-start.sh
 ```
 
 ### Frontend
 ```bash
-# Tests E2E
+# E2E tests
 npx playwright test
 
-# Modo UI
+# UI mode
 npx playwright test --ui
 ```
 
-## Migraciones de Base de Datos
+## Database Migrations
 
 ```bash
-# Crear nueva migración
-docker compose exec backend alembic revision --autogenerate -m "Descripción"
+# Create new migration
+docker compose exec backend alembic revision --autogenerate -m "Description"
 
-# Aplicar migraciones
+# Apply migrations
 docker compose exec backend alembic upgrade head
 ```
 
-## Despliegue
+## Deployment
 
-Ver [deployment.md](./deployment.md) para instrucciones detalladas de despliegue en producción.
+See [deployment.md](./deployment.md) for detailed production deployment instructions.
 
-## Documentación Adicional
+## Additional Documentation
 
-- [Desarrollo](./development.md) - Guía de desarrollo local
-- [Despliegue](./deployment.md) - Instrucciones de producción
-- [Backend](./backend/README.md) - Documentación del backend
-- [Frontend](./frontend/README.md) - Documentación del frontend
-- [Release Notes](./release-notes.md) - Historial de versiones
+- [Development](./development.md) - Local development guide
+- [Deployment](./deployment.md) - Production instructions
+- [Backend](./backend/README.md) - Backend documentation
+- [Frontend](./frontend/README.md) - Frontend documentation
+- [Release Notes](./release-notes.md) - Version history
 
-## Licencia
+## License
 
 MIT License
