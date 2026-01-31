@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as OauthCallbackProviderRouteImport } from './routes/oauth-callback.$provider'
 import { Route as LayoutWebhooksRouteImport } from './routes/_layout/webhooks'
 import { Route as LayoutSmsRouteImport } from './routes/_layout/sms'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
@@ -63,6 +64,11 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const OauthCallbackProviderRoute = OauthCallbackProviderRouteImport.update({
+  id: '/oauth-callback/$provider',
+  path: '/oauth-callback/$provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutWebhooksRoute = LayoutWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/webhooks': typeof LayoutWebhooksRoute
+  '/oauth-callback/$provider': typeof OauthCallbackProviderRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/settings': typeof LayoutSettingsRoute
   '/sms': typeof LayoutSmsRoute
   '/webhooks': typeof LayoutWebhooksRoute
+  '/oauth-callback/$provider': typeof OauthCallbackProviderRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/sms': typeof LayoutSmsRoute
   '/_layout/webhooks': typeof LayoutWebhooksRoute
+  '/oauth-callback/$provider': typeof OauthCallbackProviderRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sms'
     | '/webhooks'
+    | '/oauth-callback/$provider'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sms'
     | '/webhooks'
+    | '/oauth-callback/$provider'
     | '/'
   id:
     | '__root__'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_layout/settings'
     | '/_layout/sms'
     | '/_layout/webhooks'
+    | '/oauth-callback/$provider'
     | '/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -198,6 +210,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  OauthCallbackProviderRoute: typeof OauthCallbackProviderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/oauth-callback/$provider': {
+      id: '/oauth-callback/$provider'
+      path: '/oauth-callback/$provider'
+      fullPath: '/oauth-callback/$provider'
+      preLoaderRoute: typeof OauthCallbackProviderRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_layout/webhooks': {
       id: '/_layout/webhooks'
@@ -334,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  OauthCallbackProviderRoute: OauthCallbackProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
+import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, OauthAuthorizeData, OauthAuthorizeErrors, OauthAuthorizeResponses, OauthCallbackData, OauthCallbackErrors, OauthCallbackResponses, OauthLinkOauthAccountData, OauthLinkOauthAccountErrors, OauthLinkOauthAccountResponses, OauthListOauthAccountsData, OauthListOauthAccountsResponses, OauthListProvidersData, OauthListProvidersResponses, OauthSetPasswordData, OauthSetPasswordErrors, OauthSetPasswordResponses, OauthUnlinkOauthAccountData, OauthUnlinkOauthAccountErrors, OauthUnlinkOauthAccountResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -677,6 +677,122 @@ export class ApiKeysService {
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/api-keys/{api_key_id}',
             ...options
+        });
+    }
+}
+
+export class OauthService {
+    /**
+     * List Providers
+     *
+     * List available OAuth providers and their status.
+     */
+    public static oauthListProviders<ThrowOnError extends boolean = false>(options?: Options<OauthListProvidersData, ThrowOnError>) {
+        return (options?.client ?? client).get<OauthListProvidersResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            url: '/api/v1/oauth/providers',
+            ...options
+        });
+    }
+    
+    /**
+     * Authorize
+     *
+     * Get OAuth authorization URL for the specified provider.
+     *
+     * The client should redirect the user to this URL to start the OAuth flow.
+     */
+    public static oauthAuthorize<ThrowOnError extends boolean = false>(options: Options<OauthAuthorizeData, ThrowOnError>) {
+        return (options.client ?? client).get<OauthAuthorizeResponses, OauthAuthorizeErrors, ThrowOnError>({
+            responseType: 'json',
+            url: '/api/v1/oauth/{provider}/authorize',
+            ...options
+        });
+    }
+    
+    /**
+     * Callback
+     *
+     * Handle OAuth callback from provider.
+     *
+     * Exchanges the authorization code for tokens and redirects to frontend.
+     */
+    public static oauthCallback<ThrowOnError extends boolean = false>(options: Options<OauthCallbackData, ThrowOnError>) {
+        return (options.client ?? client).get<OauthCallbackResponses, OauthCallbackErrors, ThrowOnError>({
+            responseType: 'json',
+            url: '/api/v1/oauth/{provider}/callback',
+            ...options
+        });
+    }
+    
+    /**
+     * Link Oauth Account
+     *
+     * Link an OAuth account to an existing user by verifying their password.
+     *
+     * This is used when a user with an existing password-based account
+     * tries to login with OAuth for the first time. The frontend should
+     * call this after the user enters their password.
+     */
+    public static oauthLinkOauthAccount<ThrowOnError extends boolean = false>(options: Options<OauthLinkOauthAccountData, ThrowOnError>) {
+        return (options.client ?? client).post<OauthLinkOauthAccountResponses, OauthLinkOauthAccountErrors, ThrowOnError>({
+            responseType: 'json',
+            url: '/api/v1/oauth/{provider}/link',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Unlink Oauth Account
+     *
+     * Unlink an OAuth account from the current user.
+     *
+     * User must have either a password or another OAuth account to unlink.
+     */
+    public static oauthUnlinkOauthAccount<ThrowOnError extends boolean = false>(options: Options<OauthUnlinkOauthAccountData, ThrowOnError>) {
+        return (options.client ?? client).delete<OauthUnlinkOauthAccountResponses, OauthUnlinkOauthAccountErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/oauth/{provider}/unlink',
+            ...options
+        });
+    }
+    
+    /**
+     * List Oauth Accounts
+     *
+     * List OAuth accounts linked to the current user.
+     */
+    public static oauthListOauthAccounts<ThrowOnError extends boolean = false>(options?: Options<OauthListOauthAccountsData, ThrowOnError>) {
+        return (options?.client ?? client).get<OauthListOauthAccountsResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/oauth/accounts',
+            ...options
+        });
+    }
+    
+    /**
+     * Set Password
+     *
+     * Set a password for an OAuth-only user.
+     *
+     * This allows OAuth users to also login with email/password.
+     */
+    public static oauthSetPassword<ThrowOnError extends boolean = false>(options: Options<OauthSetPasswordData, ThrowOnError>) {
+        return (options.client ?? client).post<OauthSetPasswordResponses, OauthSetPasswordErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/oauth/set-password',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
 }

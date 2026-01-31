@@ -7,20 +7,22 @@ from sqlmodel import Session, delete
 from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
-from app.models import SMSDevice, SMSMessage, User
+from app.models import ApiKey, OAuthAccount, SMSDevice, SMSMessage, User, WebhookConfig
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
 
 @pytest.fixture(scope="session", autouse=True)
-def db() -> Generator[Session, None, None]:
+def db() -> Generator[Session]:
     with Session(engine) as session:
         init_db(session)
         yield session
         # Delete in reverse order to respect foreign key constraints
-        from app.models import SMSOutbox
-
-        statement = delete(SMSOutbox)
+        statement = delete(OAuthAccount)
+        session.execute(statement)
+        statement = delete(ApiKey)
+        session.execute(statement)
+        statement = delete(WebhookConfig)
         session.execute(statement)
         statement = delete(SMSMessage)
         session.execute(statement)
@@ -32,7 +34,7 @@ def db() -> Generator[Session, None, None]:
 
 
 @pytest.fixture(scope="module")
-def client() -> Generator[TestClient, None, None]:
+def client() -> Generator[TestClient]:
     with TestClient(app) as c:
         yield c
 

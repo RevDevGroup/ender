@@ -7,6 +7,7 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { AuthLayout } from "@/components/Common/AuthLayout"
+import { OAuthButtons } from "@/components/OAuth"
 import {
   Form,
   FormControl,
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
+import { Separator } from "@/components/ui/separator"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 const formSchema = z
@@ -172,6 +174,19 @@ function SignUp() {
             >
               Sign Up
             </LoadingButton>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <OAuthButtons disabled={signUpMutation.isPending} />
           </div>
 
           <div className="text-center text-sm">

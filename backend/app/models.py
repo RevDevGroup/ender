@@ -86,7 +86,7 @@ class UserQuota(UserQuotaBase, table=True):
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
+    hashed_password: str | None = Field(default=None)  # Nullable for OAuth-only users
     email_verified_at: datetime | None = Field(default=None)
     sms_devices: list["SMSDevice"] = Relationship(
         back_populates="user", cascade_delete=True
@@ -100,6 +100,9 @@ class User(UserBase, table=True):
     api_keys: list["ApiKey"] = Relationship(back_populates="user", cascade_delete=True)
     quota: UserQuota | None = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+    oauth_accounts: list["OAuthAccount"] = Relationship(
+        back_populates="user", cascade_delete=True
     )
 
 
@@ -386,3 +389,68 @@ class ApiKeyCreatePublic(SQLModel):
 class ApiKeysPublic(SQLModel):
     data: list[ApiKeyPublic]
     count: int
+
+
+# OAuth Account Models
+class OAuthAccountBase(SQLModel):
+    provider: str = Field(max_length=50, index=True)  # "google" | "github"
+    provider_user_id: str = Field(max_length=255)
+    provider_email: str = Field(max_length=255)
+
+
+class OAuthAccount(OAuthAccountBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    access_token: str | None = Field(default=None, max_length=2000)
+    refresh_token: str | None = Field(default=None, max_length=2000)
+    token_expires_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
+    )
+
+    user: "User" = Relationship(back_populates="oauth_accounts")
+
+
+class OAuthAccountPublic(OAuthAccountBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class OAuthAccountsPublic(SQLModel):
+    data: list[OAuthAccountPublic]
+    count: int
+
+
+# OAuth API Schemas
+class OAuthProviderInfo(SQLModel):
+    name: str
+    enabled: bool
+
+
+class OAuthProvidersResponse(SQLModel):
+    providers: list[OAuthProviderInfo]
+
+
+class OAuthAuthorizeResponse(SQLModel):
+    authorization_url: str
+
+
+class OAuthCallbackResponse(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
+    is_new_user: bool = False
+    requires_linking: bool = False
+    existing_email: str | None = None
+
+
+class OAuthLinkRequest(SQLModel):
+    email: EmailStr = Field(max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class SetPasswordRequest(SQLModel):
+    new_password: str = Field(min_length=8, max_length=128)

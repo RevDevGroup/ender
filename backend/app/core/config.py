@@ -126,6 +126,22 @@ class Settings(BaseSettings):
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60  # Default requests per minute
 
+    # OAuth configuration
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GITHUB_CLIENT_ID: str | None = None
+    GITHUB_CLIENT_SECRET: str | None = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def google_oauth_enabled(self) -> bool:
+        return bool(self.GOOGLE_CLIENT_ID and self.GOOGLE_CLIENT_SECRET)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def github_oauth_enabled(self) -> bool:
+        return bool(self.GITHUB_CLIENT_ID and self.GITHUB_CLIENT_SECRET)
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def is_local_qstash(self) -> bool:

@@ -155,6 +155,94 @@ export type NewPassword = {
 };
 
 /**
+ * OAuthAccountPublic
+ */
+export type OAuthAccountPublic = {
+    /**
+     * Provider
+     */
+    provider: string;
+    /**
+     * Provider User Id
+     */
+    provider_user_id: string;
+    /**
+     * Provider Email
+     */
+    provider_email: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * OAuthAccountsPublic
+ */
+export type OAuthAccountsPublic = {
+    /**
+     * Data
+     */
+    data: Array<OAuthAccountPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * OAuthAuthorizeResponse
+ */
+export type OAuthAuthorizeResponse = {
+    /**
+     * Authorization Url
+     */
+    authorization_url: string;
+};
+
+/**
+ * OAuthLinkRequest
+ */
+export type OAuthLinkRequest = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
+ * OAuthProviderInfo
+ */
+export type OAuthProviderInfo = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+};
+
+/**
+ * OAuthProvidersResponse
+ */
+export type OAuthProvidersResponse = {
+    /**
+     * Providers
+     */
+    providers: Array<OAuthProviderInfo>;
+};
+
+/**
  * PlanUpgrade
  */
 export type PlanUpgrade = {
@@ -442,6 +530,16 @@ export type SmsReport = {
      * Error Message
      */
     error_message?: string | null;
+};
+
+/**
+ * SetPasswordRequest
+ */
+export type SetPasswordRequest = {
+    /**
+     * New Password
+     */
+    new_password: string;
 };
 
 /**
@@ -1935,6 +2033,198 @@ export type ApiKeysDeleteApiKeyResponses = {
 };
 
 export type ApiKeysDeleteApiKeyResponse = ApiKeysDeleteApiKeyResponses[keyof ApiKeysDeleteApiKeyResponses];
+
+export type OauthListProvidersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/oauth/providers';
+};
+
+export type OauthListProvidersResponses = {
+    /**
+     * Successful Response
+     */
+    200: OAuthProvidersResponse;
+};
+
+export type OauthListProvidersResponse = OauthListProvidersResponses[keyof OauthListProvidersResponses];
+
+export type OauthAuthorizeData = {
+    body?: never;
+    path: {
+        /**
+         * Provider
+         */
+        provider: 'google' | 'github';
+    };
+    query?: never;
+    url: '/api/v1/oauth/{provider}/authorize';
+};
+
+export type OauthAuthorizeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type OauthAuthorizeError = OauthAuthorizeErrors[keyof OauthAuthorizeErrors];
+
+export type OauthAuthorizeResponses = {
+    /**
+     * Successful Response
+     */
+    200: OAuthAuthorizeResponse;
+};
+
+export type OauthAuthorizeResponse = OauthAuthorizeResponses[keyof OauthAuthorizeResponses];
+
+export type OauthCallbackData = {
+    body?: never;
+    path: {
+        /**
+         * Provider
+         */
+        provider: 'google' | 'github';
+    };
+    query?: {
+        /**
+         * Code
+         */
+        code?: string | null;
+        /**
+         * State
+         */
+        state?: string | null;
+        /**
+         * Error
+         */
+        error?: string | null;
+        /**
+         * Error Description
+         */
+        error_description?: string | null;
+    };
+    url: '/api/v1/oauth/{provider}/callback';
+};
+
+export type OauthCallbackErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type OauthCallbackError = OauthCallbackErrors[keyof OauthCallbackErrors];
+
+export type OauthCallbackResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type OauthLinkOauthAccountData = {
+    body: OAuthLinkRequest;
+    path: {
+        /**
+         * Provider
+         */
+        provider: 'google' | 'github';
+    };
+    query?: never;
+    url: '/api/v1/oauth/{provider}/link';
+};
+
+export type OauthLinkOauthAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type OauthLinkOauthAccountError = OauthLinkOauthAccountErrors[keyof OauthLinkOauthAccountErrors];
+
+export type OauthLinkOauthAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: Token;
+};
+
+export type OauthLinkOauthAccountResponse = OauthLinkOauthAccountResponses[keyof OauthLinkOauthAccountResponses];
+
+export type OauthUnlinkOauthAccountData = {
+    body?: never;
+    path: {
+        /**
+         * Provider
+         */
+        provider: 'google' | 'github';
+    };
+    query?: never;
+    url: '/api/v1/oauth/{provider}/unlink';
+};
+
+export type OauthUnlinkOauthAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type OauthUnlinkOauthAccountError = OauthUnlinkOauthAccountErrors[keyof OauthUnlinkOauthAccountErrors];
+
+export type OauthUnlinkOauthAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type OauthUnlinkOauthAccountResponse = OauthUnlinkOauthAccountResponses[keyof OauthUnlinkOauthAccountResponses];
+
+export type OauthListOauthAccountsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/oauth/accounts';
+};
+
+export type OauthListOauthAccountsResponses = {
+    /**
+     * Successful Response
+     */
+    200: OAuthAccountsPublic;
+};
+
+export type OauthListOauthAccountsResponse = OauthListOauthAccountsResponses[keyof OauthListOauthAccountsResponses];
+
+export type OauthSetPasswordData = {
+    body: SetPasswordRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/oauth/set-password';
+};
+
+export type OauthSetPasswordErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type OauthSetPasswordError = OauthSetPasswordErrors[keyof OauthSetPasswordErrors];
+
+export type OauthSetPasswordResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type OauthSetPasswordResponse = OauthSetPasswordResponses[keyof OauthSetPasswordResponses];
 
 export type InternalProcessNotificationData = {
     body?: never;

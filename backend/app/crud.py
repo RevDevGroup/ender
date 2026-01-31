@@ -11,6 +11,7 @@ from app.core.security import get_password_hash, verify_password
 from app.models import (
     ApiKey,
     ApiKeyCreate,
+    OAuthAccount,
     SMSDevice,
     SMSDeviceCreate,
     SMSDeviceUpdate,
@@ -24,6 +25,7 @@ from app.models import (
     WebhookConfigCreate,
     WebhookConfigUpdate,
 )
+from app.services.oauth.base import OAuthTokens, OAuthUserInfo
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -59,6 +61,8 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
     db_user = get_user_by_email(session=session, email=email)
     if not db_user:
+        return None
+    if not db_user.hashed_password:
         return None
     if not verify_password(password, db_user.hashed_password):
         return None
@@ -363,3 +367,129 @@ def update_api_key_last_used(*, session: Session, db_api_key: ApiKey) -> None:
     db_api_key.last_used_at = datetime.now(UTC)
     session.add(db_api_key)
     session.commit()
+
+
+# OAuth CRUD operations
+def get_oauth_account_by_provider_user_id(
+    *, session: Session, provider: str, provider_user_id: str
+) -> OAuthAccount | None:
+    """Get OAuth account by provider and provider user ID"""
+    statement = select(OAuthAccount).where(
+        OAuthAccount.provider == provider,
+        OAuthAccount.provider_user_id == provider_user_id,
+    )
+    return session.exec(statement).first()
+
+
+def get_oauth_account_by_user_and_provider(
+    *, session: Session, user_id: uuid.UUID, provider: str
+) -> OAuthAccount | None:
+    """Get OAuth account by user ID and provider"""
+    statement = select(OAuthAccount).where(
+        OAuthAccount.user_id == user_id,
+        OAuthAccount.provider == provider,
+    )
+    return session.exec(statement).first()
+
+
+def get_oauth_accounts_by_user(
+    *, session: Session, user_id: uuid.UUID
+) -> list[OAuthAccount]:
+    """Get all OAuth accounts for a user"""
+    statement = select(OAuthAccount).where(OAuthAccount.user_id == user_id)
+    return list(session.exec(statement).all())
+
+
+def create_oauth_account(
+    *,
+    session: Session,
+    user_id: uuid.UUID,
+    user_info: OAuthUserInfo,
+    tokens: OAuthTokens,
+) -> OAuthAccount:
+    """Create OAuth account for a user"""
+    db_oauth = OAuthAccount(
+        user_id=user_id,
+        provider=user_info.provider,
+        provider_user_id=user_info.provider_user_id,
+        provider_email=user_info.email,
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+        token_expires_at=tokens.expires_at,
+    )
+    session.add(db_oauth)
+    session.commit()
+    session.refresh(db_oauth)
+    return db_oauth
+
+
+def update_oauth_account_tokens(
+    *, session: Session, db_oauth: OAuthAccount, tokens: OAuthTokens
+) -> OAuthAccount:
+    """Update OAuth account tokens"""
+    db_oauth.access_token = tokens.access_token
+    if tokens.refresh_token:
+        db_oauth.refresh_token = tokens.refresh_token
+    db_oauth.token_expires_at = tokens.expires_at
+    session.add(db_oauth)
+    session.commit()
+    session.refresh(db_oauth)
+    return db_oauth
+
+
+def delete_oauth_account(
+    *, session: Session, oauth_account_id: uuid.UUID
+) -> OAuthAccount | None:
+    """Delete OAuth account"""
+    oauth_account = session.get(OAuthAccount, oauth_account_id)
+    if oauth_account:
+        session.delete(oauth_account)
+        session.commit()
+    return oauth_account
+
+
+def create_user_from_oauth(
+    *, session: Session, user_info: OAuthUserInfo, tokens: OAuthTokens
+) -> User:
+    """Create a new user from OAuth information"""
+    from datetime import datetime
+
+    db_user = User(
+        email=user_info.email,
+        full_name=user_info.name,
+        hashed_password=None,  # OAuth-only user
+        email_verified=user_info.email_verified,
+        email_verified_at=datetime.now(UTC) if user_info.email_verified else None,
+        is_active=True,
+        is_superuser=False,
+    )
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    # Create OAuth account
+    create_oauth_account(
+        session=session, user_id=db_user.id, user_info=user_info, tokens=tokens
+    )
+
+    return db_user
+
+
+def user_has_password(*, user: User) -> bool:
+    """Check if user has a password set"""
+    return user.hashed_password is not None
+
+
+def user_has_oauth_accounts(*, session: Session, user_id: uuid.UUID) -> bool:
+    """Check if user has any OAuth accounts"""
+    statement = select(OAuthAccount).where(OAuthAccount.user_id == user_id)
+    return session.exec(statement).first() is not None
+
+
+def set_user_password(*, session: Session, user: User, password: str) -> User:
+    """Set password for a user (typically OAuth-only user)"""
+    user.hashed_password = get_password_hash(password)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user

@@ -242,6 +242,140 @@ export const NewPasswordSchema = {
     title: 'NewPassword'
 } as const;
 
+export const OAuthAccountPublicSchema = {
+    properties: {
+        provider: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Provider'
+        },
+        provider_user_id: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Provider User Id'
+        },
+        provider_email: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Provider Email'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: [
+        'provider',
+        'provider_user_id',
+        'provider_email',
+        'id',
+        'created_at'
+    ],
+    title: 'OAuthAccountPublic'
+} as const;
+
+export const OAuthAccountsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                $ref: '#/components/schemas/OAuthAccountPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: [
+        'data',
+        'count'
+    ],
+    title: 'OAuthAccountsPublic'
+} as const;
+
+export const OAuthAuthorizeResponseSchema = {
+    properties: {
+        authorization_url: {
+            type: 'string',
+            title: 'Authorization Url'
+        }
+    },
+    type: 'object',
+    required: [
+        'authorization_url'
+    ],
+    title: 'OAuthAuthorizeResponse'
+} as const;
+
+export const OAuthLinkRequestSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            maxLength: 255,
+            format: 'email',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            maxLength: 128,
+            minLength: 8,
+            title: 'Password'
+        }
+    },
+    type: 'object',
+    required: [
+        'email',
+        'password'
+    ],
+    title: 'OAuthLinkRequest'
+} as const;
+
+export const OAuthProviderInfoSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled'
+        }
+    },
+    type: 'object',
+    required: [
+        'name',
+        'enabled'
+    ],
+    title: 'OAuthProviderInfo'
+} as const;
+
+export const OAuthProvidersResponseSchema = {
+    properties: {
+        providers: {
+            items: {
+                $ref: '#/components/schemas/OAuthProviderInfo'
+            },
+            type: 'array',
+            title: 'Providers'
+        }
+    },
+    type: 'object',
+    required: [
+        'providers'
+    ],
+    title: 'OAuthProvidersResponse'
+} as const;
+
 export const PlanUpgradeSchema = {
     properties: {
         plan_id: {
@@ -746,6 +880,22 @@ export const SMSReportSchema = {
         'status'
     ],
     title: 'SMSReport'
+} as const;
+
+export const SetPasswordRequestSchema = {
+    properties: {
+        new_password: {
+            type: 'string',
+            maxLength: 128,
+            minLength: 8,
+            title: 'New Password'
+        }
+    },
+    type: 'object',
+    required: [
+        'new_password'
+    ],
+    title: 'SetPasswordRequest'
 } as const;
 
 export const TokenSchema = {

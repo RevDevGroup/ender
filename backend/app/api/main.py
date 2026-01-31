@@ -4,6 +4,7 @@ from app.api.routes import (
     api_keys,
     internal,
     login,
+    oauth,
     plans,
     private,
     sms,
@@ -21,6 +22,7 @@ api_router.include_router(sms.router)
 api_router.include_router(plans.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(api_keys.router)
+api_router.include_router(oauth.router)
 api_router.include_router(internal.router, prefix="/internal", tags=["internal"])
 
 
