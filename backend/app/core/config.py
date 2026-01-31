@@ -131,6 +131,8 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
     GITHUB_CLIENT_ID: str | None = None
     GITHUB_CLIENT_SECRET: str | None = None
+    # Cookie domain for cross-subdomain auth (e.g., ".ender.jimscope.com")
+    COOKIE_DOMAIN: str | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property

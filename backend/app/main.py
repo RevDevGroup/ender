@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -71,6 +72,18 @@ app = FastAPI(
 # Configure rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Session middleware for OAuth state management
+# Must be added before CORS middleware (middleware order is LIFO)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    session_cookie="session",
+    max_age=600,  # 10 minutes, enough for OAuth flow
+    same_site="none" if settings.ENVIRONMENT != "local" else "lax",
+    https_only=settings.ENVIRONMENT != "local",
+    domain=settings.COOKIE_DOMAIN,
+)
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:

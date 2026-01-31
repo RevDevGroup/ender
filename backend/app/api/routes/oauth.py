@@ -4,12 +4,13 @@ OAuth authentication routes.
 Provides endpoints for OAuth authentication with Google and GitHub.
 """
 
+import logging
 import secrets
 from datetime import timedelta
 from typing import Annotated, Literal
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 
 from app import crud
@@ -30,11 +31,12 @@ from app.models import (
 )
 from app.services.oauth import get_oauth_service
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/oauth", tags=["oauth"])
 
-# State cookie settings
-STATE_COOKIE_NAME = "oauth_state"
-STATE_COOKIE_MAX_AGE = 600  # 10 minutes
+# Session key for OAuth state
+OAUTH_STATE_KEY = "oauth_state"
 
 
 ProviderName = Annotated[Literal["google", "github"], "OAuth provider name"]
@@ -89,8 +91,7 @@ def list_providers() -> OAuthProvidersResponse:
 @router.get("/{provider}/authorize", response_model=OAuthAuthorizeResponse)
 @limiter.limit(RateLimits.AUTH_LOGIN)
 def authorize(
-    request: Request,  # noqa: ARG001 - Required by SlowAPI limiter
-    response: Response,
+    request: Request,
     provider: ProviderName,
 ) -> OAuthAuthorizeResponse:
     """
@@ -110,15 +111,8 @@ def authorize(
     # Generate state for CSRF protection
     state = secrets.token_urlsafe(32)
 
-    # Store state in httponly cookie
-    response.set_cookie(
-        key=STATE_COOKIE_NAME,
-        value=state,
-        max_age=STATE_COOKIE_MAX_AGE,
-        httponly=True,
-        secure=settings.ENVIRONMENT != "local",
-        samesite="lax",
-    )
+    # Store state in session (managed by SessionMiddleware)
+    request.session[OAUTH_STATE_KEY] = state
 
     redirect_uri = get_redirect_uri(provider)
     authorization_url = oauth_provider.get_authorization_url(state, redirect_uri)
@@ -155,12 +149,19 @@ async def callback(
             )
         )
 
-    # Verify state
-    stored_state = request.cookies.get(STATE_COOKIE_NAME)
+    # Verify state from session
+    stored_state = request.session.get(OAUTH_STATE_KEY)
+    logger.info(
+        f"OAuth callback - state from query: {state[:10]}..., "
+        f"state from session: {stored_state[:10] if stored_state else 'None'}"
+    )
     if not stored_state or stored_state != state:
         return RedirectResponse(
             url=get_frontend_callback_url(provider, error="Invalid state parameter")
         )
+
+    # Clear state from session after validation
+    request.session.pop(OAUTH_STATE_KEY, None)
 
     service = get_oauth_service()
     oauth_provider = service.get_provider(provider)
@@ -214,13 +215,11 @@ async def callback(
             user.id, expires_delta=access_token_expires
         )
 
-        response = RedirectResponse(
+        return RedirectResponse(
             url=get_frontend_callback_url(
                 provider, access_token=access_token, is_new_user=False
             )
         )
-        response.delete_cookie(STATE_COOKIE_NAME)
-        return response
 
     # Check if user with this email already exists
     existing_user = crud.get_user_by_email(session=session, email=user_info.email)
@@ -257,13 +256,11 @@ async def callback(
             existing_user.id, expires_delta=access_token_expires
         )
 
-        response = RedirectResponse(
+        return RedirectResponse(
             url=get_frontend_callback_url(
                 provider, access_token=access_token, is_new_user=False
             )
         )
-        response.delete_cookie(STATE_COOKIE_NAME)
-        return response
 
     # Create new user
     user = crud.create_user_from_oauth(
@@ -275,13 +272,11 @@ async def callback(
         user.id, expires_delta=access_token_expires
     )
 
-    response = RedirectResponse(
+    return RedirectResponse(
         url=get_frontend_callback_url(
             provider, access_token=access_token, is_new_user=True
         )
     )
-    response.delete_cookie(STATE_COOKIE_NAME)
-    return response
 
 
 @router.post("/{provider}/link", response_model=Token)

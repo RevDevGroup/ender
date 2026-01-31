@@ -132,6 +132,8 @@ idna==3.11
     #   email-validator
     #   httpx
     #   requests
+itsdangerous==2.2.0
+    # via app (pyproject.toml)
 jinja2==3.1.6
     # via
     #   app (pyproject.toml)
