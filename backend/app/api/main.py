@@ -8,6 +8,7 @@ from app.api.routes import (
     plans,
     private,
     sms,
+    subscriptions,
     users,
     utils,
     webhooks,
@@ -23,6 +24,9 @@ api_router.include_router(plans.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(api_keys.router)
 api_router.include_router(oauth.router)
+api_router.include_router(
+    subscriptions.router, prefix="/subscriptions", tags=["subscriptions"]
+)
 api_router.include_router(internal.router, prefix="/internal", tags=["internal"])
 
 

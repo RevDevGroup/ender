@@ -1,8 +1,37 @@
 import uuid
 from datetime import UTC, datetime
+from enum import Enum
+from typing import Optional
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
+
+
+# Subscription and Payment Enums
+class SubscriptionStatus(str, Enum):
+    """Status of a user subscription."""
+
+    PENDING = "pending"  # Waiting for first payment
+    ACTIVE = "active"  # Subscription is active
+    PAST_DUE = "past_due"  # Payment overdue, in grace period
+    CANCELED = "canceled"  # User canceled
+    EXPIRED = "expired"  # Grace period ended without payment
+
+
+class PaymentStatus(str, Enum):
+    """Status of a payment transaction."""
+
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+
+
+class BillingCycle(str, Enum):
+    """Billing cycle options."""
+
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
 
 
 # Shared properties
@@ -48,8 +77,22 @@ class UserPlanBase(SQLModel):
     price: float = Field(default=0.0)
 
 
+class UserPlanUpdate(SQLModel):
+    """Schema for updating a plan."""
+
+    name: str | None = Field(default=None, max_length=100)
+    max_sms_per_month: int | None = None
+    max_devices: int | None = None
+    price: float | None = None
+    price_yearly: float | None = None
+    is_public: bool | None = None
+
+
 class UserPlan(UserPlanBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    # Additional pricing fields for subscriptions
+    price_yearly: float = Field(default=0.0)  # Yearly price (usually discounted)
+    is_public: bool = Field(default=True)  # Whether plan is visible to users
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -57,6 +100,157 @@ class UserPlan(UserPlanBase, table=True):
     )
 
     quotas: list["UserQuota"] = Relationship(back_populates="plan")
+    subscriptions: list["Subscription"] = Relationship(back_populates="plan")
+
+
+# Subscription Models
+class SubscriptionBase(SQLModel):
+    """Base subscription fields."""
+
+    billing_cycle: BillingCycle = Field(default=BillingCycle.MONTHLY)
+    status: SubscriptionStatus = Field(default=SubscriptionStatus.PENDING)
+    cancel_at_period_end: bool = Field(default=False)
+
+
+class Subscription(SubscriptionBase, table=True):
+    """
+    User subscription to a plan.
+
+    Tracks the subscription lifecycle including billing periods,
+    cancellation state, and payment history.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE"
+    )
+    plan_id: uuid.UUID = Field(
+        foreign_key="userplan.id", nullable=False, ondelete="RESTRICT"
+    )
+
+    # Billing period
+    current_period_start: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    current_period_end: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    # Cancellation tracking
+    canceled_at: datetime | None = Field(default=None)
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
+    )
+
+    # Relationships
+    user: "User" = Relationship(back_populates="subscription")
+    plan: UserPlan = Relationship(back_populates="subscriptions")
+    payments: list["Payment"] = Relationship(
+        back_populates="subscription", cascade_delete=True
+    )
+
+
+class SubscriptionCreate(SQLModel):
+    """Schema for creating a subscription."""
+
+    plan_id: uuid.UUID
+    billing_cycle: BillingCycle = BillingCycle.MONTHLY
+
+
+class SubscriptionPublic(SubscriptionBase):
+    """Public subscription response."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    plan_id: uuid.UUID
+    current_period_start: datetime
+    current_period_end: datetime
+    canceled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class SubscriptionWithPlan(SubscriptionPublic):
+    """Subscription with plan details."""
+
+    plan: "UserPlanPublic"
+
+
+# Payment Models
+class PaymentBase(SQLModel):
+    """Base payment fields."""
+
+    amount: float
+    currency: str = Field(default="USD", max_length=10)
+    status: PaymentStatus = Field(default=PaymentStatus.PENDING)
+
+
+class Payment(PaymentBase, table=True):
+    """
+    Payment record for a subscription.
+
+    Tracks individual payments including provider details
+    and the billing period covered.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    subscription_id: uuid.UUID = Field(
+        foreign_key="subscription.id", nullable=False, ondelete="CASCADE"
+    )
+
+    # Payment provider info (provider-agnostic)
+    provider: str = Field(max_length=50)  # "qvapay", "tropipay", etc.
+    provider_transaction_id: str | None = Field(
+        default=None, unique=True, index=True, max_length=255
+    )
+    provider_invoice_id: str | None = Field(default=None, index=True, max_length=255)
+    provider_invoice_url: str | None = Field(default=None, max_length=500)
+
+    # Billing period covered by this payment
+    period_start: datetime
+    period_end: datetime
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
+    )
+    paid_at: datetime | None = Field(default=None)
+
+    # Relationship
+    subscription: Subscription = Relationship(back_populates="payments")
+
+
+class PaymentPublic(PaymentBase):
+    """Public payment response."""
+
+    id: uuid.UUID
+    subscription_id: uuid.UUID
+    provider: str
+    provider_invoice_url: str | None
+    period_start: datetime
+    period_end: datetime
+    created_at: datetime
+    paid_at: datetime | None
+
+
+class PaymentsPublic(SQLModel):
+    """Paginated payments response."""
+
+    data: list[PaymentPublic]
+    count: int
+
+
+# Subscription API Response Schemas
+class SubscriptionCreateResponse(SQLModel):
+    """Response when creating a subscription."""
+
+    subscription_id: uuid.UUID
+    payment_id: uuid.UUID
+    payment_url: str | None
+    amount: float
+    message: str
 
 
 class UserQuotaBase(SQLModel):
@@ -103,6 +297,9 @@ class User(UserBase, table=True):
     )
     oauth_accounts: list["OAuthAccount"] = Relationship(
         back_populates="user", cascade_delete=True
+    )
+    subscription: Optional["Subscription"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
 
 
@@ -327,6 +524,8 @@ class UserPlanCreate(UserPlanBase):
 
 class UserPlanPublic(UserPlanBase):
     id: uuid.UUID
+    price_yearly: float
+    is_public: bool
     created_at: datetime
     updated_at: datetime
 

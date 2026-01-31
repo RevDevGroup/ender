@@ -144,6 +144,47 @@ class Settings(BaseSettings):
     def github_oauth_enabled(self) -> bool:
         return bool(self.GITHUB_CLIENT_ID and self.GITHUB_CLIENT_SECRET)
 
+    # Payment provider configuration
+    # Options: "qvapay", "tropipay"
+    # To add new providers, implement PaymentProvider in app/services/payment/
+    PAYMENT_PROVIDER: str = "qvapay"
+
+    # QvaPay credentials
+    QVAPAY_APP_ID: str | None = None
+    QVAPAY_APP_SECRET: str | None = None
+
+    # Tropipay credentials (for future use)
+    TROPIPAY_CLIENT_ID: str | None = None
+    TROPIPAY_CLIENT_SECRET: str | None = None
+    TROPIPAY_ENVIRONMENT: str = "sandbox"  # "sandbox" or "production"
+
+    # Subscription settings
+    SUBSCRIPTION_GRACE_PERIOD_DAYS: int = 3  # Grace period after expiration
+    RENEWAL_REMINDER_DAYS: int = 3  # Days before expiration to send reminder
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def qvapay_enabled(self) -> bool:
+        """Check if QvaPay is configured."""
+        return bool(self.QVAPAY_APP_ID and self.QVAPAY_APP_SECRET)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def tropipay_enabled(self) -> bool:
+        """Check if Tropipay is configured."""
+        return bool(self.TROPIPAY_CLIENT_ID and self.TROPIPAY_CLIENT_SECRET)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def payments_enabled(self) -> bool:
+        """Check if any payment provider is configured."""
+        provider = self.PAYMENT_PROVIDER.lower()
+        if provider == "qvapay":
+            return self.qvapay_enabled
+        elif provider == "tropipay":
+            return self.tropipay_enabled
+        return False
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def is_local_qstash(self) -> bool:
