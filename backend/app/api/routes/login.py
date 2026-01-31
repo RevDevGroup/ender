@@ -13,6 +13,8 @@ from app.core.rate_limit import RateLimits, limiter
 from app.core.security import get_password_hash
 from app.models import Message, NewPassword, Token, UserPublic
 from app.utils import (
+    EmailNotConfiguredError,
+    EmailSendError,
     generate_password_reset_token,
     generate_reset_password_email,
     send_email,
@@ -76,11 +78,22 @@ def recover_password(
     email_data = generate_reset_password_email(
         email_to=user.email, email=email, token=password_reset_token
     )
-    send_email(
-        email_to=user.email,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
-    )
+    try:
+        send_email(
+            email_to=user.email,
+            subject=email_data.subject,
+            html_content=email_data.html_content,
+        )
+    except EmailNotConfiguredError:
+        raise HTTPException(
+            status_code=503,
+            detail="Email service is not available. Please contact support.",
+        )
+    except EmailSendError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Failed to send email: {e}",
+        )
     return Message(message="Password recovery email sent")
 
 
