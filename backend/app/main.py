@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import sentry_sdk
@@ -12,6 +13,12 @@ from app.core.config import settings
 from app.services.fcm_service import FCMService
 from app.services.notification_dispatcher import NotificationDispatcher
 from app.services.qstash_service import QStashService
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 @asynccontextmanager
