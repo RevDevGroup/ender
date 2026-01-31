@@ -1,34 +1,34 @@
-# FastAPI Project - Development
+# Ender - Development
 
 ## Docker Compose
 
-* Start the local stack with Docker Compose:
+* Inicia el stack local con Docker Compose:
 
 ```bash
 docker compose watch
 ```
 
-* Now you can open your browser and interact with these URLs:
+* Ahora puedes abrir tu navegador e interactuar con estas URLs:
 
-Frontend, built with Docker, with routes handled based on the path: <http://localhost:5173>
+Frontend: <http://localhost:5173>
 
-Backend, JSON based web API based on OpenAPI: <http://localhost:8000>
+Backend, API web basada en JSON (OpenAPI): <http://localhost:8000>
 
-Automatic interactive documentation with Swagger UI (from the OpenAPI backend): <http://localhost:8000/docs>
+Documentación interactiva automática con Swagger UI: <http://localhost:8000/docs>
 
-Adminer, database web administration: <http://localhost:8080>
+Adminer, administración web de base de datos: <http://localhost:8080>
 
-Traefik UI, to see how the routes are being handled by the proxy: <http://localhost:8090>
+MailCatcher: <http://localhost:1080>
 
-**Note**: The first time you start your stack, it might take a minute for it to be ready. While the backend waits for the database to be ready and configures everything. You can check the logs to monitor it.
+**Nota**: La primera vez que inicies tu stack, puede tomar un minuto para estar listo. Mientras el backend espera que la base de datos esté lista y configura todo. Puedes revisar los logs para monitorearlo.
 
-To check the logs, run (in another terminal):
+Para revisar los logs, ejecuta (en otra terminal):
 
 ```bash
 docker compose logs
 ```
 
-To check the logs of a specific service, add the name of the service, e.g.:
+Para revisar los logs de un servicio específico, agrega el nombre del servicio, ej.:
 
 ```bash
 docker compose logs backend
@@ -36,136 +36,96 @@ docker compose logs backend
 
 ## Mailcatcher
 
-Mailcatcher is a simple SMTP server that catches all emails sent by the backend during local development. Instead of sending real emails, they are captured and displayed in a web interface.
+Mailcatcher es un servidor SMTP simple que captura todos los emails enviados por el backend durante el desarrollo local. En lugar de enviar emails reales, son capturados y mostrados en una interfaz web.
 
-This is useful for:
+Esto es útil para:
 
-* Testing email functionality during development
-* Verifying email content and formatting
-* Debugging email-related functionality without sending real emails
+* Probar funcionalidad de email durante el desarrollo
+* Verificar contenido y formato de emails
+* Debuggear funcionalidad relacionada con email sin enviar emails reales
 
-The backend is automatically configured to use Mailcatcher when running with Docker Compose locally (SMTP on port 1025). All captured emails can be viewed at <http://localhost:1080>.
+El backend está configurado automáticamente para usar Mailcatcher cuando corre con Docker Compose localmente (SMTP en puerto 1025). Todos los emails capturados se pueden ver en <http://localhost:1080>.
 
-## Local Development
+## Desarrollo Local
 
-The Docker Compose files are configured so that each of the services is available in a different port in `localhost`.
+Los archivos de Docker Compose están configurados para que cada servicio esté disponible en un puerto diferente en `localhost`.
 
-For the backend and frontend, they use the same port that would be used by their local development server, so, the backend is at `http://localhost:8000` and the frontend at `http://localhost:5173`.
+Para el backend y frontend, usan el mismo puerto que usaría su servidor de desarrollo local, así que el backend está en `http://localhost:8000` y el frontend en `http://localhost:5173`.
 
-This way, you could turn off a Docker Compose service and start its local development service, and everything would keep working, because it all uses the same ports.
+De esta manera, podrías apagar un servicio de Docker Compose e iniciar su servidor de desarrollo local, y todo seguiría funcionando porque todo usa los mismos puertos.
 
-For example, you can stop that `frontend` service in the Docker Compose, in another terminal, run:
+Por ejemplo, puedes detener el servicio `frontend` en Docker Compose, en otra terminal, ejecuta:
 
 ```bash
 docker compose stop frontend
 ```
 
-And then start the local frontend development server:
+Y luego inicia el servidor de desarrollo local del frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Or you could stop the `backend` Docker Compose service:
+O podrías detener el servicio `backend` de Docker Compose:
 
 ```bash
 docker compose stop backend
 ```
 
-And then you can run the local development server for the backend:
+Y luego puedes ejecutar el servidor de desarrollo local del backend:
 
 ```bash
 cd backend
 fastapi dev app/main.py
 ```
 
-## Docker Compose in `localhost.tiangolo.com`
+## Archivos de Docker Compose y variables de entorno
 
-When you start the Docker Compose stack, it uses `localhost` by default, with different ports for each service (backend, frontend, adminer, etc).
+Hay un archivo principal `docker-compose.yml` con todas las configuraciones que aplican a todo el stack, es usado automáticamente por `docker compose`.
 
-When you deploy it to production (or staging), it will deploy each service in a different subdomain, like `api.example.com` for the backend and `dashboard.example.com` for the frontend.
+Y también hay un `docker-compose.override.yml` con overrides para desarrollo, por ejemplo para montar el código fuente como volumen. Es usado automáticamente por `docker compose` para aplicar overrides sobre `docker-compose.yml`.
 
-In the guide about [deployment](deployment.md) you can read about Traefik, the configured proxy. That's the component in charge of transmitting traffic to each service based on the subdomain.
+Estos archivos de Docker Compose usan el archivo `.env` que contiene configuraciones para inyectar como variables de entorno en los contenedores.
 
-If you want to test that it's all working locally, you can edit the local `.env` file, and change:
-
-```dotenv
-DOMAIN=localhost.tiangolo.com
-```
-
-That will be used by the Docker Compose files to configure the base domain for the services.
-
-Traefik will use this to transmit traffic at `api.localhost.tiangolo.com` to the backend, and traffic at `dashboard.localhost.tiangolo.com` to the frontend.
-
-The domain `localhost.tiangolo.com` is a special domain that is configured (with all its subdomains) to point to `127.0.0.1`. This way you can use that for your local development.
-
-After you update it, run again:
+Después de cambiar variables, asegúrate de reiniciar el stack:
 
 ```bash
 docker compose watch
 ```
 
-When deploying, for example in production, the main Traefik is configured outside of the Docker Compose files. For local development, there's an included Traefik in `docker-compose.override.yml`, just to let you test that the domains work as expected, for example with `api.localhost.tiangolo.com` and `dashboard.localhost.tiangolo.com`.
+## El archivo .env
 
-## Docker Compose files and env vars
+El archivo `.env` es el que contiene todas tus configuraciones, claves generadas y contraseñas, etc.
 
-There is a main `docker-compose.yml` file with all the configurations that apply to the whole stack, it is used automatically by `docker compose`.
+Dependiendo de tu flujo de trabajo, podrías querer excluirlo de Git, por ejemplo si tu proyecto es público. En ese caso, tendrías que asegurarte de configurar una manera para que tus herramientas de CI obtengan las variables mientras construyen o despliegan tu proyecto.
 
-And there's also a `docker-compose.override.yml` with overrides for development, for example to mount the source code as a volume. It is used automatically by `docker compose` to apply overrides on top of `docker-compose.yml`.
+## Pre-commits y linting de código
 
-These Docker Compose files use the `.env` file containing configurations to be injected as environment variables in the containers.
+Estamos usando una herramienta llamada [pre-commit](https://pre-commit.com/) para linting y formateo de código.
 
-They also use some additional configurations taken from environment variables set in the scripts before calling the `docker compose` command.
+Cuando lo instalas, corre justo antes de hacer un commit en git. De esta manera asegura que el código sea consistente y formateado incluso antes de ser commiteado.
 
-After changing variables, make sure you restart the stack:
+Puedes encontrar un archivo `.pre-commit-config.yaml` con configuraciones en la raíz del proyecto.
 
-```bash
-docker compose watch
-```
+### Instalar pre-commit para que corra automáticamente
 
-## The .env file
+`pre-commit` ya es parte de las dependencias del proyecto, pero también podrías instalarlo globalmente si prefieres, siguiendo [la documentación oficial de pre-commit](https://pre-commit.com/).
 
-The `.env` file is the one that contains all your configurations, generated keys and passwords, etc.
+Después de tener la herramienta `pre-commit` instalada y disponible, necesitas "instalarla" en el repositorio local, para que corra automáticamente antes de cada commit.
 
-Depending on your workflow, you could want to exclude it from Git, for example if your project is public. In that case, you would have to make sure to set up a way for your CI tools to obtain it while building or deploying your project.
-
-One way to do it could be to add each environment variable to your CI/CD system, and updating the `docker-compose.yml` file to read that specific env var instead of reading the `.env` file.
-
-## Pre-commits and code linting
-
-we are using a tool called [pre-commit](https://pre-commit.com/) for code linting and formatting.
-
-When you install it, it runs right before making a commit in git. This way it ensures that the code is consistent and formatted even before it is committed.
-
-You can find a file `.pre-commit-config.yaml` with configurations at the root of the project.
-
-#### Install pre-commit to run automatically
-
-`pre-commit` is already part of the dependencies of the project, but you could also install it globally if you prefer to, following [the official pre-commit docs](https://pre-commit.com/).
-
-After having the `pre-commit` tool installed and available, you need to "install" it in the local repository, so that it runs automatically before each commit.
-
-Using `uv`, you could do it with:
+Usando `uv`, podrías hacerlo con:
 
 ```bash
 ❯ uv run pre-commit install
 pre-commit installed at .git/hooks/pre-commit
 ```
 
-Now whenever you try to commit, e.g. with:
+Ahora cada vez que intentes hacer commit, pre-commit correrá y revisará y formateará el código que estás a punto de commitear, y te pedirá que agregues ese código (stage it) con git de nuevo antes de commitear.
 
-```bash
-git commit
-```
+### Correr pre-commit hooks manualmente
 
-...pre-commit will run and check and format the code you are about to commit, and will ask you to add that code (stage it) with git again before committing.
-
-Then you can `git add` the modified/fixed files again and now you can commit.
-
-#### Running pre-commit hooks manually
-
-you can also run `pre-commit` manually on all the files, you can do it using `uv` with:
+También puedes correr `pre-commit` manualmente en todos los archivos usando `uv`:
 
 ```bash
 ❯ uv run pre-commit run --all-files
@@ -180,40 +140,18 @@ prettier.................................................................Passed
 
 ## URLs
 
-The production or staging URLs would use these same paths, but with your own domain.
+### URLs de Desarrollo
 
-### Development URLs
-
-Development URLs, for local development.
+URLs de desarrollo, para desarrollo local.
 
 Frontend: <http://localhost:5173>
 
 Backend: <http://localhost:8000>
 
-Automatic Interactive Docs (Swagger UI): <http://localhost:8000/docs>
+Documentación Interactiva Automática (Swagger UI): <http://localhost:8000/docs>
 
-Automatic Alternative Docs (ReDoc): <http://localhost:8000/redoc>
+Documentación Alternativa Automática (ReDoc): <http://localhost:8000/redoc>
 
 Adminer: <http://localhost:8080>
 
-Traefik UI: <http://localhost:8090>
-
 MailCatcher: <http://localhost:1080>
-
-### Development URLs with `localhost.tiangolo.com` Configured
-
-Development URLs, for local development.
-
-Frontend: <http://dashboard.localhost.tiangolo.com>
-
-Backend: <http://api.localhost.tiangolo.com>
-
-Automatic Interactive Docs (Swagger UI): <http://api.localhost.tiangolo.com/docs>
-
-Automatic Alternative Docs (ReDoc): <http://api.localhost.tiangolo.com/redoc>
-
-Adminer: <http://localhost.tiangolo.com:8080>
-
-Traefik UI: <http://localhost.tiangolo.com:8090>
-
-MailCatcher: <http://localhost.tiangolo.com:1080>
