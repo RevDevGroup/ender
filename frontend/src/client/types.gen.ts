@@ -267,7 +267,7 @@ export type PlanUpgradeRequest = {
      */
     plan_id: string;
     billing_cycle?: BillingCycle;
-    payment_method?: PaymentMethod;
+    payment_method?: PaymentMethod | null;
 };
 
 /**

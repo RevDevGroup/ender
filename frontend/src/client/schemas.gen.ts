@@ -408,8 +408,14 @@ export const PlanUpgradeRequestSchema = {
             default: 'monthly'
         },
         payment_method: {
-            $ref: '#/components/schemas/PaymentMethod',
-            default: 'invoice'
+            anyOf: [
+                {
+                    $ref: '#/components/schemas/PaymentMethod'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         }
     },
     type: 'object',

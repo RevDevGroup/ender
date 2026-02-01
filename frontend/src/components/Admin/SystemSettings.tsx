@@ -95,10 +95,7 @@ function SystemSettings() {
             <Label htmlFor="app-name">Application Name</Label>
             <Input
               id="app-name"
-              value={getConfigValue("app_name")}
-              onChange={(_e) => {
-                // Debounce would be nice here, but for simplicity just update on blur
-              }}
+              defaultValue={getConfigValue("app_name")}
               onBlur={(e) => handleConfigChange("app_name", e.target.value)}
               placeholder="Ender"
               className="w-[300px]"

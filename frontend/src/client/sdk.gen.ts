@@ -241,7 +241,7 @@ export class UsersService {
     /**
      * Delete User
      *
-     * Delete a user.
+     * Delete a user and all related data.
      */
     public static usersDeleteUser<ThrowOnError extends boolean = false>(options: Options<UsersDeleteUserData, ThrowOnError>) {
         return (options.client ?? client).delete<UsersDeleteUserResponses, UsersDeleteUserErrors, ThrowOnError>({

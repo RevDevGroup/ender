@@ -581,7 +581,7 @@ class PlanUpgradeRequest(SQLModel):
 
     plan_id: uuid.UUID
     billing_cycle: BillingCycle = BillingCycle.MONTHLY
-    payment_method: PaymentMethod = PaymentMethod.INVOICE
+    payment_method: PaymentMethod | None = None  # None = use system default
 
 
 class PlanUpgradePublic(SQLModel):

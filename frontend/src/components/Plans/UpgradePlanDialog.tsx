@@ -102,7 +102,7 @@ function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
   const mutation = useMutation({
     mutationFn: (planId: string) =>
       PlansService.plansUpgradePlan({
-        body: { plan_id: planId, payment_method: "invoice" },
+        body: { plan_id: planId }, // payment_method uses system default
       }),
     onSuccess: (response) => {
       const data = response.data as UpgradeResponse

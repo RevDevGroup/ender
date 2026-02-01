@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.api.routes.system_config import get_config_value
 from app.core.config import settings
 from app.models import (
     PaymentMethod,
@@ -73,8 +74,13 @@ async def upgrade_plan(
     if not plan.is_public:
         raise HTTPException(status_code=400, detail="Plan not available")
 
-    # Get payment method (default to invoice)
-    payment_method = getattr(body, "payment_method", PaymentMethod.INVOICE)
+    # Get payment method from request or fall back to system config
+    if body.payment_method is not None:
+        payment_method = body.payment_method
+    else:
+        # Read default from system config (DB or env fallback)
+        default_method = get_config_value(session, "default_payment_method")
+        payment_method = PaymentMethod(default_method)
 
     # Build webhook URL with provider in path
     base_url = str(request.base_url).rstrip("/")
