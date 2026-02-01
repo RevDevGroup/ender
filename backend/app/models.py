@@ -34,6 +34,13 @@ class BillingCycle(str, Enum):
     YEARLY = "yearly"
 
 
+class PaymentMethod(str, Enum):
+    """Payment method for subscriptions."""
+
+    INVOICE = "invoice"  # Manual payment via invoice each period
+    AUTHORIZED = "authorized"  # Automatic payments via authorized token
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
@@ -109,6 +116,7 @@ class SubscriptionBase(SQLModel):
 
     billing_cycle: BillingCycle = Field(default=BillingCycle.MONTHLY)
     status: SubscriptionStatus = Field(default=SubscriptionStatus.PENDING)
+    payment_method: PaymentMethod = Field(default=PaymentMethod.INVOICE)
     cancel_at_period_end: bool = Field(default=False)
 
 
@@ -573,6 +581,7 @@ class PlanUpgradeRequest(SQLModel):
 
     plan_id: uuid.UUID
     billing_cycle: BillingCycle = BillingCycle.MONTHLY
+    payment_method: PaymentMethod = PaymentMethod.INVOICE
 
 
 class PlanUpgradePublic(SQLModel):

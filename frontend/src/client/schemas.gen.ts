@@ -386,6 +386,16 @@ export const OAuthProvidersResponseSchema = {
     title: 'OAuthProvidersResponse'
 } as const;
 
+export const PaymentMethodSchema = {
+    type: 'string',
+    enum: [
+        'invoice',
+        'authorized'
+    ],
+    title: 'PaymentMethod',
+    description: 'Payment method for subscriptions.'
+} as const;
+
 export const PlanUpgradeRequestSchema = {
     properties: {
         plan_id: {
@@ -396,6 +406,10 @@ export const PlanUpgradeRequestSchema = {
         billing_cycle: {
             $ref: '#/components/schemas/BillingCycle',
             default: 'monthly'
+        },
+        payment_method: {
+            $ref: '#/components/schemas/PaymentMethod',
+            default: 'invoice'
         }
     },
     type: 'object',

@@ -20,6 +20,8 @@ from app.models import (
     Subscription,
     SubscriptionStatus,
 )
+from app.services.payment import get_payment_service
+from app.services.payment.base import WebhookEventType
 from app.services.qstash_service import QStashService
 from app.services.subscription_service import (
     SubscriptionService,
@@ -32,38 +34,106 @@ router = APIRouter()
 
 
 # ============================================================================
-# Payment Provider Callbacks
+# Payment Provider Webhooks (Generic)
 # ============================================================================
 
 
-@router.post("/callback/authorize")
-async def authorization_callback(
+@router.post("/webhook/{provider}")
+@router.get("/webhook/{provider}")
+async def payment_webhook(
+    provider: str,
+    request: Request,
     session: SessionDep,
-    user_uuid: str,
-    remote_id: str,
 ) -> Any:
     """
-    Callback from QvaPay after user authorizes automatic payments.
+    Generic webhook endpoint for payment providers.
 
-    This completes the authorization and charges the first payment.
+    Supports:
+    - QvaPay authorize_payments callback (GET with query params)
+    - QvaPay invoice webhook (POST with JSON)
+    - Future providers (TropiPay, etc.)
+
+    Args:
+        provider: Payment provider name (qvapay, tropipay)
     """
+    payment_service = get_payment_service()
+
+    # Get payload based on request method
+    if request.method == "GET":
+        payload: dict[str, object] = dict(request.query_params)
+    else:
+        try:
+            payload = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    # Parse webhook using the provider's logic
     try:
-        user_id = uuid.UUID(remote_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid remote_id")
+        event = payment_service.parse_webhook(
+            provider_name=provider,
+            payload=payload,
+            headers=dict(request.headers),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not event:
+        logger.warning(f"Unrecognized webhook from {provider}: {payload}")
+        raise HTTPException(status_code=400, detail="Invalid webhook payload")
+
+    logger.info(f"Webhook received from {provider}: {event.event_type.value}")
 
     service = get_subscription_service()
-    subscription = await service.complete_authorization(
-        session=session,
-        user_id=user_id,
-        provider_user_uuid=user_uuid,
-    )
 
-    return {
-        "status": "success",
-        "subscription_id": str(subscription.id),
-        "subscription_status": subscription.status.value,
-    }
+    if event.event_type == WebhookEventType.AUTHORIZATION_COMPLETED:
+        # Handle authorize_payments callback
+        if not event.user_uuid:
+            raise HTTPException(status_code=400, detail="Missing user_uuid")
+
+        try:
+            user_id = uuid.UUID(event.remote_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid remote_id")
+
+        subscription = await service.complete_authorization(
+            session=session,
+            user_id=user_id,
+            provider_user_uuid=event.user_uuid,
+        )
+
+        return {
+            "status": "success",
+            "event": "authorization_completed",
+            "subscription_id": str(subscription.id),
+            "subscription_status": subscription.status.value,
+        }
+
+    elif event.event_type == WebhookEventType.PAYMENT_COMPLETED:
+        # Handle invoice payment webhook
+        if not event.transaction_id:
+            raise HTTPException(status_code=400, detail="Missing transaction_id")
+
+        try:
+            payment_id = uuid.UUID(event.remote_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid remote_id")
+
+        subscription = await service.complete_invoice_payment(
+            session=session,
+            payment_id=payment_id,
+            transaction_id=event.transaction_id,
+        )
+
+        return {
+            "status": "success",
+            "event": "payment_completed",
+            "subscription_id": str(subscription.id),
+            "subscription_status": subscription.status.value,
+        }
+
+    else:
+        logger.warning(f"Unhandled webhook event type: {event.event_type}")
+        return {"status": "ignored", "event": event.event_type.value}
 
 
 # ============================================================================

@@ -13,7 +13,13 @@ const useCustomToast = () => {
     })
   }
 
-  return { showSuccessToast, showErrorToast }
+  const showInfoToast = (description: string) => {
+    toast.info("Info", {
+      description,
+    })
+  }
+
+  return { showSuccessToast, showErrorToast, showInfoToast }
 }
 
 export default useCustomToast

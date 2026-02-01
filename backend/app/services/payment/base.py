@@ -39,6 +39,9 @@ class InvoiceRequest:
         currency: Currency code (USD, EUR, etc.)
         description: Description shown to user
         remote_id: Internal ID for tracking (e.g., payment.id)
+        webhook_url: URL to receive payment notifications (optional)
+        success_url: URL to redirect user after successful payment (optional)
+        error_url: URL to redirect user if payment fails/cancelled (optional)
         metadata: Additional provider-specific data
     """
 
@@ -46,6 +49,9 @@ class InvoiceRequest:
     currency: str
     description: str
     remote_id: str
+    webhook_url: str | None = None
+    success_url: str | None = None
+    error_url: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
 
 
@@ -193,6 +199,36 @@ class ChargeResult:
     amount: float | None = None
     error: str | None = None
     raw_response: dict[str, object] | None = None
+
+
+class WebhookEventType(str, Enum):
+    """Types of webhook events from payment providers."""
+
+    PAYMENT_COMPLETED = "payment_completed"
+    AUTHORIZATION_COMPLETED = "authorization_completed"
+    PAYMENT_FAILED = "payment_failed"
+
+
+@dataclass
+class WebhookEvent:
+    """
+    Parsed webhook event from a payment provider.
+
+    Attributes:
+        event_type: Type of the event
+        transaction_id: Provider transaction ID (for payments)
+        remote_id: Our internal reference ID (payment.id or user.id)
+        user_uuid: Provider's user UUID (for authorization events)
+        amount: Transaction amount (if applicable)
+        raw_payload: Original webhook payload
+    """
+
+    event_type: WebhookEventType
+    remote_id: str
+    transaction_id: str | None = None
+    user_uuid: str | None = None
+    amount: float | None = None
+    raw_payload: dict[str, object] = field(default_factory=dict)
 
 
 class PaymentProvider(ABC):
@@ -345,4 +381,24 @@ class PaymentProvider(ABC):
         """
         raise NotImplementedError(
             f"{self.provider_name} does not support authorized payments"
+        )
+
+    def parse_webhook(
+        self, payload: dict[str, object], headers: dict[str, str]
+    ) -> WebhookEvent | None:
+        """
+        Parse a webhook payload from this provider.
+
+        Each provider implements their own parsing logic based on their
+        webhook format.
+
+        Args:
+            payload: Webhook payload (parsed JSON or query params)
+            headers: HTTP headers from the webhook request
+
+        Returns:
+            WebhookEvent if successfully parsed, None if invalid/unrecognized
+        """
+        raise NotImplementedError(
+            f"{self.provider_name} does not implement webhook parsing"
         )

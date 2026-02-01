@@ -31,6 +31,8 @@ from .base import (
     PaymentVerification,
     TransactionInfo,
     TransactionStatus,
+    WebhookEvent,
+    WebhookEventType,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,15 +83,21 @@ class QvaPayProvider(PaymentProvider):
             return InvoiceResult(success=False, error="QvaPay is not configured")
 
         try:
+            payload: dict[str, object] = {
+                "amount": request.amount,
+                "description": request.description,
+                "remote_id": request.remote_id,
+            }
+
+            # Add optional webhook URL for payment notifications
+            if request.webhook_url:
+                payload["webhook"] = request.webhook_url
+
             async with AsyncClient() as client:
                 response = await client.post(
                     f"{self.BASE_URL}/create_invoice",
                     headers=self._get_headers(),
-                    json={
-                        "amount": request.amount,
-                        "description": request.description,
-                        "remote_id": request.remote_id,
-                    },
+                    json=payload,
                     timeout=self.DEFAULT_TIMEOUT,
                 )
                 data = response.json()
@@ -97,7 +105,9 @@ class QvaPayProvider(PaymentProvider):
                 if response.status_code == 200 and data.get("url"):
                     return InvoiceResult(
                         success=True,
-                        invoice_id=data.get("transation_uuid") or data.get("uuid"),
+                        invoice_id=data.get("transaction_uuid")
+                        or data.get("transation_uuid")
+                        or data.get("uuid"),
                         payment_url=data.get("url"),
                         raw_response=data,
                     )
@@ -289,3 +299,52 @@ class QvaPayProvider(PaymentProvider):
         except Exception as e:
             logger.exception(f"QvaPay charge error: {e}")
             return ChargeResult(success=False, error=str(e))
+
+    def parse_webhook(
+        self, payload: dict[str, object], headers: dict[str, str]
+    ) -> WebhookEvent | None:
+        """
+        Parse QvaPay webhook payload.
+
+        QvaPay sends different payloads for different events:
+        - authorize_payments callback: GET with ?user_uuid=xxx&remote_id=xxx
+        - invoice webhook: POST with {transaction_uuid, remote_id, status, amount, ...}
+        """
+        # Authorization callback (from authorize_payments)
+        # Comes as query params: user_uuid and remote_id
+        if "user_uuid" in payload and "remote_id" in payload:
+            return WebhookEvent(
+                event_type=WebhookEventType.AUTHORIZATION_COMPLETED,
+                remote_id=str(payload["remote_id"]),
+                user_uuid=str(payload["user_uuid"]),
+                raw_payload=payload,
+            )
+
+        # Invoice payment webhook
+        # Comes as JSON with transaction_uuid when payment is completed
+        transaction_uuid = payload.get("transaction_uuid") or payload.get(
+            "transation_uuid"
+        )
+        if transaction_uuid:
+            remote_id = payload.get("remote_id")
+            if not remote_id:
+                logger.warning("QvaPay webhook missing remote_id")
+                return None
+
+            amount = None
+            if "amount" in payload:
+                try:
+                    amount = float(str(payload["amount"]))
+                except (ValueError, TypeError):
+                    pass
+
+            return WebhookEvent(
+                event_type=WebhookEventType.PAYMENT_COMPLETED,
+                remote_id=str(remote_id),
+                transaction_id=str(transaction_uuid),
+                amount=amount,
+                raw_payload=payload,
+            )
+
+        logger.warning(f"Unrecognized QvaPay webhook payload: {payload}")
+        return None

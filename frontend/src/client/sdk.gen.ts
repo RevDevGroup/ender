@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, OauthAuthorizeData, OauthAuthorizeErrors, OauthAuthorizeResponses, OauthCallbackData, OauthCallbackErrors, OauthCallbackResponses, OauthLinkOauthAccountData, OauthLinkOauthAccountErrors, OauthLinkOauthAccountResponses, OauthListOauthAccountsData, OauthListOauthAccountsResponses, OauthListProvidersData, OauthListProvidersResponses, OauthSetPasswordData, OauthSetPasswordErrors, OauthSetPasswordResponses, OauthUnlinkOauthAccountData, OauthUnlinkOauthAccountErrors, OauthUnlinkOauthAccountResponses, PlansCancelPlanData, PlansCancelPlanErrors, PlansCancelPlanResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, SubscriptionsAuthorizationCallbackData, SubscriptionsAuthorizationCallbackErrors, SubscriptionsAuthorizationCallbackResponses, SubscriptionsCheckRenewalsJobData, SubscriptionsCheckRenewalsJobResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
+import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, OauthAuthorizeData, OauthAuthorizeErrors, OauthAuthorizeResponses, OauthCallbackData, OauthCallbackErrors, OauthCallbackResponses, OauthLinkOauthAccountData, OauthLinkOauthAccountErrors, OauthLinkOauthAccountResponses, OauthListOauthAccountsData, OauthListOauthAccountsResponses, OauthListProvidersData, OauthListProvidersResponses, OauthSetPasswordData, OauthSetPasswordErrors, OauthSetPasswordResponses, OauthUnlinkOauthAccountData, OauthUnlinkOauthAccountErrors, OauthUnlinkOauthAccountResponses, PlansCancelPlanData, PlansCancelPlanErrors, PlansCancelPlanResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, SubscriptionsCheckRenewalsJobData, SubscriptionsCheckRenewalsJobResponses, SubscriptionsPaymentWebhook2Data, SubscriptionsPaymentWebhook2Errors, SubscriptionsPaymentWebhook2Responses, SubscriptionsPaymentWebhookData, SubscriptionsPaymentWebhookErrors, SubscriptionsPaymentWebhookResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -526,9 +526,11 @@ export class PlansService {
      * Upgrade to a new plan.
      *
      * - Free plans: activates immediately
-     * - Paid plans: returns authorization URL for automatic payments
+     * - Paid plans with invoice: returns payment URL for manual payment
+     * - Paid plans with authorization: returns authorization URL for automatic payments
      *
-     * After authorizing, the first payment is charged automatically.
+     * Payment method defaults to 'invoice'. Set payment_method='authorized' for
+     * automatic recurring payments (requires provider authorization).
      */
     public static plansUpgradePlan<ThrowOnError extends boolean = false>(options: Options<PlansUpgradePlanData, ThrowOnError>) {
         return (options.client ?? client).put<PlansUpgradePlanResponses, PlansUpgradePlanErrors, ThrowOnError>({
@@ -821,16 +823,43 @@ export class OauthService {
 
 export class SubscriptionsService {
     /**
-     * Authorization Callback
+     * Payment Webhook
      *
-     * Callback from QvaPay after user authorizes automatic payments.
+     * Generic webhook endpoint for payment providers.
      *
-     * This completes the authorization and charges the first payment.
+     * Supports:
+     * - QvaPay authorize_payments callback (GET with query params)
+     * - QvaPay invoice webhook (POST with JSON)
+     * - Future providers (TropiPay, etc.)
+     *
+     * Args:
+     * provider: Payment provider name (qvapay, tropipay)
      */
-    public static subscriptionsAuthorizationCallback<ThrowOnError extends boolean = false>(options: Options<SubscriptionsAuthorizationCallbackData, ThrowOnError>) {
-        return (options.client ?? client).post<SubscriptionsAuthorizationCallbackResponses, SubscriptionsAuthorizationCallbackErrors, ThrowOnError>({
+    public static subscriptionsPaymentWebhook<ThrowOnError extends boolean = false>(options: Options<SubscriptionsPaymentWebhookData, ThrowOnError>) {
+        return (options.client ?? client).get<SubscriptionsPaymentWebhookResponses, SubscriptionsPaymentWebhookErrors, ThrowOnError>({
             responseType: 'json',
-            url: '/api/v1/subscriptions/callback/authorize',
+            url: '/api/v1/subscriptions/webhook/{provider}',
+            ...options
+        });
+    }
+    
+    /**
+     * Payment Webhook
+     *
+     * Generic webhook endpoint for payment providers.
+     *
+     * Supports:
+     * - QvaPay authorize_payments callback (GET with query params)
+     * - QvaPay invoice webhook (POST with JSON)
+     * - Future providers (TropiPay, etc.)
+     *
+     * Args:
+     * provider: Payment provider name (qvapay, tropipay)
+     */
+    public static subscriptionsPaymentWebhook2<ThrowOnError extends boolean = false>(options: Options<SubscriptionsPaymentWebhook2Data, ThrowOnError>) {
+        return (options.client ?? client).post<SubscriptionsPaymentWebhook2Responses, SubscriptionsPaymentWebhook2Errors, ThrowOnError>({
+            responseType: 'json',
+            url: '/api/v1/subscriptions/webhook/{provider}',
             ...options
         });
     }

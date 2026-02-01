@@ -250,6 +250,13 @@ export type OAuthProvidersResponse = {
 };
 
 /**
+ * PaymentMethod
+ *
+ * Payment method for subscriptions.
+ */
+export type PaymentMethod = 'invoice' | 'authorized';
+
+/**
  * PlanUpgradeRequest
  *
  * Request body for plan upgrade.
@@ -260,6 +267,7 @@ export type PlanUpgradeRequest = {
      */
     plan_id: string;
     billing_cycle?: BillingCycle;
+    payment_method?: PaymentMethod;
 };
 
 /**
@@ -2331,34 +2339,60 @@ export type OauthSetPasswordResponses = {
 
 export type OauthSetPasswordResponse = OauthSetPasswordResponses[keyof OauthSetPasswordResponses];
 
-export type SubscriptionsAuthorizationCallbackData = {
+export type SubscriptionsPaymentWebhookData = {
     body?: never;
-    path?: never;
-    query: {
+    path: {
         /**
-         * User Uuid
+         * Provider
          */
-        user_uuid: string;
-        /**
-         * Remote Id
-         */
-        remote_id: string;
+        provider: string;
     };
-    url: '/api/v1/subscriptions/callback/authorize';
+    query?: never;
+    url: '/api/v1/subscriptions/webhook/{provider}';
 };
 
-export type SubscriptionsAuthorizationCallbackErrors = {
+export type SubscriptionsPaymentWebhookErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type SubscriptionsAuthorizationCallbackError = SubscriptionsAuthorizationCallbackErrors[keyof SubscriptionsAuthorizationCallbackErrors];
+export type SubscriptionsPaymentWebhookError = SubscriptionsPaymentWebhookErrors[keyof SubscriptionsPaymentWebhookErrors];
 
-export type SubscriptionsAuthorizationCallbackResponses = {
+export type SubscriptionsPaymentWebhookResponses = {
     /**
-     * Response Subscriptions-Authorization Callback
+     * Response Subscriptions-Payment Webhook
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SubscriptionsPaymentWebhook2Data = {
+    body?: never;
+    path: {
+        /**
+         * Provider
+         */
+        provider: string;
+    };
+    query?: never;
+    url: '/api/v1/subscriptions/webhook/{provider}';
+};
+
+export type SubscriptionsPaymentWebhook2Errors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SubscriptionsPaymentWebhook2Error = SubscriptionsPaymentWebhook2Errors[keyof SubscriptionsPaymentWebhook2Errors];
+
+export type SubscriptionsPaymentWebhook2Responses = {
+    /**
+     * Response Subscriptions-Payment Webhook
      *
      * Successful Response
      */

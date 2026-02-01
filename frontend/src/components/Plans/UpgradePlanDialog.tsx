@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Check } from "lucide-react"
+import { Check, ExternalLink } from "lucide-react"
 import { useState } from "react"
 
 import { PlansService, type UserPlanPublic } from "@/client"
@@ -28,6 +28,15 @@ import { usePlanList } from "@/hooks/usePlanList"
 
 interface UpgradePlanDialogProps {
   currentPlan?: string
+}
+
+// Response type from the upgrade API
+interface UpgradeResponse {
+  status: "activated" | "pending_payment" | "pending_authorization"
+  plan: string
+  message: string
+  payment_url?: string
+  authorization_url?: string
 }
 
 function PlanCard({
@@ -82,21 +91,42 @@ function PlanCard({
 function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [pendingPayment, setPendingPayment] = useState<{
+    url: string
+    plan: string
+  } | null>(null)
   const { data: plansData, isLoading } = usePlanList()
   const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
+  const { showSuccessToast, showErrorToast, showInfoToast } = useCustomToast()
 
   const mutation = useMutation({
     mutationFn: (planId: string) =>
-      PlansService.plansUpgradePlan({ body: { plan_id: planId } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quota"] })
-      showSuccessToast("Plan updated successfully")
-      setIsOpen(false)
-      setSelectedPlanId(null)
+      PlansService.plansUpgradePlan({
+        body: { plan_id: planId, payment_method: "invoice" },
+      }),
+    onSuccess: (response) => {
+      const data = response.data as UpgradeResponse
+
+      if (data.status === "activated") {
+        // Free plan - activated immediately
+        queryClient.invalidateQueries({ queryKey: ["quota"] })
+        showSuccessToast("Plan activated successfully")
+        setIsOpen(false)
+        setSelectedPlanId(null)
+      } else if (data.status === "pending_payment" && data.payment_url) {
+        // Paid plan - show payment link
+        setPendingPayment({ url: data.payment_url, plan: data.plan })
+        showInfoToast("Please complete payment to activate your plan")
+      } else if (
+        data.status === "pending_authorization" &&
+        data.authorization_url
+      ) {
+        // Authorization flow - redirect to provider
+        window.location.href = data.authorization_url
+      }
     },
     onError: () => {
-      showErrorToast("Failed to update plan. Please contact support.")
+      showErrorToast("Failed to upgrade plan. Please try again.")
     },
   })
 
@@ -110,6 +140,13 @@ function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
     setIsOpen(open)
     if (!open) {
       setSelectedPlanId(null)
+      setPendingPayment(null)
+    }
+  }
+
+  const handlePaymentRedirect = () => {
+    if (pendingPayment?.url) {
+      window.open(pendingPayment.url, "_blank")
     }
   }
 
@@ -124,13 +161,35 @@ function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Upgrade Your Plan</DialogTitle>
+          <DialogTitle>
+            {pendingPayment ? "Complete Payment" : "Upgrade Your Plan"}
+          </DialogTitle>
           <DialogDescription>
-            Choose the plan that best fits your needs
+            {pendingPayment
+              ? `Complete payment to activate ${pendingPayment.plan} plan`
+              : "Choose the plan that best fits your needs"}
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {pendingPayment ? (
+          // Payment pending view
+          <div className="py-8 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <ExternalLink className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-muted-foreground">
+              Click the button below to complete your payment on QvaPay. Once
+              payment is confirmed, your plan will be activated automatically.
+            </p>
+            <Button onClick={handlePaymentRedirect} size="lg" className="gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Pay with QvaPay
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              You will be redirected to QvaPay to complete the payment securely.
+            </p>
+          </div>
+        ) : isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 py-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-48 w-full" />
@@ -153,18 +212,26 @@ function UpgradePlanDialog({ currentPlan }: UpgradePlanDialogProps) {
         )}
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" disabled={mutation.isPending}>
-              Cancel
+          {pendingPayment ? (
+            <Button variant="outline" onClick={() => setPendingPayment(null)}>
+              Choose Different Plan
             </Button>
-          </DialogClose>
-          <LoadingButton
-            onClick={handleSubmit}
-            loading={mutation.isPending}
-            disabled={!selectedPlanId || isCurrentPlanSelected}
-          >
-            {isCurrentPlanSelected ? "Current Plan" : "Confirm Upgrade"}
-          </LoadingButton>
+          ) : (
+            <>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <LoadingButton
+                onClick={handleSubmit}
+                loading={mutation.isPending}
+                disabled={!selectedPlanId || isCurrentPlanSelected}
+              >
+                {isCurrentPlanSelected ? "Current Plan" : "Confirm Upgrade"}
+              </LoadingButton>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

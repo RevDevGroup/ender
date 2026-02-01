@@ -23,6 +23,7 @@ from .base import (
     PaymentProvider,
     PaymentVerification,
     TransactionInfo,
+    WebhookEvent,
 )
 from .qvapay_provider import QvaPayProvider
 from .tropipay_provider import TropipayProvider
@@ -113,6 +114,9 @@ class PaymentService:
         currency: str = "USD",
         description: str,
         remote_id: str,
+        webhook_url: str | None = None,
+        success_url: str | None = None,
+        error_url: str | None = None,
         metadata: dict[str, str] | None = None,
     ) -> InvoiceResult:
         """
@@ -123,6 +127,9 @@ class PaymentService:
             currency: Currency code (default: USD)
             description: Description shown to user
             remote_id: Internal reference ID (payment.id)
+            webhook_url: URL to receive payment notifications (optional)
+            success_url: URL to redirect user after payment (optional)
+            error_url: URL to redirect user if cancelled (optional)
             metadata: Additional data (optional)
 
         Returns:
@@ -140,6 +147,9 @@ class PaymentService:
             currency=currency,
             description=description,
             remote_id=remote_id,
+            webhook_url=webhook_url,
+            success_url=success_url,
+            error_url=error_url,
             metadata=metadata or {},
         )
 
@@ -196,6 +206,37 @@ class PaymentService:
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
         """Verify webhook signature from current provider."""
         return self.provider.verify_webhook_signature(payload, signature)
+
+    def parse_webhook(
+        self,
+        provider_name: str,
+        payload: dict[str, object],
+        headers: dict[str, str],
+    ) -> WebhookEvent | None:
+        """
+        Parse a webhook payload for a specific provider.
+
+        Args:
+            provider_name: Name of the provider (e.g., "qvapay", "tropipay")
+            payload: Webhook payload (parsed JSON or query params)
+            headers: HTTP headers from the webhook request
+
+        Returns:
+            WebhookEvent if successfully parsed, None if invalid
+
+        Raises:
+            ValueError: If provider is not supported
+        """
+        # Get the appropriate provider for parsing
+        provider: PaymentProvider
+        if provider_name == PaymentProviderType.QVAPAY:
+            provider = QvaPayProvider()
+        elif provider_name == PaymentProviderType.TROPIPAY:
+            provider = TropipayProvider()
+        else:
+            raise ValueError(f"Unsupported provider: {provider_name}")
+
+        return provider.parse_webhook(payload, headers)
 
     # ==================== Authorized Payments ====================
 

@@ -1,8 +1,10 @@
 """
 Subscription management service.
 
-Handles subscription lifecycle with automatic payments only.
-Uses QvaPay authorize_payments + charge for all paid subscriptions.
+Handles subscription lifecycle with both invoice and automatic payments.
+Supports:
+- Invoice payments: User pays manually via invoice each period
+- Authorized payments: User authorizes once, then automatic charges
 """
 
 import logging
@@ -15,6 +17,7 @@ from sqlmodel import Session, select
 from app.models import (
     BillingCycle,
     Payment,
+    PaymentMethod,
     PaymentStatus,
     Subscription,
     SubscriptionStatus,
@@ -28,13 +31,14 @@ logger = logging.getLogger(__name__)
 
 class SubscriptionService:
     """
-    Service for managing user subscriptions with automatic payments.
+    Service for managing user subscriptions.
 
-    Flow for paid plans:
-    1. User requests upgrade → get authorization URL
-    2. User authorizes on QvaPay → callback saves provider_user_uuid
-    3. First charge is made automatically
-    4. Renewals are charged automatically
+    Supports two payment methods:
+    1. Invoice (default): User pays manually via invoice
+       - Create invoice → User pays → Webhook activates subscription
+    2. Authorized: User authorizes recurring payments
+       - Get auth URL → User authorizes → Callback charges first payment
+       - Renewals are charged automatically
     """
 
     def __init__(self, payment_service: PaymentService | None = None):
@@ -52,17 +56,29 @@ class SubscriptionService:
         user_id: uuid.UUID,
         plan_id: uuid.UUID,
         billing_cycle: BillingCycle,
-        callback_url: str,
+        payment_method: PaymentMethod,
+        webhook_url: str,
         success_url: str,
         error_url: str,
-    ) -> tuple[Subscription | None, str | None]:
+    ) -> tuple[Subscription, str | None]:
         """
         Start subscription process.
 
-        For free plans: activates immediately, returns (subscription, None)
-        For paid plans: returns (subscription, authorization_url)
+        Args:
+            session: Database session
+            user_id: User ID
+            plan_id: Plan ID to subscribe to
+            billing_cycle: Monthly or yearly
+            payment_method: Invoice (manual) or Authorized (automatic)
+            webhook_url: URL for payment provider callbacks
+            success_url: URL to redirect user after success
+            error_url: URL to redirect user on error/cancel
 
-        The subscription stays PENDING until authorization callback + first charge.
+        Returns:
+            (subscription, redirect_url)
+            - Free plans: (subscription, None) - activated immediately
+            - Invoice: (subscription, payment_url) - user pays at this URL
+            - Authorized: (subscription, authorization_url) - user authorizes here
         """
         # Check for existing active subscription
         existing = session.exec(
@@ -90,24 +106,25 @@ class SubscriptionService:
                 detail="Plan not available",
             )
 
-        # Calculate amount
+        # Calculate amount and period
         if billing_cycle == BillingCycle.MONTHLY:
             amount = plan.price
+            period_days = 30
         else:
             amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
+            period_days = 365
 
         # Free plan - activate immediately
         if amount <= 0:
             now = datetime.now(UTC)
-            period_end = now + timedelta(
-                days=30 if billing_cycle == BillingCycle.MONTHLY else 365
-            )
+            period_end = now + timedelta(days=period_days)
 
             subscription = Subscription(
                 user_id=user_id,
                 plan_id=plan_id,
                 status=SubscriptionStatus.ACTIVE,
                 billing_cycle=billing_cycle,
+                payment_method=payment_method,
                 current_period_start=now,
                 current_period_end=period_end,
             )
@@ -118,32 +135,124 @@ class SubscriptionService:
             logger.info(f"Free subscription activated: {subscription.id}")
             return subscription, None
 
-        # Paid plan - create pending subscription and get authorization URL
         # Delete any existing expired/canceled subscription first
         if existing:
             session.delete(existing)
             session.flush()
 
+        # Create pending subscription
+        now = datetime.now(UTC)
         subscription = Subscription(
             user_id=user_id,
             plan_id=plan_id,
             status=SubscriptionStatus.PENDING,
             billing_cycle=billing_cycle,
-            current_period_start=datetime.now(UTC),
-            current_period_end=datetime.now(UTC),  # Will be set after first charge
+            payment_method=payment_method,
+            current_period_start=now,
+            current_period_end=now,  # Will be set after payment
         )
         session.add(subscription)
+        session.flush()
+
+        if payment_method == PaymentMethod.INVOICE:
+            # Create invoice for manual payment
+            return await self._start_invoice_subscription(
+                session=session,
+                subscription=subscription,
+                plan=plan,
+                amount=amount,
+                period_days=period_days,
+                webhook_url=webhook_url,
+            )
+        else:
+            # Get authorization URL for automatic payments
+            return await self._start_authorized_subscription(
+                session=session,
+                subscription=subscription,
+                user_id=user_id,
+                webhook_url=webhook_url,
+                success_url=success_url,
+                error_url=error_url,
+            )
+
+    async def _start_invoice_subscription(
+        self,
+        session: Session,
+        subscription: Subscription,
+        plan: UserPlan,
+        amount: float,
+        period_days: int,
+        webhook_url: str,
+    ) -> tuple[Subscription, str]:
+        """Create invoice for manual payment."""
+        now = datetime.now(UTC)
+        period_end = now + timedelta(days=period_days)
+
+        # Create pending payment record
+        payment = Payment(
+            subscription_id=subscription.id,
+            amount=amount,
+            currency="USD",
+            period_start=now,
+            period_end=period_end,
+            status=PaymentStatus.PENDING,
+            provider=self.payment_service.provider_name,
+        )
+        session.add(payment)
+        session.flush()
+
+        # Create invoice with webhook
+        result = await self.payment_service.create_invoice(
+            amount=amount,
+            currency="USD",
+            description=f"Subscription: {plan.name} ({subscription.billing_cycle.value})",
+            remote_id=str(payment.id),
+            webhook_url=webhook_url,
+        )
+
+        if not result.success:
+            logger.error(f"Failed to create invoice: {result.error}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Payment provider error: {result.error}",
+            )
+
+        if not result.payment_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Payment provider did not return payment URL",
+            )
+
+        # Save invoice details
+        payment.provider_invoice_id = result.invoice_id
+        payment.provider_invoice_url = result.payment_url
         session.commit()
 
-        # Get authorization URL from payment provider
+        logger.info(
+            f"Invoice created for subscription {subscription.id}: {result.invoice_id}"
+        )
+        return subscription, result.payment_url
+
+    async def _start_authorized_subscription(
+        self,
+        session: Session,
+        subscription: Subscription,
+        user_id: uuid.UUID,
+        webhook_url: str,
+        success_url: str,
+        error_url: str,
+    ) -> tuple[Subscription, str]:
+        """Get authorization URL for automatic payments."""
+        session.commit()
+
         result = await self.payment_service.get_authorization_url(
             remote_id=str(user_id),
-            callback_url=callback_url,
+            callback_url=webhook_url,
             success_url=success_url,
             error_url=error_url,
         )
 
-        if not result.success:
+        if not result.success or not result.authorization_url:
             logger.error(f"Failed to get authorization URL: {result.error}")
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -152,6 +261,70 @@ class SubscriptionService:
 
         logger.info(f"Subscription pending authorization: {subscription.id}")
         return subscription, result.authorization_url
+
+    async def complete_invoice_payment(
+        self,
+        session: Session,
+        payment_id: uuid.UUID,
+        transaction_id: str,
+    ) -> Subscription:
+        """
+        Complete subscription when invoice is paid.
+
+        Called from the webhook endpoint when payment provider notifies
+        that an invoice has been paid.
+
+        Args:
+            session: Database session
+            payment_id: Our internal payment ID (passed as remote_id to provider)
+            transaction_id: Provider's transaction ID
+
+        Returns:
+            Updated subscription
+        """
+        payment = session.get(Payment, payment_id)
+        if not payment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Payment not found",
+            )
+
+        # Check if already processed
+        if payment.status == PaymentStatus.COMPLETED:
+            logger.info(f"Payment {payment_id} already completed, skipping")
+            return payment.subscription
+
+        subscription = payment.subscription
+
+        # Update payment
+        payment.status = PaymentStatus.COMPLETED
+        payment.provider_transaction_id = transaction_id
+        payment.paid_at = datetime.now(UTC)
+
+        # Activate subscription if pending
+        if subscription.status == SubscriptionStatus.PENDING:
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.current_period_start = payment.period_start
+            subscription.current_period_end = payment.period_end
+
+            self._update_user_quota(session, subscription.user_id, subscription.plan_id)
+
+            logger.info(f"Subscription activated via invoice: {subscription.id}")
+        elif subscription.status == SubscriptionStatus.PAST_DUE:
+            # Renewal payment received
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.current_period_start = payment.period_start
+            subscription.current_period_end = payment.period_end
+
+            logger.info(f"Subscription renewed via invoice: {subscription.id}")
+        else:
+            logger.info(
+                f"Payment {payment_id} completed for subscription "
+                f"in status {subscription.status}"
+            )
+
+        session.commit()
+        return subscription
 
     async def complete_authorization(
         self,
