@@ -18,6 +18,7 @@ import { routeTree } from "./routeTree.gen"
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true, // Required for OAuth cookies across subdomains
+  throwOnError: true, // Required for TanStack Query to catch errors
 })
 
 // Add auth interceptor

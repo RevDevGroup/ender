@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from dataclasses import dataclass
@@ -5,7 +6,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import emails  # type: ignore
 import jwt
 from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
@@ -13,6 +13,8 @@ from sqlmodel import Session
 
 from app.core import security
 from app.core.config import settings
+from app.services.email import get_email_service
+from app.services.email.base import EmailStatus
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,29 +34,49 @@ def render_email_template(*, template_name: str, context: dict[str, Any]) -> str
     return html_content
 
 
+class EmailNotConfiguredError(Exception):
+    """Raised when email sending is attempted but not configured."""
+
+    pass
+
+
+class EmailSendError(Exception):
+    """Raised when email sending fails."""
+
+    pass
+
+
 def send_email(
     *,
     email_to: str,
     subject: str = "",
     html_content: str = "",
 ) -> None:
-    assert settings.emails_enabled, "no provided configuration for email variables"
-    message = emails.Message(
-        subject=subject,
-        html=html_content,
-        mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
+    """
+    Send an email using the configured email provider.
+
+    Uses the EmailService which supports multiple providers (SMTP, Maileroo, etc.)
+    based on the EMAIL_PROVIDER environment variable.
+    """
+    email_service = get_email_service()
+
+    if not email_service.is_configured():
+        raise EmailNotConfiguredError("Email service is not configured")
+
+    # Run the async send_email in a sync context
+    result = asyncio.run(
+        email_service.send_email(
+            to=email_to,
+            subject=subject,
+            html_content=html_content,
+        )
     )
-    smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
-    if settings.SMTP_TLS:
-        smtp_options["tls"] = True
-    elif settings.SMTP_SSL:
-        smtp_options["ssl"] = True
-    if settings.SMTP_USER:
-        smtp_options["user"] = settings.SMTP_USER
-    if settings.SMTP_PASSWORD:
-        smtp_options["password"] = settings.SMTP_PASSWORD
-    response = message.send(to=email_to, smtp=smtp_options)
-    logger.info(f"send email result: {response}")
+
+    if result.status == EmailStatus.FAILED:
+        logger.error(f"Failed to send email to {email_to}: {result.error}")
+        raise EmailSendError(result.error or "Failed to send email")
+
+    logger.info(f"Email sent to {email_to}, message_id: {result.message_id}")
 
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:

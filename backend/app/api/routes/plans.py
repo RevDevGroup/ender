@@ -1,25 +1,40 @@
-from fastapi import APIRouter, HTTPException, status
+"""
+Plan management API routes.
+"""
+
+import uuid
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import select
 
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 from app.models import (
-    PlanUpgrade,
-    PlanUpgradePublic,
+    BillingCycle,
+    Subscription,
     UserPlan,
     UserPlanPublic,
     UserPlansPublic,
     UserQuotaPublic,
 )
 from app.services.quota_service import QuotaService
+from app.services.subscription_service import (
+    SubscriptionService,
+    get_subscription_service,
+)
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
 
 @router.get("/list", response_model=UserPlansPublic)
 def list_plans(*, session: SessionDep) -> UserPlansPublic:
-    """List available plans"""
-    statement = select(UserPlan)
-    plans = session.exec(statement).all()
+    """List available plans."""
+    plans = session.exec(
+        select(UserPlan)
+        .where(UserPlan.is_public == True)  # noqa: E712
+        .order_by(UserPlan.price)  # type: ignore[arg-type]
+    ).all()
     return UserPlansPublic(
         data=[UserPlanPublic.model_validate(p) for p in plans], count=len(plans)
     )
@@ -27,43 +42,103 @@ def list_plans(*, session: SessionDep) -> UserPlansPublic:
 
 @router.get("/quota", response_model=UserQuotaPublic)
 def get_quota(*, session: SessionDep, current_user: CurrentUser) -> UserQuotaPublic:
-    """Get user quota information"""
+    """Get user quota information."""
     quota_info = QuotaService.get_user_quota(session=session, user_id=current_user.id)
     return UserQuotaPublic.model_validate(quota_info)
 
 
-@router.put("/upgrade", response_model=PlanUpgradePublic)
-def upgrade_plan(
+@router.post("/upgrade")
+async def upgrade_plan(
+    request: Request,
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    upgrade_in: PlanUpgrade,
-) -> PlanUpgradePublic:
-    """Change user plan (requires superuser or payment integration)"""
-    # TODO: For now, only superusers can change plans
-    # In the future, here will be integrated with payment system
-    get_current_active_superuser(current_user)
+    plan_id: uuid.UUID,
+    billing_cycle: BillingCycle = BillingCycle.MONTHLY,
+) -> Any:
+    """
+    Upgrade to a new plan.
 
-    plan = session.get(UserPlan, upgrade_in.plan_id)
+    - Free plans: activates immediately
+    - Paid plans: returns authorization URL for automatic payments
+
+    After authorizing, the first payment is charged automatically.
+    """
+    plan = session.get(UserPlan, plan_id)
     if not plan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found"
-        )
+        raise HTTPException(status_code=404, detail="Plan not found")
 
-    # Get or create quota
-    quota = current_user.quota
-    if not quota:
-        quota = QuotaService._create_default_quota(
-            session=session, user_id=current_user.id
-        )
+    if not plan.is_public:
+        raise HTTPException(status_code=400, detail="Plan not available")
 
-    # Update plan
-    quota.plan_id = upgrade_in.plan_id
-    session.add(quota)
-    session.commit()
-    session.refresh(quota)
+    # Build callback URL from request (server-to-server)
+    base_url = str(request.base_url).rstrip("/")
+    callback_url = f"{base_url}/api/v1/subscriptions/callback/authorize"
 
-    return PlanUpgradePublic(
-        message=f"Plan updated to {plan.name}",
-        data={"plan": plan.name, "plan_id": str(upgrade_in.plan_id)},
+    # Build success/error URLs for user redirect (frontend)
+    frontend_url = settings.FRONTEND_HOST.rstrip("/")
+    success_url = f"{frontend_url}/subscription/success"
+    error_url = f"{frontend_url}/subscription/error"
+
+    service = get_subscription_service()
+    subscription, authorization_url = await service.start_subscription(
+        session=session,
+        user_id=current_user.id,
+        plan_id=plan_id,
+        billing_cycle=billing_cycle,
+        callback_url=callback_url,
+        success_url=success_url,
+        error_url=error_url,
     )
+
+    if authorization_url is None:
+        # Free plan - activated immediately
+        return {
+            "status": "activated",
+            "plan": plan.name,
+            "message": "Plan activated successfully",
+        }
+
+    # Paid plan - redirect to authorize
+    return {
+        "status": "pending_authorization",
+        "plan": plan.name,
+        "authorization_url": authorization_url,
+        "message": "Authorize automatic payments to activate plan",
+    }
+
+
+@router.post("/cancel")
+def cancel_plan(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    immediate: bool = False,
+) -> Any:
+    """
+    Cancel subscription.
+
+    By default, cancels at end of current billing period.
+    Set immediate=true to cancel immediately (no refund).
+    """
+    subscription = session.exec(
+        select(Subscription).where(Subscription.user_id == current_user.id)
+    ).first()
+
+    if not subscription:
+        raise HTTPException(status_code=404, detail="No active subscription")
+
+    SubscriptionService.cancel_subscription(
+        session=session,
+        subscription_id=subscription.id,
+        immediate=immediate,
+    )
+
+    if immediate:
+        return {"status": "canceled", "message": "Subscription canceled immediately"}
+
+    return {
+        "status": "pending_cancellation",
+        "ends_at": subscription.current_period_end.isoformat(),
+        "message": "Subscription will cancel at end of billing period",
+    }
