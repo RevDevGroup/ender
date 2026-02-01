@@ -568,6 +568,13 @@ class UserQuotaPublic(SQLModel):
     reset_date: str | None
 
 
+class PlanUpgradeRequest(SQLModel):
+    """Request body for plan upgrade."""
+
+    plan_id: uuid.UUID
+    billing_cycle: BillingCycle = BillingCycle.MONTHLY
+
+
 class PlanUpgradePublic(SQLModel):
     message: str
     data: dict[str, str]

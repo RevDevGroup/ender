@@ -2,7 +2,6 @@
 Plan management API routes.
 """
 
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -11,7 +10,7 @@ from sqlmodel import select
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import (
-    BillingCycle,
+    PlanUpgradeRequest,
     Subscription,
     UserPlan,
     UserPlanPublic,
@@ -53,8 +52,7 @@ async def upgrade_plan(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    plan_id: uuid.UUID,
-    billing_cycle: BillingCycle = BillingCycle.MONTHLY,
+    body: PlanUpgradeRequest,
 ) -> Any:
     """
     Upgrade to a new plan.
@@ -64,7 +62,7 @@ async def upgrade_plan(
 
     After authorizing, the first payment is charged automatically.
     """
-    plan = session.get(UserPlan, plan_id)
+    plan = session.get(UserPlan, body.plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
@@ -84,8 +82,8 @@ async def upgrade_plan(
     subscription, authorization_url = await service.start_subscription(
         session=session,
         user_id=current_user.id,
-        plan_id=plan_id,
-        billing_cycle=billing_cycle,
+        plan_id=body.plan_id,
+        billing_cycle=body.billing_cycle,
         callback_url=callback_url,
         success_url=success_url,
         error_url=error_url,
