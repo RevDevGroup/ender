@@ -80,18 +80,29 @@ class SubscriptionService:
             - Invoice: (subscription, payment_url) - user pays at this URL
             - Authorized: (subscription, authorization_url) - user authorizes here
         """
-        # Check for existing active subscription
+        # Check for existing subscription
         existing = session.exec(
             select(Subscription).where(Subscription.user_id == user_id)
         ).first()
-        if existing and existing.status in [
-            SubscriptionStatus.ACTIVE,
-            SubscriptionStatus.PENDING,
-        ]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already has an active subscription",
-            )
+        if existing:
+            if existing.status == SubscriptionStatus.PENDING:
+                # Delete pending subscription (unpaid) to allow new attempt
+                logger.info(
+                    f"Deleting pending subscription {existing.id} for new attempt"
+                )
+                session.delete(existing)
+                session.flush()
+                existing = None
+            elif existing.status == SubscriptionStatus.ACTIVE:
+                if existing.plan_id == plan_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Already subscribed to this plan",
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cancel current subscription before changing plans",
+                )
 
         plan = session.get(UserPlan, plan_id)
         if not plan:
