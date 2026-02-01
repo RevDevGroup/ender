@@ -313,6 +313,25 @@ class UserPublic(UserBase):
     id: uuid.UUID
 
 
+class UserPlanInfo(SQLModel):
+    """Plan info included in user response."""
+
+    plan_name: str
+    max_sms_per_month: int
+    max_devices: int
+    sms_sent_this_month: int = 0
+    devices_registered: int = 0
+    subscription_status: str | None = None
+    subscription_ends_at: datetime | None = None
+    has_auto_renewal: bool = False
+
+
+class UserPublicWithPlan(UserPublic):
+    """User with plan information."""
+
+    plan: UserPlanInfo | None = None
+
+
 class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int

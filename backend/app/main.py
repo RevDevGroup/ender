@@ -27,9 +27,10 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Run migrations on startup
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+    # Run migrations only in production/docker (not local dev)
+    if settings.ENVIRONMENT != "local":
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
 
     # Initialize services
     FCMService.initialize()

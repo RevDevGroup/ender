@@ -21,7 +21,9 @@ from app.models import (
     UpdatePassword,
     User,
     UserCreate,
+    UserPlanInfo,
     UserPublic,
+    UserPublicWithPlan,
     UserRegister,
     UsersPublic,
     UserUpdate,
@@ -132,12 +134,42 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get("/me", response_model=UserPublic)
-def read_user_me(current_user: CurrentUser) -> Any:
+@router.get("/me", response_model=UserPublicWithPlan)
+def read_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
-    Get current user.
+    Get current user with plan information.
     """
-    return current_user
+    # Refresh to load relationships
+    session.refresh(current_user)
+    plan_info = None
+
+    # Get plan info from quota or subscription
+    if current_user.quota and current_user.quota.plan:
+        plan = current_user.quota.plan
+        plan_info = UserPlanInfo(
+            plan_name=plan.name,
+            max_sms_per_month=plan.max_sms_per_month,
+            max_devices=plan.max_devices,
+            sms_sent_this_month=current_user.quota.sms_sent_this_month,
+            devices_registered=current_user.quota.devices_registered,
+        )
+
+        # Add subscription info if exists
+        if current_user.subscription:
+            sub = current_user.subscription
+            plan_info.subscription_status = sub.status.value
+            plan_info.subscription_ends_at = sub.current_period_end
+            plan_info.has_auto_renewal = bool(sub.provider_user_uuid)
+
+    return UserPublicWithPlan(
+        id=current_user.id,
+        email=current_user.email,
+        is_active=current_user.is_active,
+        is_superuser=current_user.is_superuser,
+        full_name=current_user.full_name,
+        email_verified=current_user.email_verified,
+        plan=plan_info,
+    )
 
 
 @router.delete("/me", response_model=Message)
