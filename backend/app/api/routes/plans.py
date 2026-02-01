@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.api.routes.system_config import get_config_value
 from app.core.config import settings
 from app.models import (
     PaymentMethod,
@@ -19,6 +18,7 @@ from app.models import (
     UserPlansPublic,
     UserQuotaPublic,
 )
+from app.services.config_service import ConfigService
 from app.services.payment import get_payment_service
 from app.services.quota_service import QuotaService
 from app.services.subscription_service import (
@@ -79,8 +79,7 @@ async def upgrade_plan(
         payment_method = body.payment_method
     else:
         # Read default from system config (DB or env fallback)
-        default_method = get_config_value(session, "default_payment_method")
-        payment_method = PaymentMethod(default_method)
+        payment_method = ConfigService.get_default_payment_method(session)
 
     # Build webhook URL with provider in path
     base_url = str(request.base_url).rstrip("/")

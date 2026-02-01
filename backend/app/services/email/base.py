@@ -17,6 +17,7 @@ class EmailStatus(Enum):
     SENT = "sent"
     QUEUED = "queued"
     FAILED = "failed"
+    SKIPPED = "skipped"  # When notifications are disabled
 
 
 @dataclass

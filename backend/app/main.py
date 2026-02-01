@@ -4,16 +4,19 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from slowapi.errors import RateLimitExceeded
+from sqlmodel import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.core.db import engine
 from app.core.rate_limit import limiter
+from app.services.config_service import ConfigService
 from app.services.fcm_service import FCMService
 from app.services.notification_dispatcher import NotificationDispatcher
 from app.services.qstash_service import QStashService
@@ -95,5 +98,36 @@ if settings.all_cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+# Maintenance mode middleware
+@app.middleware("http")
+async def maintenance_mode_middleware(request: Request, call_next):  # type: ignore
+    """Check if maintenance mode is enabled and return 503 if so."""
+    # Allow health check and admin endpoints during maintenance
+    path = request.url.path
+    if path.startswith("/api/v1/utils/health") or path.startswith(
+        "/api/v1/system-config"
+    ):
+        return await call_next(request)
+
+    # Check maintenance mode from DB
+    try:
+        with Session(engine) as session:
+            if ConfigService.is_maintenance_mode(session):
+                app_name = ConfigService.get_app_name(session)
+                return JSONResponse(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    content={
+                        "detail": f"{app_name} is currently under maintenance. Please try again later."
+                    },
+                    headers={"Retry-After": "300"},
+                )
+    except Exception:
+        # If we can't check, continue normally
+        pass
+
+    return await call_next(request)
+
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

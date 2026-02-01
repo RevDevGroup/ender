@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 from app import crud
 from app.core.db import engine
 from app.models import SMSDevice, SMSMessage, UserQuota, WebhookConfig
+from app.services.config_service import ConfigService
 from app.services.notification_dispatcher import NotificationDispatcher
 from app.services.quota_service import QuotaService
 from app.services.webhook_service import WebhookService
@@ -206,7 +207,11 @@ class SMSService:
             if not message:
                 return {"success": False, "error": "Message not found"}
 
-            result = await WebhookService.send_webhook(webhook, message)
+            # Get timeout from system config
+            timeout = ConfigService.get_webhook_timeout(session)
+            result = await WebhookService.send_webhook(
+                webhook, message, timeout=timeout
+            )
             if result.get("success"):
                 message.webhook_sent = True
                 session.add(message)

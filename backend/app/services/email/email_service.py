@@ -11,7 +11,10 @@ import logging
 from enum import Enum
 from functools import lru_cache
 
+from sqlmodel import Session
+
 from app.core.config import settings
+from app.core.db import engine
 
 from .base import EmailMessage, EmailProvider, EmailResult, EmailStatus
 from .maileroo_provider import MailerooProvider
@@ -106,6 +109,17 @@ class EmailService:
         """Check if email sending is properly configured."""
         return self.provider.is_configured()
 
+    def _are_notifications_enabled(self) -> bool:
+        """Check if email notifications are enabled in system config."""
+        try:
+            from app.services.config_service import ConfigService
+
+            with Session(engine) as session:
+                return ConfigService.is_email_notifications_enabled(session)
+        except Exception:
+            # If we can't check, default to enabled
+            return True
+
     async def send_email(
         self,
         *,
@@ -134,6 +148,15 @@ class EmailService:
         Returns:
             EmailResult with send status
         """
+        # Check if email notifications are enabled
+        if not self._are_notifications_enabled():
+            logger.info("Email notifications disabled, skipping send")
+            return EmailResult(
+                status=EmailStatus.SKIPPED,
+                message_id=None,
+                error="Email notifications are disabled",
+            )
+
         if not self.is_configured():
             logger.warning("Email service is not configured, skipping send")
             return EmailResult(
