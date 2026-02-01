@@ -6,17 +6,11 @@ import PendingItems from "@/components/Pending/PendingItems"
 import SendSMS from "@/components/Sms/SendSMS"
 import { SMSTable } from "@/components/Sms/SMSTable"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import useAppConfig from "@/hooks/useAppConfig"
 import { type SMSMessageType, useSMSList } from "@/hooks/useSMSList"
 
 export const Route = createFileRoute("/_layout/sms")({
   component: Sms,
-  head: () => ({
-    meta: [
-      {
-        title: "Message Logs - Ender Labs",
-      },
-    ],
-  }),
 })
 
 function SMSTableContent({ messageType }: { messageType: SMSMessageType }) {
@@ -49,9 +43,11 @@ function SMSTableContent({ messageType }: { messageType: SMSMessageType }) {
 
 function Sms() {
   const [messageType, setMessageType] = useState<SMSMessageType>("all")
+  const { config } = useAppConfig()
 
   return (
     <div className="flex flex-col gap-6">
+      <title>{`Message Logs - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">SMS</h1>

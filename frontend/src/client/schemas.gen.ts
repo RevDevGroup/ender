@@ -118,6 +118,26 @@ export const ApiKeysPublicSchema = {
     title: 'ApiKeysPublic'
 } as const;
 
+export const AppSettingsSchema = {
+    properties: {
+        app_name: {
+            type: 'string',
+            title: 'App Name'
+        },
+        support_email: {
+            type: 'string',
+            title: 'Support Email'
+        }
+    },
+    type: 'object',
+    required: [
+        'app_name',
+        'support_email'
+    ],
+    title: 'AppSettings',
+    description: 'Public application settings.'
+} as const;
+
 export const BillingCycleSchema = {
     type: 'string',
     enum: [

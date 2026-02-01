@@ -97,7 +97,7 @@ function SystemSettings() {
               id="app-name"
               defaultValue={getConfigValue("app_name")}
               onBlur={(e) => handleConfigChange("app_name", e.target.value)}
-              placeholder="Ender"
+              placeholder="My App"
               className="w-[300px]"
             />
             <p className="text-sm text-muted-foreground">

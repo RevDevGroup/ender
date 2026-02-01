@@ -6,17 +6,11 @@ import { DataTable } from "@/components/Common/DataTable"
 import AddDevice from "@/components/Devices/AddDevice"
 import { columns } from "@/components/Devices/columns"
 import PendingDevices from "@/components/Pending/PendingDevices"
+import useAppConfig from "@/hooks/useAppConfig"
 import { useDeviceListSuspense } from "@/hooks/useDeviceList"
 
 export const Route = createFileRoute("/_layout/devices")({
   component: Devices,
-  head: () => ({
-    meta: [
-      {
-        title: "Devices - Ender Labs",
-      },
-    ],
-  }),
 })
 
 function DevicesTableContent() {
@@ -48,8 +42,11 @@ function DevicesTable() {
 }
 
 function Devices() {
+  const { config } = useAppConfig()
+
   return (
     <div className="flex flex-col gap-6">
+      <title>{`Devices - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Devices</h1>

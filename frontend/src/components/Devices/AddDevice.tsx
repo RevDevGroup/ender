@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import useAppConfig from "@/hooks/useAppConfig"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { useCreateDevice } from "@/hooks/useDeviceMutations"
 
@@ -49,6 +50,7 @@ const AddDevice = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [copiedText, copyToClipboard] = useCopyToClipboard()
+  const { config } = useAppConfig()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -115,8 +117,8 @@ const AddDevice = () => {
                   </Cuer.Root>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  Scan this QR code with the Ender Modem app to connect
-                  automatically
+                  Scan this QR code with the {config.appName} Modem app to
+                  connect automatically
                 </p>
               </div>
               <div className="flex items-center gap-2">

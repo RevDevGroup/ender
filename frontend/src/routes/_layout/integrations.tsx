@@ -7,16 +7,10 @@ import { columns } from "@/components/ApiKeys/columns"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingApiKeys from "@/components/Pending/PendingApiKeys"
 import { useApiKeyListSuspense } from "@/hooks/useApiKeyList"
+import useAppConfig from "@/hooks/useAppConfig"
 
 export const Route = createFileRoute("/_layout/integrations")({
   component: Integrations,
-  head: () => ({
-    meta: [
-      {
-        title: "Integrations - Ender Labs",
-      },
-    ],
-  }),
 })
 
 function ApiKeysTableContent() {
@@ -48,8 +42,11 @@ function ApiKeysTable() {
 }
 
 function Integrations() {
+  const { config } = useAppConfig()
+
   return (
     <div className="flex flex-col gap-6">
+      <title>{`Integrations - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>

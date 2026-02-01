@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as LayoutRouteImport } from './routes/_layout'
@@ -32,6 +34,11 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -45,6 +52,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const RecoverPasswordRoute = RecoverPasswordRouteImport.update({
   id: '/recover-password',
   path: '/recover-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -115,9 +127,11 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
 export interface FileRoutesByFullPath {
   '/check-email': typeof CheckEmailRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof LayoutAdminRoute
   '/devices': typeof LayoutDevicesRoute
@@ -133,9 +147,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/check-email': typeof CheckEmailRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof LayoutAdminRoute
   '/devices': typeof LayoutDevicesRoute
@@ -153,9 +169,11 @@ export interface FileRoutesById {
   '/_layout': typeof LayoutRouteWithChildren
   '/check-email': typeof CheckEmailRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/devices': typeof LayoutDevicesRoute
@@ -173,9 +191,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/check-email'
     | '/login'
+    | '/privacy'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/verify-email'
     | '/admin'
     | '/devices'
@@ -191,9 +211,11 @@ export interface FileRouteTypes {
   to:
     | '/check-email'
     | '/login'
+    | '/privacy'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/verify-email'
     | '/admin'
     | '/devices'
@@ -210,9 +232,11 @@ export interface FileRouteTypes {
     | '/_layout'
     | '/check-email'
     | '/login'
+    | '/privacy'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/verify-email'
     | '/_layout/admin'
     | '/_layout/devices'
@@ -230,9 +254,11 @@ export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   CheckEmailRoute: typeof CheckEmailRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   OauthCallbackProviderRoute: typeof OauthCallbackProviderRoute
   SubscriptionErrorRoute: typeof SubscriptionErrorRoute
@@ -246,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -267,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/recover-password'
       fullPath: '/recover-password'
       preLoaderRoute: typeof RecoverPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -390,9 +430,11 @@ const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   CheckEmailRoute: CheckEmailRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   OauthCallbackProviderRoute: OauthCallbackProviderRoute,
   SubscriptionErrorRoute: SubscriptionErrorRoute,

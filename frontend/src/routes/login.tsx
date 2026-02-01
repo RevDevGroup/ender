@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Separator } from "@/components/ui/separator"
+import useAppConfig from "@/hooks/useAppConfig"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 const formSchema = z.object({
@@ -43,17 +44,12 @@ export const Route = createFileRoute("/login")({
       })
     }
   },
-  head: () => ({
-    meta: [
-      {
-        title: "Log In - FastAPI Cloud",
-      },
-    ],
-  }),
 })
 
 function Login() {
   const { loginMutation } = useAuth()
+  const { config } = useAppConfig()
+  const appName = config.appName
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
@@ -71,6 +67,7 @@ function Login() {
 
   return (
     <AuthLayout>
+      <title>{`Log In - ${appName}`}</title>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -150,6 +147,22 @@ function Login() {
               Sign up
             </RouterLink>
           </div>
+
+          <p className="text-center text-xs text-muted-foreground">
+            <RouterLink
+              to="/terms"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Terms of Service
+            </RouterLink>
+            {" · "}
+            <RouterLink
+              to="/privacy"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Privacy Policy
+            </RouterLink>
+          </p>
         </form>
       </Form>
     </AuthLayout>

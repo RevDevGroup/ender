@@ -81,6 +81,22 @@ export type ApiKeysPublic = {
 };
 
 /**
+ * AppSettings
+ *
+ * Public application settings.
+ */
+export type AppSettings = {
+    /**
+     * App Name
+     */
+    app_name: string;
+    /**
+     * Support Email
+     */
+    support_email: string;
+};
+
+/**
  * BillingCycle
  *
  * Billing cycle options.
@@ -1496,6 +1512,22 @@ export type UtilsHealthCheckResponses = {
 };
 
 export type UtilsHealthCheckResponse = UtilsHealthCheckResponses[keyof UtilsHealthCheckResponses];
+
+export type UtilsGetAppSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/utils/app-settings/';
+};
+
+export type UtilsGetAppSettingsResponses = {
+    /**
+     * Successful Response
+     */
+    200: AppSettings;
+};
+
+export type UtilsGetAppSettingsResponse = UtilsGetAppSettingsResponses[keyof UtilsGetAppSettingsResponses];
 
 export type SmsSendSmsData = {
     body: SmsMessageCreate;

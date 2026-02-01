@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Separator } from "@/components/ui/separator"
+import useAppConfig from "@/hooks/useAppConfig"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 const formSchema = z
@@ -50,17 +51,12 @@ export const Route = createFileRoute("/signup")({
       })
     }
   },
-  head: () => ({
-    meta: [
-      {
-        title: "Sign Up - FastAPI Cloud",
-      },
-    ],
-  }),
 })
 
 function SignUp() {
   const { signUpMutation } = useAuth()
+  const { config } = useAppConfig()
+  const appName = config.appName
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
@@ -83,6 +79,7 @@ function SignUp() {
 
   return (
     <AuthLayout>
+      <title>{`Sign Up - ${appName}`}</title>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -195,6 +192,23 @@ function SignUp() {
               Log in
             </RouterLink>
           </div>
+
+          <p className="text-center text-xs text-muted-foreground">
+            By signing up, you agree to our{" "}
+            <RouterLink
+              to="/terms"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Terms of Service
+            </RouterLink>{" "}
+            and{" "}
+            <RouterLink
+              to="/privacy"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Privacy Policy
+            </RouterLink>
+          </p>
         </form>
       </Form>
     </AuthLayout>
