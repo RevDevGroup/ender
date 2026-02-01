@@ -483,6 +483,229 @@ class SubscriptionService:
             if quota:
                 quota.plan_id = free_plan.id
 
+    # ==================== Authorized Payments ====================
+
+    def supports_authorized_payments(self) -> bool:
+        """Check if the payment provider supports authorized/recurring payments."""
+        return self.payment_service.supports_authorized_payments()
+
+    async def get_authorization_url(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        callback_url: str,
+    ) -> str:
+        """
+        Get URL for user to authorize recurring payments.
+
+        After authorization, the user's provider UUID will be stored in their
+        subscription for automatic renewals.
+
+        Args:
+            session: Database session
+            user_id: User ID
+            callback_url: URL to redirect after authorization
+
+        Returns:
+            Authorization URL
+
+        Raises:
+            HTTPException: If provider doesn't support authorized payments
+        """
+        if not self.supports_authorized_payments():
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Payment provider does not support authorized payments",
+            )
+
+        result = await self.payment_service.get_authorization_url(
+            remote_id=str(user_id),
+            callback_url=callback_url,
+        )
+
+        if not result.success:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to get authorization URL: {result.error}",
+            )
+
+        return result.authorization_url or ""
+
+    def save_user_authorization(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        provider_user_uuid: str,
+    ) -> Subscription | None:
+        """
+        Save the user's provider UUID after they authorize payments.
+
+        This is called from the callback endpoint after user authorizes.
+
+        Args:
+            session: Database session
+            user_id: User ID
+            provider_user_uuid: UUID from payment provider
+
+        Returns:
+            Updated subscription or None if no subscription exists
+        """
+        subscription = session.exec(
+            select(Subscription).where(Subscription.user_id == user_id)
+        ).first()
+
+        if subscription:
+            subscription.provider_user_uuid = provider_user_uuid
+            session.commit()
+            logger.info(f"Saved provider user UUID for subscription {subscription.id}")
+
+        return subscription
+
+    async def charge_subscription_renewal(
+        self,
+        session: Session,
+        subscription_id: uuid.UUID,
+    ) -> tuple[Payment, bool]:
+        """
+        Automatically charge subscription renewal using authorized payments.
+
+        This is used instead of generate_renewal_invoice when the user has
+        authorized automatic payments.
+
+        Args:
+            session: Database session
+            subscription_id: Subscription to renew
+
+        Returns:
+            Tuple of (payment, was_successful)
+
+        Raises:
+            HTTPException: If subscription not found or not eligible
+        """
+        subscription = session.get(Subscription, subscription_id)
+        if not subscription:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Subscription not found",
+            )
+
+        if not subscription.provider_user_uuid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Subscription does not have authorized payments enabled",
+            )
+
+        if subscription.status not in [
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.PAST_DUE,
+        ]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Subscription is not active",
+            )
+
+        if subscription.cancel_at_period_end:
+            subscription.status = SubscriptionStatus.CANCELED
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Subscription is scheduled for cancellation",
+            )
+
+        plan = subscription.plan
+        now = subscription.current_period_end
+
+        if subscription.billing_cycle == BillingCycle.MONTHLY:
+            period_end = now + timedelta(days=30)
+            amount = plan.price
+        else:
+            period_end = now + timedelta(days=365)
+            amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
+
+        # Create payment record
+        payment = Payment(
+            subscription_id=subscription.id,
+            amount=amount,
+            currency="USD",
+            period_start=now,
+            period_end=period_end,
+            status=PaymentStatus.PENDING,
+            provider=self.payment_service.provider_name,
+        )
+        session.add(payment)
+        session.flush()
+
+        # Charge the user automatically
+        charge_result = await self.payment_service.charge_authorized_user(
+            user_uuid=subscription.provider_user_uuid,
+            amount=amount,
+            currency="USD",
+            description=f"Renewal: {plan.name} ({subscription.billing_cycle.value})",
+            remote_id=str(payment.id),
+        )
+
+        if charge_result.success:
+            # Payment successful - activate subscription
+            payment.status = PaymentStatus.COMPLETED
+            payment.provider_transaction_id = charge_result.transaction_id
+            payment.paid_at = datetime.now(UTC)
+
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.current_period_start = now
+            subscription.current_period_end = period_end
+
+            session.commit()
+            logger.info(
+                f"Automatic renewal successful for subscription {subscription_id}"
+            )
+            return payment, True
+        else:
+            # Payment failed - mark as past due
+            payment.status = PaymentStatus.FAILED
+            subscription.status = SubscriptionStatus.PAST_DUE
+
+            session.commit()
+            logger.warning(
+                f"Automatic renewal failed for subscription {subscription_id}: "
+                f"{charge_result.error}"
+            )
+            return payment, False
+
+    async def process_renewal(
+        self,
+        session: Session,
+        subscription_id: uuid.UUID,
+    ) -> tuple[Payment, str | None, bool]:
+        """
+        Process subscription renewal - automatic if authorized, manual otherwise.
+
+        Args:
+            session: Database session
+            subscription_id: Subscription to renew
+
+        Returns:
+            Tuple of (payment, payment_url_if_manual, was_automatic_success)
+        """
+        subscription = session.get(Subscription, subscription_id)
+        if not subscription:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Subscription not found",
+            )
+
+        # If user has authorized payments, charge automatically
+        if subscription.provider_user_uuid and self.supports_authorized_payments():
+            payment, success = await self.charge_subscription_renewal(
+                session, subscription_id
+            )
+            return payment, None, success
+
+        # Otherwise, generate manual invoice
+        payment, payment_url = await self.generate_renewal_invoice(
+            session, subscription_id
+        )
+        return payment, payment_url, False
+
 
 # Singleton instance
 _subscription_service: SubscriptionService | None = None

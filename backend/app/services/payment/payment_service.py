@@ -14,6 +14,10 @@ from functools import lru_cache
 from app.core.config import settings
 
 from .base import (
+    AuthorizationRequest,
+    AuthorizationResult,
+    ChargeRequest,
+    ChargeResult,
     InvoiceRequest,
     InvoiceResult,
     PaymentProvider,
@@ -192,6 +196,131 @@ class PaymentService:
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
         """Verify webhook signature from current provider."""
         return self.provider.verify_webhook_signature(payload, signature)
+
+    # ==================== Authorized Payments ====================
+
+    def supports_authorized_payments(self) -> bool:
+        """
+        Check if the current provider supports authorized/recurring payments.
+
+        Returns:
+            True if authorized payments are supported
+        """
+        return self.provider.supports_authorized_payments()
+
+    async def get_authorization_url(
+        self,
+        *,
+        remote_id: str,
+        callback_url: str,
+        metadata: dict[str, str] | None = None,
+    ) -> AuthorizationResult:
+        """
+        Get a URL where the user can authorize recurring payments.
+
+        After the user authorizes, they will be redirected to callback_url
+        with the user_uuid that can be used for future charges.
+
+        Args:
+            remote_id: Internal reference ID (user.id or subscription.id)
+            callback_url: URL to redirect after authorization
+            metadata: Additional data (optional)
+
+        Returns:
+            AuthorizationResult with authorization URL or error
+        """
+        if not self.supports_authorized_payments():
+            return AuthorizationResult(
+                success=False,
+                error=f"{self.provider_name} does not support authorized payments",
+            )
+
+        if not self.is_configured():
+            return AuthorizationResult(
+                success=False,
+                error="Payment service is not configured",
+            )
+
+        request = AuthorizationRequest(
+            remote_id=remote_id,
+            callback_url=callback_url,
+            metadata=metadata or {},
+        )
+
+        result = await self.provider.get_authorization_url(request)
+
+        if result.success:
+            logger.info(
+                f"Authorization URL created via {self.provider_name} "
+                f"for remote_id={remote_id}"
+            )
+        else:
+            logger.error(
+                f"Failed to create authorization URL via {self.provider_name}: "
+                f"{result.error}"
+            )
+
+        return result
+
+    async def charge_authorized_user(
+        self,
+        *,
+        user_uuid: str,
+        amount: float,
+        currency: str = "USD",
+        description: str,
+        remote_id: str,
+        metadata: dict[str, str] | None = None,
+    ) -> ChargeResult:
+        """
+        Charge a user who has previously authorized payments.
+
+        The user must have completed the authorization flow and you must
+        have their user_uuid from the callback.
+
+        Args:
+            user_uuid: Provider-specific user UUID (from authorization callback)
+            amount: Amount to charge
+            currency: Currency code (default: USD)
+            description: Description shown to user
+            remote_id: Internal reference ID (payment.id)
+            metadata: Additional data (optional)
+
+        Returns:
+            ChargeResult with transaction ID or error
+        """
+        if not self.supports_authorized_payments():
+            return ChargeResult(
+                success=False,
+                error=f"{self.provider_name} does not support authorized payments",
+            )
+
+        if not self.is_configured():
+            return ChargeResult(
+                success=False,
+                error="Payment service is not configured",
+            )
+
+        request = ChargeRequest(
+            user_uuid=user_uuid,
+            amount=amount,
+            currency=currency,
+            description=description,
+            remote_id=remote_id,
+            metadata=metadata or {},
+        )
+
+        result = await self.provider.charge_authorized_user(request)
+
+        if result.success:
+            logger.info(
+                f"Charge successful via {self.provider_name}: "
+                f"transaction={result.transaction_id}, amount={amount}"
+            )
+        else:
+            logger.error(f"Failed to charge via {self.provider_name}: {result.error}")
+
+        return result
 
 
 # Singleton instance

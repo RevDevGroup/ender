@@ -147,6 +147,7 @@ def get_my_subscription(
         canceled_at=subscription.canceled_at,
         created_at=subscription.created_at,
         updated_at=subscription.updated_at,
+        has_authorized_payments=bool(subscription.provider_user_uuid),
         plan=UserPlanPublic(
             id=plan.id,
             name=plan.name,
@@ -231,6 +232,161 @@ def cancel_subscription(
         subscription_id=subscription.id,
         immediate=immediate,
     )
+
+
+# ============================================================================
+# Authorized Payments Endpoints
+# ============================================================================
+
+
+@router.get("/authorize")
+async def get_authorization_url(
+    session: SessionDep,
+    current_user: CurrentUser,
+    callback_url: str,
+) -> Any:
+    """
+    Get URL to authorize recurring payments.
+
+    The user will be redirected to this URL to authorize your app to charge
+    their account automatically for subscription renewals.
+
+    After authorization, the callback_url will receive the user's provider UUID.
+    """
+    service = get_subscription_service()
+
+    if not service.supports_authorized_payments():
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Payment provider does not support authorized payments",
+        )
+
+    # Check if user has a subscription
+    subscription = session.exec(
+        select(Subscription).where(Subscription.user_id == current_user.id)
+    ).first()
+
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No subscription found. Please create a subscription first.",
+        )
+
+    authorization_url = await service.get_authorization_url(
+        session=session,
+        user_id=current_user.id,
+        callback_url=callback_url,
+    )
+
+    return {
+        "authorization_url": authorization_url,
+        "message": "Redirect user to this URL to authorize recurring payments",
+    }
+
+
+@router.post("/authorize/callback")
+async def authorization_callback(
+    session: SessionDep,
+    user_uuid: str,
+    remote_id: str,
+) -> Any:
+    """
+    Callback endpoint for payment authorization.
+
+    This endpoint is called by the payment provider after user authorizes.
+    The remote_id is the user_id we passed when requesting authorization.
+    """
+    try:
+        user_id = uuid.UUID(remote_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid remote_id format",
+        )
+
+    service = get_subscription_service()
+    subscription = service.save_user_authorization(
+        session=session,
+        user_id=user_id,
+        provider_user_uuid=user_uuid,
+    )
+
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No subscription found for this user",
+        )
+
+    return {
+        "status": "success",
+        "message": "Recurring payments authorized successfully",
+        "subscription_id": str(subscription.id),
+        "has_authorized_payments": True,
+    }
+
+
+@router.get("/authorize/status")
+def get_authorization_status(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Check if the current user has authorized recurring payments.
+    """
+    subscription = session.exec(
+        select(Subscription).where(Subscription.user_id == current_user.id)
+    ).first()
+
+    if not subscription:
+        return {
+            "has_subscription": False,
+            "has_authorized_payments": False,
+        }
+
+    service = get_subscription_service()
+
+    return {
+        "has_subscription": True,
+        "subscription_id": str(subscription.id),
+        "subscription_status": subscription.status.value,
+        "has_authorized_payments": bool(subscription.provider_user_uuid),
+        "provider_supports_authorization": service.supports_authorized_payments(),
+    }
+
+
+@router.delete("/authorize")
+def revoke_authorization(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Revoke recurring payment authorization.
+
+    After this, subscriptions will require manual payment for renewal.
+    """
+    subscription = session.exec(
+        select(Subscription).where(Subscription.user_id == current_user.id)
+    ).first()
+
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No subscription found",
+        )
+
+    if not subscription.provider_user_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No authorization to revoke",
+        )
+
+    subscription.provider_user_uuid = None
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": "Recurring payment authorization revoked",
+    }
 
 
 @router.get("/payments", response_model=PaymentsPublic)
@@ -350,20 +506,29 @@ async def check_renewals_job(
 
         if not pending_payment:
             try:
-                payment, payment_url = await service.generate_renewal_invoice(
+                # Use process_renewal which handles both automatic and manual
+                payment, payment_url, was_automatic = await service.process_renewal(
                     session, subscription.id
                 )
-                # Enqueue renewal email via QStash
-                QStashService.enqueue(
-                    endpoint="/api/v1/subscriptions/jobs/send-renewal-email",
-                    payload={
-                        "user_id": str(subscription.user_id),
-                        "payment_id": str(payment.id),
-                        "payment_url": payment_url or "",
-                    },
-                    deduplication_id=f"renewal-email-{payment.id}",
-                )
-                results["renewals_generated"] += 1
+
+                if was_automatic:
+                    # Automatic charge was successful
+                    results["renewals_generated"] += 1
+                    logger.info(
+                        f"Automatic renewal successful for subscription {subscription.id}"
+                    )
+                else:
+                    # Manual invoice generated - send email
+                    QStashService.enqueue(
+                        endpoint="/api/v1/subscriptions/jobs/send-renewal-email",
+                        payload={
+                            "user_id": str(subscription.user_id),
+                            "payment_id": str(payment.id),
+                            "payment_url": payment_url or "",
+                        },
+                        deduplication_id=f"renewal-email-{payment.id}",
+                    )
+                    results["renewals_generated"] += 1
             except Exception as e:
                 error_msg = f"subscription {subscription.id}: {e!s}"
                 results["errors"].append(error_msg)

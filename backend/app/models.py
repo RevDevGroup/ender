@@ -132,6 +132,10 @@ class Subscription(SubscriptionBase, table=True):
     current_period_start: datetime = Field(default_factory=lambda: datetime.now(UTC))
     current_period_end: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+    # Authorized payments - stores the user's UUID from payment provider
+    # This is obtained when user authorizes recurring payments
+    provider_user_uuid: str | None = Field(default=None, max_length=255)
+
     # Cancellation tracking
     canceled_at: datetime | None = Field(default=None)
 
@@ -168,6 +172,7 @@ class SubscriptionPublic(SubscriptionBase):
     canceled_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    has_authorized_payments: bool = False  # Computed field
 
 
 class SubscriptionWithPlan(SubscriptionPublic):

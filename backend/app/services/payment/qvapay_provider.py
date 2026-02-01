@@ -3,12 +3,21 @@ QvaPay payment provider implementation.
 
 QvaPay API documentation: https://documenter.getpostman.com/view/8765260/TzzHnDGw
 
-Endpoints used:
+API v1 Endpoints:
 - GET /info - Authentication/app info
 - GET /balance - Account balance
 - GET /create_invoice - Create payment invoice
 - GET /transactions - List transactions
 - GET /transaction/{uuid} - Get transaction details
+
+API v2 Endpoints (Merchants - Authorized Payments):
+- POST /v2/info - App info
+- POST /v2/balance - Account balance
+- POST /v2/create_invoice - Create payment invoice
+- POST /v2/transactions - List transactions
+- POST /v2/transactions/{uuid} - Get transaction status
+- POST /v2/authorize_payments - Get authorization URL for recurring payments
+- POST /v2/charge - Charge user with authorized token
 """
 
 import logging
@@ -18,6 +27,10 @@ from httpx import AsyncClient
 from app.core.config import settings
 
 from .base import (
+    AuthorizationRequest,
+    AuthorizationResult,
+    ChargeRequest,
+    ChargeResult,
     InvoiceRequest,
     InvoiceResult,
     PaymentProvider,
@@ -36,9 +49,14 @@ class QvaPayProvider(PaymentProvider):
     Configuration (via environment):
         QVAPAY_APP_ID: Application ID from QvaPay dashboard
         QVAPAY_APP_SECRET: Application secret from QvaPay dashboard
+
+    Supports:
+        - Invoice-based payments (manual user payment)
+        - Authorized/recurring payments (automatic charges)
     """
 
     BASE_URL = "https://qvapay.com/api/v1"
+    BASE_URL_V2 = "https://api.qvapay.com/v2"
     DEFAULT_TIMEOUT = 30.0
 
     def __init__(
@@ -57,10 +75,18 @@ class QvaPayProvider(PaymentProvider):
         return bool(self.app_id and self.app_secret)
 
     def _get_auth_params(self) -> dict[str, str]:
-        """Get authentication parameters for API requests."""
+        """Get authentication parameters for API v1 requests (query params)."""
         return {
             "app_id": self.app_id or "",
             "app_secret": self.app_secret or "",
+        }
+
+    def _get_auth_headers(self) -> dict[str, str]:
+        """Get authentication headers for API v2 requests."""
+        return {
+            "app-id": self.app_id or "",
+            "app-secret": self.app_secret or "",
+            "Content-Type": "application/json",
         }
 
     async def create_invoice(self, request: InvoiceRequest) -> InvoiceResult:
@@ -239,3 +265,140 @@ class QvaPayProvider(PaymentProvider):
         except Exception as e:
             logger.exception(f"QvaPay get_balance error: {e}")
             return None
+
+    # ==================== Authorized Payments (API v2) ====================
+
+    def supports_authorized_payments(self) -> bool:
+        """QvaPay supports authorized/recurring payments via API v2."""
+        return True
+
+    async def get_authorization_url(
+        self, request: AuthorizationRequest
+    ) -> AuthorizationResult:
+        """
+        Get a URL where the user can authorize recurring payments.
+
+        Uses QvaPay API v2 endpoint: POST /v2/authorize_payments
+
+        The user will be redirected to this URL to authorize your app
+        to charge their account. After authorization, they are redirected
+        to your callback_url with the user_uuid in the response.
+
+        Args:
+            request: Authorization request with callback URL
+
+        Returns:
+            AuthorizationResult with authorization URL
+        """
+        if not self.is_configured():
+            return AuthorizationResult(
+                success=False,
+                error="QvaPay is not configured",
+            )
+
+        try:
+            async with AsyncClient() as client:
+                response = await client.post(
+                    f"{self.BASE_URL_V2}/authorize_payments",
+                    headers=self._get_auth_headers(),
+                    json={
+                        "remote_id": request.remote_id,
+                        "callback": request.callback_url,
+                    },
+                    timeout=self.DEFAULT_TIMEOUT,
+                )
+                data = response.json()
+
+                if response.status_code == 200:
+                    # QvaPay returns a URL where user authorizes payments
+                    auth_url = data.get("url") or data.get("authorization_url")
+                    if auth_url:
+                        return AuthorizationResult(
+                            success=True,
+                            authorization_url=auth_url,
+                            raw_response=data,
+                        )
+                    else:
+                        return AuthorizationResult(
+                            success=False,
+                            error="No authorization URL in response",
+                            raw_response=data,
+                        )
+                else:
+                    error_msg = (
+                        data.get("error") or data.get("message") or "Unknown error"
+                    )
+                    logger.error(f"QvaPay authorize_payments failed: {error_msg}")
+                    return AuthorizationResult(
+                        success=False,
+                        error=error_msg,
+                        raw_response=data,
+                    )
+
+        except Exception as e:
+            logger.exception(f"QvaPay authorize_payments error: {e}")
+            return AuthorizationResult(success=False, error=str(e))
+
+    async def charge_authorized_user(self, request: ChargeRequest) -> ChargeResult:
+        """
+        Charge a user who has previously authorized payments.
+
+        Uses QvaPay API v2 endpoint: POST /v2/charge
+
+        The user must have previously authorized payments via get_authorization_url.
+        The charge is processed automatically without user intervention.
+
+        Args:
+            request: Charge request with user UUID and amount
+
+        Returns:
+            ChargeResult with transaction ID or error
+        """
+        if not self.is_configured():
+            return ChargeResult(
+                success=False,
+                error="QvaPay is not configured",
+            )
+
+        try:
+            async with AsyncClient() as client:
+                response = await client.post(
+                    f"{self.BASE_URL_V2}/charge",
+                    headers=self._get_auth_headers(),
+                    json={
+                        "amount": request.amount,
+                        "user_uuid": request.user_uuid,
+                        "description": request.description,
+                        "remote_id": request.remote_id,
+                    },
+                    timeout=self.DEFAULT_TIMEOUT,
+                )
+                data = response.json()
+
+                if response.status_code == 200:
+                    # Successful charge
+                    transaction_id = (
+                        data.get("transaction_uuid")
+                        or data.get("transation_uuid")  # QvaPay typo
+                        or data.get("uuid")
+                    )
+                    return ChargeResult(
+                        success=True,
+                        transaction_id=transaction_id,
+                        amount=request.amount,
+                        raw_response=data,
+                    )
+                else:
+                    error_msg = (
+                        data.get("error") or data.get("message") or "Unknown error"
+                    )
+                    logger.error(f"QvaPay charge failed: {error_msg}")
+                    return ChargeResult(
+                        success=False,
+                        error=error_msg,
+                        raw_response=data,
+                    )
+
+        except Exception as e:
+            logger.exception(f"QvaPay charge error: {e}")
+            return ChargeResult(success=False, error=str(e))

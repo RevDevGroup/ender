@@ -113,6 +113,84 @@ class PaymentVerification:
     error: str | None = None
 
 
+@dataclass
+class AuthorizationRequest:
+    """
+    Request to get payment authorization from a user.
+
+    Attributes:
+        remote_id: Internal ID for tracking (e.g., user.id or subscription.id)
+        callback_url: URL where user is redirected after authorization
+        metadata: Additional provider-specific data
+    """
+
+    remote_id: str
+    callback_url: str
+    metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class AuthorizationResult:
+    """
+    Result of requesting payment authorization.
+
+    Attributes:
+        success: Whether the authorization URL was created successfully
+        authorization_url: URL where user authorizes payments
+        expires_at: When the authorization URL expires (optional)
+        error: Error message if failed
+        raw_response: Raw provider response (for debugging)
+    """
+
+    success: bool
+    authorization_url: str | None = None
+    expires_at: str | None = None
+    error: str | None = None
+    raw_response: dict[str, object] | None = None
+
+
+@dataclass
+class ChargeRequest:
+    """
+    Request to charge an authorized user.
+
+    Attributes:
+        user_uuid: Provider-specific user UUID (obtained after authorization)
+        amount: Amount to charge
+        currency: Currency code (USD, EUR, etc.)
+        description: Description shown to user
+        remote_id: Internal ID for tracking (e.g., payment.id)
+        metadata: Additional provider-specific data
+    """
+
+    user_uuid: str
+    amount: float
+    currency: str
+    description: str
+    remote_id: str
+    metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class ChargeResult:
+    """
+    Result of charging an authorized user.
+
+    Attributes:
+        success: Whether the charge was successful
+        transaction_id: Provider-specific transaction ID
+        amount: Amount charged
+        error: Error message if failed
+        raw_response: Raw provider response (for debugging)
+    """
+
+    success: bool
+    transaction_id: str | None = None
+    amount: float | None = None
+    error: str | None = None
+    raw_response: dict[str, object] | None = None
+
+
 class PaymentProvider(ABC):
     """
     Abstract base class for payment providers.
@@ -219,3 +297,48 @@ class PaymentProvider(ABC):
             True if signature is valid (default: True if no verification)
         """
         return True
+
+    def supports_authorized_payments(self) -> bool:
+        """
+        Check if the provider supports authorized/recurring payments.
+
+        Returns:
+            True if authorized payments are supported (default: False)
+        """
+        return False
+
+    async def get_authorization_url(
+        self, request: "AuthorizationRequest"
+    ) -> "AuthorizationResult":
+        """
+        Get a URL where the user can authorize recurring payments.
+
+        Args:
+            request: Authorization request with callback URL
+
+        Returns:
+            AuthorizationResult with authorization URL or error
+
+        Raises:
+            NotImplementedError: If provider doesn't support authorized payments
+        """
+        raise NotImplementedError(
+            f"{self.provider_name} does not support authorized payments"
+        )
+
+    async def charge_authorized_user(self, request: "ChargeRequest") -> "ChargeResult":
+        """
+        Charge a user who has previously authorized payments.
+
+        Args:
+            request: Charge request with user UUID and amount
+
+        Returns:
+            ChargeResult with transaction ID or error
+
+        Raises:
+            NotImplementedError: If provider doesn't support authorized payments
+        """
+        raise NotImplementedError(
+            f"{self.provider_name} does not support authorized payments"
+        )

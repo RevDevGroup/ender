@@ -7,12 +7,28 @@ multiple providers (QvaPay, Tropipay, etc.) through a common API.
 Usage:
     from app.services.payment import get_payment_service
 
+    # Invoice-based payment (manual)
     service = get_payment_service()
     result = await service.create_invoice(
         amount=10.00,
         description="Pro Plan",
         remote_id=str(payment_id),
     )
+
+    # Authorized payment (automatic/recurring)
+    if service.supports_authorized_payments():
+        auth_result = await service.get_authorization_url(
+            remote_id=str(user_id),
+            callback_url="https://myapp.com/callback",
+        )
+        # User authorizes at auth_result.authorization_url
+        # Then charge automatically:
+        charge_result = await service.charge_authorized_user(
+            user_uuid="user-uuid-from-callback",
+            amount=10.00,
+            description="Monthly subscription",
+            remote_id=str(payment_id),
+        )
 
 To add a new provider:
     1. Create a new class inheriting from PaymentProvider
@@ -22,6 +38,10 @@ To add a new provider:
 """
 
 from .base import (
+    AuthorizationRequest,
+    AuthorizationResult,
+    ChargeRequest,
+    ChargeResult,
     InvoiceRequest,
     InvoiceResult,
     InvoiceStatus,
@@ -41,6 +61,11 @@ __all__ = [
     "TransactionInfo",
     "TransactionStatus",
     "PaymentVerification",
+    # Authorized payments
+    "AuthorizationRequest",
+    "AuthorizationResult",
+    "ChargeRequest",
+    "ChargeResult",
     # Service
     "PaymentService",
     "PaymentProviderType",
