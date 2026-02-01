@@ -19,8 +19,6 @@ CONFIG_DEFAULTS: dict[str, Any] = {
     "default_payment_method": lambda: getattr(
         settings, "DEFAULT_PAYMENT_METHOD", "invoice"
     ),
-    "payment_provider": lambda: settings.PAYMENT_PROVIDER,
-    "sms_rate_limit_per_minute": lambda: "60",
     "sms_retry_attempts": lambda: "3",
     "email_notifications_enabled": lambda: "true",
     "webhook_timeout_seconds": lambda: "30",
@@ -75,16 +73,6 @@ class ConfigService:
         """Get default payment method for subscriptions."""
         value = ConfigService.get_value(session, "default_payment_method")
         return PaymentMethod(value)
-
-    @staticmethod
-    def get_payment_provider(session: Session) -> str:
-        """Get active payment provider name."""
-        return ConfigService.get_value(session, "payment_provider")
-
-    @staticmethod
-    def get_sms_rate_limit(session: Session) -> int:
-        """Get SMS rate limit per minute."""
-        return ConfigService.get_int(session, "sms_rate_limit_per_minute")
 
     @staticmethod
     def get_sms_retry_attempts(session: Session) -> int:

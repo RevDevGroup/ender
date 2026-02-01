@@ -187,28 +187,6 @@ function SystemSettings() {
               or automatic recurring charges
             </p>
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="payment-provider">Payment Provider</Label>
-            <Select
-              value={getConfigValue("payment_provider")}
-              onValueChange={(value) =>
-                handleConfigChange("payment_provider", value)
-              }
-              disabled={updateConfigMutation.isPending}
-            >
-              <SelectTrigger id="payment-provider" className="w-[300px]">
-                <SelectValue placeholder="Select provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="qvapay">QvaPay</SelectItem>
-                <SelectItem value="tropipay">TropiPay</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Active payment gateway for processing transactions
-            </p>
-          </div>
         </CardContent>
       </Card>
 
@@ -219,27 +197,9 @@ function SystemSettings() {
             <MessageSquare className="h-5 w-5" />
             SMS
           </CardTitle>
-          <CardDescription>
-            Configure SMS delivery settings and limits
-          </CardDescription>
+          <CardDescription>Configure SMS delivery settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="sms-rate-limit">Rate Limit (per minute)</Label>
-            <Input
-              id="sms-rate-limit"
-              type="number"
-              defaultValue={getConfigValue("sms_rate_limit_per_minute")}
-              onBlur={(e) =>
-                handleConfigChange("sms_rate_limit_per_minute", e.target.value)
-              }
-              className="w-[150px]"
-            />
-            <p className="text-sm text-muted-foreground">
-              Maximum SMS messages a user can send per minute
-            </p>
-          </div>
-
           <div className="grid gap-2">
             <Label htmlFor="sms-retry">Retry Attempts</Label>
             <Input

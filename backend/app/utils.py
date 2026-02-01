@@ -46,22 +46,41 @@ class EmailSendError(Exception):
     pass
 
 
+def get_support_email_from_config() -> str | None:
+    """Get support email from system config for use as reply-to."""
+    try:
+        from app.core.db import engine
+        from app.services.config_service import ConfigService
+
+        with Session(engine) as session:
+            return ConfigService.get_support_email(session)
+    except Exception:
+        return None
+
+
 def send_email(
     *,
     email_to: str,
     subject: str = "",
     html_content: str = "",
+    reply_to: str | None = None,
 ) -> None:
     """
     Send an email using the configured email provider.
 
     Uses the EmailService which supports multiple providers (SMTP, Maileroo, etc.)
     based on the EMAIL_PROVIDER environment variable.
+
+    If reply_to is not provided, uses the support_email from system config.
     """
     email_service = get_email_service()
 
     if not email_service.is_configured():
         raise EmailNotConfiguredError("Email service is not configured")
+
+    # Use support_email as reply-to if not explicitly provided
+    if reply_to is None:
+        reply_to = get_support_email_from_config()
 
     # Run the async send_email in a sync context
     result = asyncio.run(
@@ -69,6 +88,7 @@ def send_email(
             to=email_to,
             subject=subject,
             html_content=html_content,
+            reply_to=reply_to,
         )
     )
 
@@ -81,6 +101,7 @@ def send_email(
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
     project_name = settings.PROJECT_NAME
+    support_email = get_support_email_from_config() or settings.EMAILS_FROM_EMAIL
     subject = f"{project_name} - Password recovery for user {email}"
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
     html_content = render_email_template(
@@ -91,6 +112,7 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
             "email": email_to,
             "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
             "link": link,
+            "support_email": support_email,
         },
     )
     return EmailData(html_content=html_content, subject=subject)
@@ -100,6 +122,7 @@ def generate_new_account_email(
     email_to: str, username: str, password: str
 ) -> EmailData:
     project_name = settings.PROJECT_NAME
+    support_email = get_support_email_from_config() or settings.EMAILS_FROM_EMAIL
     subject = f"{project_name} - New account for user {username}"
     html_content = render_email_template(
         template_name="new_account.html",
@@ -109,6 +132,7 @@ def generate_new_account_email(
             "password": password,
             "email": email_to,
             "link": settings.FRONTEND_HOST,
+            "support_email": support_email,
         },
     )
     return EmailData(html_content=html_content, subject=subject)
@@ -117,6 +141,7 @@ def generate_new_account_email(
 def generate_email_verification_email(email_to: str, token: str) -> EmailData:
     """Generate email verification email content."""
     project_name = settings.PROJECT_NAME
+    support_email = get_support_email_from_config() or settings.EMAILS_FROM_EMAIL
     subject = f"{project_name} - Verify your email address"
     link = f"{settings.FRONTEND_HOST}/verify-email?token={token}"
     html_content = render_email_template(
@@ -126,6 +151,7 @@ def generate_email_verification_email(email_to: str, token: str) -> EmailData:
             "username": email_to,
             "valid_hours": settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS,
             "link": link,
+            "support_email": support_email,
         },
     )
     return EmailData(html_content=html_content, subject=subject)

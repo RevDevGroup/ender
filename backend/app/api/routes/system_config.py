@@ -51,18 +51,7 @@ CONFIG_DEFINITIONS: dict[str, dict[str, Any]] = {
         "category": "payments",
         "allowed_values": ["invoice", "authorized"],
     },
-    "payment_provider": {
-        "default": lambda: settings.PAYMENT_PROVIDER,
-        "description": "Active payment provider (qvapay, tropipay)",
-        "category": "payments",
-        "allowed_values": ["qvapay", "tropipay"],
-    },
     # SMS settings
-    "sms_rate_limit_per_minute": {
-        "default": lambda: "60",
-        "description": "Maximum SMS messages per minute per user",
-        "category": "sms",
-    },
     "sms_retry_attempts": {
         "default": lambda: "3",
         "description": "Number of retry attempts for failed SMS",
