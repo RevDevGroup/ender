@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, OauthAuthorizeData, OauthAuthorizeErrors, OauthAuthorizeResponses, OauthCallbackData, OauthCallbackErrors, OauthCallbackResponses, OauthLinkOauthAccountData, OauthLinkOauthAccountErrors, OauthLinkOauthAccountResponses, OauthListOauthAccountsData, OauthListOauthAccountsResponses, OauthListProvidersData, OauthListProvidersResponses, OauthSetPasswordData, OauthSetPasswordErrors, OauthSetPasswordResponses, OauthUnlinkOauthAccountData, OauthUnlinkOauthAccountErrors, OauthUnlinkOauthAccountResponses, PlansCancelPlanData, PlansCancelPlanErrors, PlansCancelPlanResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, SubscriptionsCheckRenewalsJobData, SubscriptionsCheckRenewalsJobResponses, SubscriptionsPaymentWebhook2Data, SubscriptionsPaymentWebhook2Errors, SubscriptionsPaymentWebhook2Responses, SubscriptionsPaymentWebhookData, SubscriptionsPaymentWebhookErrors, SubscriptionsPaymentWebhookResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
+import type { ApiKeysCreateApiKeyData, ApiKeysCreateApiKeyErrors, ApiKeysCreateApiKeyResponses, ApiKeysDeleteApiKeyData, ApiKeysDeleteApiKeyErrors, ApiKeysDeleteApiKeyResponses, ApiKeysListApiKeysData, ApiKeysListApiKeysErrors, ApiKeysListApiKeysResponses, ApiKeysRevokeApiKeyData, ApiKeysRevokeApiKeyErrors, ApiKeysRevokeApiKeyResponses, InternalProcessNotificationData, InternalProcessNotificationResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentErrors, LoginRecoverPasswordHtmlContentResponses, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, LoginTestTokenData, LoginTestTokenResponses, OauthAuthorizeData, OauthAuthorizeErrors, OauthAuthorizeResponses, OauthCallbackData, OauthCallbackErrors, OauthCallbackResponses, OauthLinkOauthAccountData, OauthLinkOauthAccountErrors, OauthLinkOauthAccountResponses, OauthListOauthAccountsData, OauthListOauthAccountsResponses, OauthListProvidersData, OauthListProvidersResponses, OauthSetPasswordData, OauthSetPasswordErrors, OauthSetPasswordResponses, OauthUnlinkOauthAccountData, OauthUnlinkOauthAccountErrors, OauthUnlinkOauthAccountResponses, PlansCancelPlanData, PlansCancelPlanErrors, PlansCancelPlanResponses, PlansGetQuotaData, PlansGetQuotaResponses, PlansListPlansData, PlansListPlansResponses, PlansUpgradePlanData, PlansUpgradePlanErrors, PlansUpgradePlanResponses, PrivateCreateUserData, PrivateCreateUserErrors, PrivateCreateUserResponses, SmsCreateDeviceData, SmsCreateDeviceErrors, SmsCreateDeviceResponses, SmsDeleteDeviceData, SmsDeleteDeviceErrors, SmsDeleteDeviceResponses, SmsGetDeviceData, SmsGetDeviceErrors, SmsGetDeviceResponses, SmsGetMessageData, SmsGetMessageErrors, SmsGetMessageResponses, SmsListDevicesData, SmsListDevicesErrors, SmsListDevicesResponses, SmsListIncomingMessagesData, SmsListIncomingMessagesErrors, SmsListIncomingMessagesResponses, SmsListMessagesData, SmsListMessagesErrors, SmsListMessagesResponses, SmsReportIncomingSmsData, SmsReportIncomingSmsErrors, SmsReportIncomingSmsResponses, SmsReportSmsStatusData, SmsReportSmsStatusErrors, SmsReportSmsStatusResponses, SmsSendSmsData, SmsSendSmsErrors, SmsSendSmsResponses, SmsUpdateDeviceData, SmsUpdateDeviceErrors, SmsUpdateDeviceResponses, SmsUpdateFcmTokenData, SmsUpdateFcmTokenErrors, SmsUpdateFcmTokenResponses, SubscriptionsCheckRenewalsJobData, SubscriptionsCheckRenewalsJobResponses, SubscriptionsPaymentWebhook2Data, SubscriptionsPaymentWebhook2Errors, SubscriptionsPaymentWebhook2Responses, SubscriptionsPaymentWebhookData, SubscriptionsPaymentWebhookErrors, SubscriptionsPaymentWebhookResponses, SystemConfigGetConfigData, SystemConfigGetConfigErrors, SystemConfigGetConfigResponses, SystemConfigListConfigsData, SystemConfigListConfigsResponses, SystemConfigUpdateConfigData, SystemConfigUpdateConfigErrors, SystemConfigUpdateConfigResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersResendVerificationEmailData, UsersResendVerificationEmailErrors, UsersResendVerificationEmailResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UsersVerifyEmailData, UsersVerifyEmailErrors, UsersVerifyEmailResponses, UtilsHealthCheckData, UtilsHealthCheckResponses, WebhooksCreateWebhookData, WebhooksCreateWebhookErrors, WebhooksCreateWebhookResponses, WebhooksDeleteWebhookData, WebhooksDeleteWebhookErrors, WebhooksDeleteWebhookResponses, WebhooksGetWebhookData, WebhooksGetWebhookErrors, WebhooksGetWebhookResponses, WebhooksListWebhooksData, WebhooksListWebhooksErrors, WebhooksListWebhooksResponses, WebhooksUpdateWebhookData, WebhooksUpdateWebhookErrors, WebhooksUpdateWebhookResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -894,6 +894,54 @@ export class InternalService {
             responseType: 'json',
             url: '/api/v1/internal/notifications/send',
             ...options
+        });
+    }
+}
+
+export class SystemConfigService {
+    /**
+     * List Configs
+     *
+     * List all system configuration settings.
+     */
+    public static systemConfigListConfigs<ThrowOnError extends boolean = false>(options?: Options<SystemConfigListConfigsData, ThrowOnError>) {
+        return (options?.client ?? client).get<SystemConfigListConfigsResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/system-config/',
+            ...options
+        });
+    }
+    
+    /**
+     * Get Config
+     *
+     * Get a specific configuration value.
+     */
+    public static systemConfigGetConfig<ThrowOnError extends boolean = false>(options: Options<SystemConfigGetConfigData, ThrowOnError>) {
+        return (options.client ?? client).get<SystemConfigGetConfigResponses, SystemConfigGetConfigErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/system-config/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update Config
+     *
+     * Update a configuration value.
+     */
+    public static systemConfigUpdateConfig<ThrowOnError extends boolean = false>(options: Options<SystemConfigUpdateConfigData, ThrowOnError>) {
+        return (options.client ?? client).put<SystemConfigUpdateConfigResponses, SystemConfigUpdateConfigErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/system-config/{key}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
 }

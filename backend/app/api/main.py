@@ -9,6 +9,7 @@ from app.api.routes import (
     private,
     sms,
     subscriptions,
+    system_config,
     users,
     utils,
     webhooks,
@@ -28,6 +29,7 @@ api_router.include_router(
     subscriptions.router, prefix="/subscriptions", tags=["subscriptions"]
 )
 api_router.include_router(internal.router, prefix="/internal", tags=["internal"])
+api_router.include_router(system_config.router)
 
 
 if settings.ENVIRONMENT == "local":

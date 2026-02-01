@@ -693,3 +693,45 @@ class OAuthLinkRequest(SQLModel):
 
 class SetPasswordRequest(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# System Configuration Models
+class SystemConfig(SQLModel, table=True):
+    """
+    System-wide configuration stored in database.
+
+    Allows runtime configuration changes without redeployment.
+    Environment variables serve as defaults, DB values override them.
+    """
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    key: str = Field(unique=True, index=True, max_length=100)
+    value: str = Field(max_length=1000)
+    description: str | None = Field(default=None, max_length=500)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
+    )
+
+
+class SystemConfigPublic(SQLModel):
+    """Public system config response."""
+
+    key: str
+    value: str
+    description: str | None
+    category: str | None = None
+    updated_at: datetime
+
+
+class SystemConfigUpdate(SQLModel):
+    """Update a system config value."""
+
+    value: str = Field(max_length=1000)
+
+
+class SystemConfigsPublic(SQLModel):
+    """List of system configs."""
+
+    data: list[SystemConfigPublic]
+    count: int

@@ -545,6 +545,62 @@ export type SetPasswordRequest = {
 };
 
 /**
+ * SystemConfigPublic
+ *
+ * Public system config response.
+ */
+export type SystemConfigPublic = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Value
+     */
+    value: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Category
+     */
+    category?: string | null;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * SystemConfigUpdate
+ *
+ * Update a system config value.
+ */
+export type SystemConfigUpdate = {
+    /**
+     * Value
+     */
+    value: string;
+};
+
+/**
+ * SystemConfigsPublic
+ *
+ * List of system configs.
+ */
+export type SystemConfigsPublic = {
+    /**
+     * Data
+     */
+    data: Array<SystemConfigPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
  * Token
  */
 export type Token = {
@@ -2434,6 +2490,82 @@ export type InternalProcessNotificationResponses = {
 };
 
 export type InternalProcessNotificationResponse = InternalProcessNotificationResponses[keyof InternalProcessNotificationResponses];
+
+export type SystemConfigListConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/system-config/';
+};
+
+export type SystemConfigListConfigsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemConfigsPublic;
+};
+
+export type SystemConfigListConfigsResponse = SystemConfigListConfigsResponses[keyof SystemConfigListConfigsResponses];
+
+export type SystemConfigGetConfigData = {
+    body?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/v1/system-config/{key}';
+};
+
+export type SystemConfigGetConfigErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SystemConfigGetConfigError = SystemConfigGetConfigErrors[keyof SystemConfigGetConfigErrors];
+
+export type SystemConfigGetConfigResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemConfigPublic;
+};
+
+export type SystemConfigGetConfigResponse = SystemConfigGetConfigResponses[keyof SystemConfigGetConfigResponses];
+
+export type SystemConfigUpdateConfigData = {
+    body: SystemConfigUpdate;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/v1/system-config/{key}';
+};
+
+export type SystemConfigUpdateConfigErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SystemConfigUpdateConfigError = SystemConfigUpdateConfigErrors[keyof SystemConfigUpdateConfigErrors];
+
+export type SystemConfigUpdateConfigResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemConfigPublic;
+};
+
+export type SystemConfigUpdateConfigResponse = SystemConfigUpdateConfigResponses[keyof SystemConfigUpdateConfigResponses];
 
 export type PrivateCreateUserData = {
     body: PrivateUserCreate;

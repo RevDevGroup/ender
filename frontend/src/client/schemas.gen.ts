@@ -905,6 +905,94 @@ export const SetPasswordRequestSchema = {
     title: 'SetPasswordRequest'
 } as const;
 
+export const SystemConfigPublicSchema = {
+    properties: {
+        key: {
+            type: 'string',
+            title: 'Key'
+        },
+        value: {
+            type: 'string',
+            title: 'Value'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description'
+        },
+        category: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Category'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: [
+        'key',
+        'value',
+        'description',
+        'updated_at'
+    ],
+    title: 'SystemConfigPublic',
+    description: 'Public system config response.'
+} as const;
+
+export const SystemConfigUpdateSchema = {
+    properties: {
+        value: {
+            type: 'string',
+            maxLength: 1000,
+            title: 'Value'
+        }
+    },
+    type: 'object',
+    required: [
+        'value'
+    ],
+    title: 'SystemConfigUpdate',
+    description: 'Update a system config value.'
+} as const;
+
+export const SystemConfigsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                $ref: '#/components/schemas/SystemConfigPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: [
+        'data',
+        'count'
+    ],
+    title: 'SystemConfigsPublic',
+    description: 'List of system configs.'
+} as const;
+
 export const TokenSchema = {
     properties: {
         access_token: {

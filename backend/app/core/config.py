@@ -161,6 +161,7 @@ class Settings(BaseSettings):
     # Subscription settings
     SUBSCRIPTION_GRACE_PERIOD_DAYS: int = 3  # Grace period after expiration
     RENEWAL_REMINDER_DAYS: int = 3  # Days before expiration to send reminder
+    DEFAULT_PAYMENT_METHOD: str = "invoice"  # Default: "invoice" or "authorized"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
