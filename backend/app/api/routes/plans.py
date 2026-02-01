@@ -47,7 +47,7 @@ def get_quota(*, session: SessionDep, current_user: CurrentUser) -> UserQuotaPub
     return UserQuotaPublic.model_validate(quota_info)
 
 
-@router.post("/upgrade")
+@router.put("/upgrade")
 async def upgrade_plan(
     request: Request,
     *,
