@@ -1,8 +1,8 @@
 """
 Subscription management service.
 
-Handles subscription lifecycle: creation, payments, renewals, and cancellations.
-Uses the abstract PaymentService for provider-agnostic payment processing.
+Handles subscription lifecycle with automatic payments only.
+Uses QvaPay authorize_payments + charge for all paid subscriptions.
 """
 
 import logging
@@ -28,54 +28,43 @@ logger = logging.getLogger(__name__)
 
 class SubscriptionService:
     """
-    Service for managing user subscriptions.
+    Service for managing user subscriptions with automatic payments.
 
-    This service:
-    - Creates subscriptions with initial payment
-    - Processes payment confirmations
-    - Generates renewal invoices
-    - Handles cancellations and expirations
+    Flow for paid plans:
+    1. User requests upgrade → get authorization URL
+    2. User authorizes on QvaPay → callback saves provider_user_uuid
+    3. First charge is made automatically
+    4. Renewals are charged automatically
     """
 
     def __init__(self, payment_service: PaymentService | None = None):
-        """
-        Initialize the subscription service.
-
-        Args:
-            payment_service: Optional payment service. Uses singleton if not provided.
-        """
         self._payment_service = payment_service
 
     @property
     def payment_service(self) -> PaymentService:
-        """Get the payment service."""
         if self._payment_service is None:
             self._payment_service = get_payment_service()
         return self._payment_service
 
-    async def create_subscription(
+    async def start_subscription(
         self,
         session: Session,
         user_id: uuid.UUID,
         plan_id: uuid.UUID,
-        billing_cycle: BillingCycle = BillingCycle.MONTHLY,
-    ) -> tuple[Subscription, Payment, str | None]:
+        billing_cycle: BillingCycle,
+        callback_url: str,
+        success_url: str,
+        error_url: str,
+    ) -> tuple[Subscription | None, str | None]:
         """
-        Create a subscription and generate the first invoice.
+        Start subscription process.
 
-        Args:
-            session: Database session
-            user_id: User ID
-            plan_id: Plan to subscribe to
-            billing_cycle: Monthly or yearly billing
+        For free plans: activates immediately, returns (subscription, None)
+        For paid plans: returns (subscription, authorization_url)
 
-        Returns:
-            Tuple of (subscription, payment, payment_url)
-
-        Raises:
-            HTTPException: If plan not found or payment creation fails
+        The subscription stays PENDING until authorization callback + first charge.
         """
-        # Check for existing subscription
+        # Check for existing active subscription
         existing = session.exec(
             select(Subscription).where(Subscription.user_id == user_id)
         ).first()
@@ -98,20 +87,22 @@ class SubscriptionService:
         if not plan.is_public:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This plan is not available for subscription",
+                detail="Plan not available",
             )
 
-        # Calculate billing period and amount
-        now = datetime.now(UTC)
+        # Calculate amount
         if billing_cycle == BillingCycle.MONTHLY:
-            period_end = now + timedelta(days=30)
             amount = plan.price
         else:
-            period_end = now + timedelta(days=365)
             amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
 
-        # Free plan doesn't need payment
+        # Free plan - activate immediately
         if amount <= 0:
+            now = datetime.now(UTC)
+            period_end = now + timedelta(
+                days=30 if billing_cycle == BillingCycle.MONTHLY else 365
+            )
+
             subscription = Subscription(
                 user_id=user_id,
                 plan_id=plan_id,
@@ -121,25 +112,89 @@ class SubscriptionService:
                 current_period_end=period_end,
             )
             session.add(subscription)
-
-            # Update user quota
             self._update_user_quota(session, user_id, plan_id)
             session.commit()
 
-            logger.info(f"Free subscription created: {subscription.id}")
-            return subscription, None, None  # type: ignore
+            logger.info(f"Free subscription activated: {subscription.id}")
+            return subscription, None
 
-        # Create subscription (pending until first payment)
+        # Paid plan - create pending subscription and get authorization URL
+        # Delete any existing expired/canceled subscription first
+        if existing:
+            session.delete(existing)
+            session.flush()
+
         subscription = Subscription(
             user_id=user_id,
             plan_id=plan_id,
             status=SubscriptionStatus.PENDING,
             billing_cycle=billing_cycle,
-            current_period_start=now,
-            current_period_end=period_end,
+            current_period_start=datetime.now(UTC),
+            current_period_end=datetime.now(UTC),  # Will be set after first charge
         )
         session.add(subscription)
+        session.commit()
+
+        # Get authorization URL from payment provider
+        result = await self.payment_service.get_authorization_url(
+            remote_id=str(user_id),
+            callback_url=callback_url,
+            success_url=success_url,
+            error_url=error_url,
+        )
+
+        if not result.success:
+            logger.error(f"Failed to get authorization URL: {result.error}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Payment provider error: {result.error}",
+            )
+
+        logger.info(f"Subscription pending authorization: {subscription.id}")
+        return subscription, result.authorization_url
+
+    async def complete_authorization(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        provider_user_uuid: str,
+    ) -> Subscription:
+        """
+        Complete authorization and charge first payment.
+
+        Called from the callback endpoint after user authorizes on QvaPay.
+        """
+        subscription = session.exec(
+            select(Subscription).where(Subscription.user_id == user_id)
+        ).first()
+
+        if not subscription:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Subscription not found",
+            )
+
+        if subscription.status != SubscriptionStatus.PENDING:
+            # Already processed or in different state
+            subscription.provider_user_uuid = provider_user_uuid
+            session.commit()
+            return subscription
+
+        # Save authorization
+        subscription.provider_user_uuid = provider_user_uuid
         session.flush()
+
+        # Charge first payment
+        plan = subscription.plan
+        if subscription.billing_cycle == BillingCycle.MONTHLY:
+            amount = plan.price
+            period_days = 30
+        else:
+            amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
+            period_days = 365
+
+        now = datetime.now(UTC)
+        period_end = now + timedelta(days=period_days)
 
         # Create payment record
         payment = Payment(
@@ -154,150 +209,53 @@ class SubscriptionService:
         session.add(payment)
         session.flush()
 
-        # Generate invoice via payment provider
-        invoice_result = await self.payment_service.create_invoice(
+        # Charge the user
+        charge_result = await self.payment_service.charge_authorized_user(
+            user_uuid=provider_user_uuid,
             amount=amount,
             currency="USD",
-            description=f"Subscription: {plan.name} ({billing_cycle.value})",
+            description=f"Subscription: {plan.name} ({subscription.billing_cycle.value})",
             remote_id=str(payment.id),
         )
 
-        if not invoice_result.success:
-            logger.error(f"Failed to create invoice: {invoice_result.error}")
-            session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Failed to create payment invoice: {invoice_result.error}",
+        if charge_result.success:
+            payment.status = PaymentStatus.COMPLETED
+            payment.provider_transaction_id = charge_result.transaction_id
+            payment.paid_at = now
+
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.current_period_start = now
+            subscription.current_period_end = period_end
+
+            self._update_user_quota(session, subscription.user_id, subscription.plan_id)
+
+            session.commit()
+            logger.info(f"Subscription activated: {subscription.id}")
+        else:
+            payment.status = PaymentStatus.FAILED
+            subscription.status = SubscriptionStatus.EXPIRED
+
+            session.commit()
+            logger.error(
+                f"First charge failed for {subscription.id}: {charge_result.error}"
             )
 
-        # Store invoice details
-        payment.provider_invoice_id = invoice_result.invoice_id
-        payment.provider_invoice_url = invoice_result.payment_url
-        session.commit()
-
-        logger.info(
-            f"Subscription created: {subscription.id} via {self.payment_service.provider_name}"
-        )
-
-        return subscription, payment, invoice_result.payment_url
-
-    async def process_payment_confirmation(
-        self,
-        session: Session,
-        payment_id: uuid.UUID,
-        provider_transaction_id: str,
-    ) -> Subscription:
-        """
-        Process payment confirmation (from webhook or manual verification).
-
-        Activates the subscription and updates user quota.
-
-        Args:
-            session: Database session
-            payment_id: Payment ID
-            provider_transaction_id: Transaction ID from payment provider
-
-        Returns:
-            Updated subscription
-        """
-        payment = session.get(Payment, payment_id)
-        if not payment:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Payment not found",
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Payment failed: {charge_result.error}",
             )
-
-        if payment.status == PaymentStatus.COMPLETED:
-            # Already processed
-            return payment.subscription
-
-        # Update payment
-        payment.status = PaymentStatus.COMPLETED
-        payment.provider_transaction_id = provider_transaction_id
-        payment.paid_at = datetime.now(UTC)
-
-        # Activate subscription
-        subscription = payment.subscription
-        was_pending = subscription.status == SubscriptionStatus.PENDING
-
-        subscription.status = SubscriptionStatus.ACTIVE
-
-        # If this is a renewal, extend the period
-        if not was_pending:
-            subscription.current_period_start = payment.period_start
-            subscription.current_period_end = payment.period_end
-
-        # Update user quota to new plan
-        self._update_user_quota(session, subscription.user_id, subscription.plan_id)
-
-        # Reset SMS counter on new subscription
-        if was_pending:
-            quota = session.exec(
-                select(UserQuota).where(UserQuota.user_id == subscription.user_id)
-            ).first()
-            if quota:
-                quota.sms_sent_this_month = 0
-                quota.last_reset_date = datetime.now(UTC)
-
-        session.commit()
-
-        logger.info(f"Payment confirmed: {payment_id}, subscription: {subscription.id}")
 
         return subscription
 
-    async def verify_and_process_payment(
-        self,
-        session: Session,
-        payment_id: uuid.UUID,
-    ) -> Subscription | None:
-        """
-        Verify payment status with provider and process if paid.
-
-        Args:
-            session: Database session
-            payment_id: Payment ID to verify
-
-        Returns:
-            Updated subscription if paid, None otherwise
-        """
-        payment = session.get(Payment, payment_id)
-        if not payment:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Payment not found",
-            )
-
-        if payment.status == PaymentStatus.COMPLETED:
-            return payment.subscription
-
-        # Verify with payment provider
-        verification = await self.payment_service.verify_payment(str(payment_id))
-
-        if verification.is_paid:
-            return await self.process_payment_confirmation(
-                session=session,
-                payment_id=payment_id,
-                provider_transaction_id=verification.transaction_id or "verified",
-            )
-
-        return None
-
-    async def generate_renewal_invoice(
+    async def process_renewal(
         self,
         session: Session,
         subscription_id: uuid.UUID,
-    ) -> tuple[Payment, str | None]:
+    ) -> Payment:
         """
-        Generate renewal invoice for existing subscription.
+        Process automatic subscription renewal.
 
-        Called by the renewal job before subscription expires.
-
-        Args:
-            session: Database session
-            subscription_id: Subscription to renew
-
-        Returns:
-            Tuple of (payment, payment_url)
+        Called by the renewal job for subscriptions with authorized payments.
         """
         subscription = session.get(Subscription, subscription_id)
         if not subscription:
@@ -306,10 +264,16 @@ class SubscriptionService:
                 detail="Subscription not found",
             )
 
+        if not subscription.provider_user_uuid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No payment authorization",
+            )
+
         if subscription.status != SubscriptionStatus.ACTIVE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription is not active",
+                detail="Subscription not active",
             )
 
         if subscription.cancel_at_period_end:
@@ -317,20 +281,20 @@ class SubscriptionService:
             session.commit()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription is scheduled for cancellation",
+                detail="Subscription canceled",
             )
 
         plan = subscription.plan
         now = subscription.current_period_end
 
         if subscription.billing_cycle == BillingCycle.MONTHLY:
-            period_end = now + timedelta(days=30)
             amount = plan.price
+            period_end = now + timedelta(days=30)
         else:
-            period_end = now + timedelta(days=365)
             amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
+            period_end = now + timedelta(days=365)
 
-        # Create pending payment
+        # Create payment record
         payment = Payment(
             subscription_id=subscription.id,
             amount=amount,
@@ -343,31 +307,33 @@ class SubscriptionService:
         session.add(payment)
         session.flush()
 
-        # Generate invoice via payment provider
-        invoice_result = await self.payment_service.create_invoice(
+        # Charge automatically
+        charge_result = await self.payment_service.charge_authorized_user(
+            user_uuid=subscription.provider_user_uuid,
             amount=amount,
             currency="USD",
             description=f"Renewal: {plan.name} ({subscription.billing_cycle.value})",
             remote_id=str(payment.id),
         )
 
-        if not invoice_result.success:
-            logger.error(f"Failed to create renewal invoice: {invoice_result.error}")
-            session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Failed to create renewal invoice: {invoice_result.error}",
-            )
+        if charge_result.success:
+            payment.status = PaymentStatus.COMPLETED
+            payment.provider_transaction_id = charge_result.transaction_id
+            payment.paid_at = datetime.now(UTC)
 
-        payment.provider_invoice_id = invoice_result.invoice_id
-        payment.provider_invoice_url = invoice_result.payment_url
-        subscription.status = SubscriptionStatus.PAST_DUE
+            subscription.current_period_start = now
+            subscription.current_period_end = period_end
 
-        session.commit()
+            session.commit()
+            logger.info(f"Renewal successful: {subscription_id}")
+        else:
+            payment.status = PaymentStatus.FAILED
+            subscription.status = SubscriptionStatus.PAST_DUE
 
-        logger.info(f"Renewal invoice created for subscription: {subscription_id}")
+            session.commit()
+            logger.warning(f"Renewal failed: {subscription_id}: {charge_result.error}")
 
-        return payment, invoice_result.payment_url
+        return payment
 
     @staticmethod
     def cancel_subscription(
@@ -375,17 +341,7 @@ class SubscriptionService:
         subscription_id: uuid.UUID,
         immediate: bool = False,
     ) -> Subscription:
-        """
-        Cancel a subscription.
-
-        Args:
-            session: Database session
-            subscription_id: Subscription to cancel
-            immediate: If True, cancel now. If False, cancel at period end.
-
-        Returns:
-            Updated subscription
-        """
+        """Cancel a subscription."""
         subscription = session.get(Subscription, subscription_id)
         if not subscription:
             raise HTTPException(
@@ -396,21 +352,18 @@ class SubscriptionService:
         if subscription.status == SubscriptionStatus.CANCELED:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription is already canceled",
+                detail="Already canceled",
             )
 
         if immediate:
             subscription.status = SubscriptionStatus.CANCELED
             subscription.canceled_at = datetime.now(UTC)
-
-            # Downgrade to Free plan
             SubscriptionService._downgrade_to_free_plan(session, subscription.user_id)
-
-            logger.info(f"Subscription canceled immediately: {subscription_id}")
+            logger.info(f"Subscription canceled: {subscription_id}")
         else:
             subscription.cancel_at_period_end = True
             subscription.canceled_at = datetime.now(UTC)
-            logger.info(f"Subscription scheduled for cancellation: {subscription_id}")
+            logger.info(f"Subscription will cancel at period end: {subscription_id}")
 
         session.commit()
         return subscription
@@ -420,16 +373,7 @@ class SubscriptionService:
         session: Session,
         subscription_id: uuid.UUID,
     ) -> Subscription:
-        """
-        Expire a subscription (grace period ended without payment).
-
-        Args:
-            session: Database session
-            subscription_id: Subscription to expire
-
-        Returns:
-            Updated subscription
-        """
+        """Expire a subscription after failed renewals."""
         subscription = session.get(Subscription, subscription_id)
         if not subscription:
             raise HTTPException(
@@ -438,12 +382,9 @@ class SubscriptionService:
             )
 
         subscription.status = SubscriptionStatus.EXPIRED
-
-        # Downgrade to Free plan
         SubscriptionService._downgrade_to_free_plan(session, subscription.user_id)
 
         session.commit()
-
         logger.info(f"Subscription expired: {subscription_id}")
 
         return subscription
@@ -459,8 +400,9 @@ class SubscriptionService:
 
         if quota:
             quota.plan_id = plan_id
+            quota.sms_sent_this_month = 0
+            quota.last_reset_date = datetime.now(UTC)
         else:
-            # Create quota if it doesn't exist
             quota = UserQuota(
                 user_id=user_id,
                 plan_id=plan_id,
@@ -483,236 +425,12 @@ class SubscriptionService:
             if quota:
                 quota.plan_id = free_plan.id
 
-    # ==================== Authorized Payments ====================
 
-    def supports_authorized_payments(self) -> bool:
-        """Check if the payment provider supports authorized/recurring payments."""
-        return self.payment_service.supports_authorized_payments()
-
-    async def get_authorization_url(
-        self,
-        session: Session,
-        user_id: uuid.UUID,
-        callback_url: str,
-    ) -> str:
-        """
-        Get URL for user to authorize recurring payments.
-
-        After authorization, the user's provider UUID will be stored in their
-        subscription for automatic renewals.
-
-        Args:
-            session: Database session
-            user_id: User ID
-            callback_url: URL to redirect after authorization
-
-        Returns:
-            Authorization URL
-
-        Raises:
-            HTTPException: If provider doesn't support authorized payments
-        """
-        if not self.supports_authorized_payments():
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail="Payment provider does not support authorized payments",
-            )
-
-        result = await self.payment_service.get_authorization_url(
-            remote_id=str(user_id),
-            callback_url=callback_url,
-        )
-
-        if not result.success:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Failed to get authorization URL: {result.error}",
-            )
-
-        return result.authorization_url or ""
-
-    def save_user_authorization(
-        self,
-        session: Session,
-        user_id: uuid.UUID,
-        provider_user_uuid: str,
-    ) -> Subscription | None:
-        """
-        Save the user's provider UUID after they authorize payments.
-
-        This is called from the callback endpoint after user authorizes.
-
-        Args:
-            session: Database session
-            user_id: User ID
-            provider_user_uuid: UUID from payment provider
-
-        Returns:
-            Updated subscription or None if no subscription exists
-        """
-        subscription = session.exec(
-            select(Subscription).where(Subscription.user_id == user_id)
-        ).first()
-
-        if subscription:
-            subscription.provider_user_uuid = provider_user_uuid
-            session.commit()
-            logger.info(f"Saved provider user UUID for subscription {subscription.id}")
-
-        return subscription
-
-    async def charge_subscription_renewal(
-        self,
-        session: Session,
-        subscription_id: uuid.UUID,
-    ) -> tuple[Payment, bool]:
-        """
-        Automatically charge subscription renewal using authorized payments.
-
-        This is used instead of generate_renewal_invoice when the user has
-        authorized automatic payments.
-
-        Args:
-            session: Database session
-            subscription_id: Subscription to renew
-
-        Returns:
-            Tuple of (payment, was_successful)
-
-        Raises:
-            HTTPException: If subscription not found or not eligible
-        """
-        subscription = session.get(Subscription, subscription_id)
-        if not subscription:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Subscription not found",
-            )
-
-        if not subscription.provider_user_uuid:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription does not have authorized payments enabled",
-            )
-
-        if subscription.status not in [
-            SubscriptionStatus.ACTIVE,
-            SubscriptionStatus.PAST_DUE,
-        ]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription is not active",
-            )
-
-        if subscription.cancel_at_period_end:
-            subscription.status = SubscriptionStatus.CANCELED
-            session.commit()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subscription is scheduled for cancellation",
-            )
-
-        plan = subscription.plan
-        now = subscription.current_period_end
-
-        if subscription.billing_cycle == BillingCycle.MONTHLY:
-            period_end = now + timedelta(days=30)
-            amount = plan.price
-        else:
-            period_end = now + timedelta(days=365)
-            amount = plan.price_yearly if plan.price_yearly > 0 else plan.price * 12
-
-        # Create payment record
-        payment = Payment(
-            subscription_id=subscription.id,
-            amount=amount,
-            currency="USD",
-            period_start=now,
-            period_end=period_end,
-            status=PaymentStatus.PENDING,
-            provider=self.payment_service.provider_name,
-        )
-        session.add(payment)
-        session.flush()
-
-        # Charge the user automatically
-        charge_result = await self.payment_service.charge_authorized_user(
-            user_uuid=subscription.provider_user_uuid,
-            amount=amount,
-            currency="USD",
-            description=f"Renewal: {plan.name} ({subscription.billing_cycle.value})",
-            remote_id=str(payment.id),
-        )
-
-        if charge_result.success:
-            # Payment successful - activate subscription
-            payment.status = PaymentStatus.COMPLETED
-            payment.provider_transaction_id = charge_result.transaction_id
-            payment.paid_at = datetime.now(UTC)
-
-            subscription.status = SubscriptionStatus.ACTIVE
-            subscription.current_period_start = now
-            subscription.current_period_end = period_end
-
-            session.commit()
-            logger.info(
-                f"Automatic renewal successful for subscription {subscription_id}"
-            )
-            return payment, True
-        else:
-            # Payment failed - mark as past due
-            payment.status = PaymentStatus.FAILED
-            subscription.status = SubscriptionStatus.PAST_DUE
-
-            session.commit()
-            logger.warning(
-                f"Automatic renewal failed for subscription {subscription_id}: "
-                f"{charge_result.error}"
-            )
-            return payment, False
-
-    async def process_renewal(
-        self,
-        session: Session,
-        subscription_id: uuid.UUID,
-    ) -> tuple[Payment, str | None, bool]:
-        """
-        Process subscription renewal - automatic if authorized, manual otherwise.
-
-        Args:
-            session: Database session
-            subscription_id: Subscription to renew
-
-        Returns:
-            Tuple of (payment, payment_url_if_manual, was_automatic_success)
-        """
-        subscription = session.get(Subscription, subscription_id)
-        if not subscription:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Subscription not found",
-            )
-
-        # If user has authorized payments, charge automatically
-        if subscription.provider_user_uuid and self.supports_authorized_payments():
-            payment, success = await self.charge_subscription_renewal(
-                session, subscription_id
-            )
-            return payment, None, success
-
-        # Otherwise, generate manual invoice
-        payment, payment_url = await self.generate_renewal_invoice(
-            session, subscription_id
-        )
-        return payment, payment_url, False
-
-
-# Singleton instance
+# Singleton
 _subscription_service: SubscriptionService | None = None
 
 
 def get_subscription_service() -> SubscriptionService:
-    """Get the subscription service singleton."""
     global _subscription_service
     if _subscription_service is None:
         _subscription_service = SubscriptionService()

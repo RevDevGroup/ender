@@ -120,12 +120,16 @@ class AuthorizationRequest:
 
     Attributes:
         remote_id: Internal ID for tracking (e.g., user.id or subscription.id)
-        callback_url: URL where user is redirected after authorization
+        callback_url: URL called by provider after authorization (server-to-server)
+        success_url: URL where user is redirected after successful authorization
+        error_url: URL where user is redirected if authorization fails or is cancelled
         metadata: Additional provider-specific data
     """
 
     remote_id: str
     callback_url: str
+    success_url: str
+    error_url: str
     metadata: dict[str, str] = field(default_factory=dict)
 
 

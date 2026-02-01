@@ -213,17 +213,21 @@ class PaymentService:
         *,
         remote_id: str,
         callback_url: str,
+        success_url: str,
+        error_url: str,
         metadata: dict[str, str] | None = None,
     ) -> AuthorizationResult:
         """
         Get a URL where the user can authorize recurring payments.
 
-        After the user authorizes, they will be redirected to callback_url
-        with the user_uuid that can be used for future charges.
+        After the user authorizes, they will be redirected to success_url.
+        The callback_url is called server-to-server by the provider.
 
         Args:
             remote_id: Internal reference ID (user.id or subscription.id)
-            callback_url: URL to redirect after authorization
+            callback_url: URL called by provider after authorization (server-to-server)
+            success_url: URL where user is redirected after successful authorization
+            error_url: URL where user is redirected if authorization fails or is cancelled
             metadata: Additional data (optional)
 
         Returns:
@@ -244,6 +248,8 @@ class PaymentService:
         request = AuthorizationRequest(
             remote_id=remote_id,
             callback_url=callback_url,
+            success_url=success_url,
+            error_url=error_url,
             metadata=metadata or {},
         )
 
