@@ -118,6 +118,16 @@ export const ApiKeysPublicSchema = {
     title: 'ApiKeysPublic'
 } as const;
 
+export const BillingCycleSchema = {
+    type: 'string',
+    enum: [
+        'monthly',
+        'yearly'
+    ],
+    title: 'BillingCycle',
+    description: 'Billing cycle options.'
+} as const;
+
 export const Body_login_login_access_tokenSchema = {
     properties: {
         grant_type: {
@@ -376,41 +386,24 @@ export const OAuthProvidersResponseSchema = {
     title: 'OAuthProvidersResponse'
 } as const;
 
-export const PlanUpgradeSchema = {
+export const PlanUpgradeRequestSchema = {
     properties: {
         plan_id: {
             type: 'string',
             format: 'uuid',
             title: 'Plan Id'
+        },
+        billing_cycle: {
+            $ref: '#/components/schemas/BillingCycle',
+            default: 'monthly'
         }
     },
     type: 'object',
     required: [
         'plan_id'
     ],
-    title: 'PlanUpgrade'
-} as const;
-
-export const PlanUpgradePublicSchema = {
-    properties: {
-        message: {
-            type: 'string',
-            title: 'Message'
-        },
-        data: {
-            additionalProperties: {
-                type: 'string'
-            },
-            type: 'object',
-            title: 'Data'
-        }
-    },
-    type: 'object',
-    required: [
-        'message',
-        'data'
-    ],
-    title: 'PlanUpgradePublic'
+    title: 'PlanUpgradeRequest',
+    description: 'Request body for plan upgrade.'
 } as const;
 
 export const PrivateUserCreateSchema = {
@@ -990,6 +983,69 @@ export const UserCreateSchema = {
     title: 'UserCreate'
 } as const;
 
+export const UserPlanInfoSchema = {
+    properties: {
+        plan_name: {
+            type: 'string',
+            title: 'Plan Name'
+        },
+        max_sms_per_month: {
+            type: 'integer',
+            title: 'Max Sms Per Month'
+        },
+        max_devices: {
+            type: 'integer',
+            title: 'Max Devices'
+        },
+        sms_sent_this_month: {
+            type: 'integer',
+            title: 'Sms Sent This Month',
+            default: 0
+        },
+        devices_registered: {
+            type: 'integer',
+            title: 'Devices Registered',
+            default: 0
+        },
+        subscription_status: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Subscription Status'
+        },
+        subscription_ends_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Subscription Ends At'
+        },
+        has_auto_renewal: {
+            type: 'boolean',
+            title: 'Has Auto Renewal',
+            default: false
+        }
+    },
+    type: 'object',
+    required: [
+        'plan_name',
+        'max_sms_per_month',
+        'max_devices'
+    ],
+    title: 'UserPlanInfo',
+    description: 'Plan info included in user response.'
+} as const;
+
 export const UserPlanPublicSchema = {
     properties: {
         name: {
@@ -1017,6 +1073,14 @@ export const UserPlanPublicSchema = {
             format: 'uuid',
             title: 'Id'
         },
+        price_yearly: {
+            type: 'number',
+            title: 'Price Yearly'
+        },
+        is_public: {
+            type: 'boolean',
+            title: 'Is Public'
+        },
         created_at: {
             type: 'string',
             format: 'date-time',
@@ -1032,6 +1096,8 @@ export const UserPlanPublicSchema = {
     required: [
         'name',
         'id',
+        'price_yearly',
+        'is_public',
         'created_at',
         'updated_at'
     ],
@@ -1107,6 +1173,66 @@ export const UserPublicSchema = {
         'id'
     ],
     title: 'UserPublic'
+} as const;
+
+export const UserPublicWithPlanSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            maxLength: 255,
+            format: 'email',
+            title: 'Email'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active',
+            default: true
+        },
+        is_superuser: {
+            type: 'boolean',
+            title: 'Is Superuser',
+            default: false
+        },
+        full_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Full Name'
+        },
+        email_verified: {
+            type: 'boolean',
+            title: 'Email Verified',
+            default: false
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        plan: {
+            anyOf: [
+                {
+                    $ref: '#/components/schemas/UserPlanInfo'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    required: [
+        'email',
+        'id'
+    ],
+    title: 'UserPublicWithPlan',
+    description: 'User with plan information.'
 } as const;
 
 export const UserQuotaPublicSchema = {

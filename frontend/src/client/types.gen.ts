@@ -81,6 +81,13 @@ export type ApiKeysPublic = {
 };
 
 /**
+ * BillingCycle
+ *
+ * Billing cycle options.
+ */
+export type BillingCycle = 'monthly' | 'yearly';
+
+/**
  * Body_login-login_access_token
  */
 export type BodyLoginLoginAccessToken = {
@@ -243,29 +250,16 @@ export type OAuthProvidersResponse = {
 };
 
 /**
- * PlanUpgrade
+ * PlanUpgradeRequest
+ *
+ * Request body for plan upgrade.
  */
-export type PlanUpgrade = {
+export type PlanUpgradeRequest = {
     /**
      * Plan Id
      */
     plan_id: string;
-};
-
-/**
- * PlanUpgradePublic
- */
-export type PlanUpgradePublic = {
-    /**
-     * Message
-     */
-    message: string;
-    /**
-     * Data
-     */
-    data: {
-        [key: string]: string;
-    };
+    billing_cycle?: BillingCycle;
 };
 
 /**
@@ -601,6 +595,46 @@ export type UserCreate = {
 };
 
 /**
+ * UserPlanInfo
+ *
+ * Plan info included in user response.
+ */
+export type UserPlanInfo = {
+    /**
+     * Plan Name
+     */
+    plan_name: string;
+    /**
+     * Max Sms Per Month
+     */
+    max_sms_per_month: number;
+    /**
+     * Max Devices
+     */
+    max_devices: number;
+    /**
+     * Sms Sent This Month
+     */
+    sms_sent_this_month?: number;
+    /**
+     * Devices Registered
+     */
+    devices_registered?: number;
+    /**
+     * Subscription Status
+     */
+    subscription_status?: string | null;
+    /**
+     * Subscription Ends At
+     */
+    subscription_ends_at?: string | null;
+    /**
+     * Has Auto Renewal
+     */
+    has_auto_renewal?: boolean;
+};
+
+/**
  * UserPlanPublic
  */
 export type UserPlanPublic = {
@@ -624,6 +658,14 @@ export type UserPlanPublic = {
      * Id
      */
     id: string;
+    /**
+     * Price Yearly
+     */
+    price_yearly: number;
+    /**
+     * Is Public
+     */
+    is_public: boolean;
     /**
      * Created At
      */
@@ -676,6 +718,39 @@ export type UserPublic = {
      * Id
      */
     id: string;
+};
+
+/**
+ * UserPublicWithPlan
+ *
+ * User with plan information.
+ */
+export type UserPublicWithPlan = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean;
+    /**
+     * Full Name
+     */
+    full_name?: string | null;
+    /**
+     * Email Verified
+     */
+    email_verified?: boolean;
+    /**
+     * Id
+     */
+    id: string;
+    plan?: UserPlanInfo | null;
 };
 
 /**
@@ -1110,7 +1185,7 @@ export type UsersReadUserMeResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    200: UserPublicWithPlan;
 };
 
 export type UsersReadUserMeResponse = UsersReadUserMeResponses[keyof UsersReadUserMeResponses];
@@ -1742,7 +1817,7 @@ export type PlansGetQuotaResponses = {
 export type PlansGetQuotaResponse = PlansGetQuotaResponses[keyof PlansGetQuotaResponses];
 
 export type PlansUpgradePlanData = {
-    body: PlanUpgrade;
+    body: PlanUpgradeRequest;
     path?: never;
     query?: never;
     url: '/api/v1/plans/upgrade';
@@ -1759,12 +1834,42 @@ export type PlansUpgradePlanError = PlansUpgradePlanErrors[keyof PlansUpgradePla
 
 export type PlansUpgradePlanResponses = {
     /**
+     * Response Plans-Upgrade Plan
+     *
      * Successful Response
      */
-    200: PlanUpgradePublic;
+    200: unknown;
 };
 
-export type PlansUpgradePlanResponse = PlansUpgradePlanResponses[keyof PlansUpgradePlanResponses];
+export type PlansCancelPlanData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Immediate
+         */
+        immediate?: boolean;
+    };
+    url: '/api/v1/plans/cancel';
+};
+
+export type PlansCancelPlanErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PlansCancelPlanError = PlansCancelPlanErrors[keyof PlansCancelPlanErrors];
+
+export type PlansCancelPlanResponses = {
+    /**
+     * Response Plans-Cancel Plan
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type WebhooksListWebhooksData = {
     body?: never;
@@ -2225,6 +2330,56 @@ export type OauthSetPasswordResponses = {
 };
 
 export type OauthSetPasswordResponse = OauthSetPasswordResponses[keyof OauthSetPasswordResponses];
+
+export type SubscriptionsAuthorizationCallbackData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * User Uuid
+         */
+        user_uuid: string;
+        /**
+         * Remote Id
+         */
+        remote_id: string;
+    };
+    url: '/api/v1/subscriptions/callback/authorize';
+};
+
+export type SubscriptionsAuthorizationCallbackErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SubscriptionsAuthorizationCallbackError = SubscriptionsAuthorizationCallbackErrors[keyof SubscriptionsAuthorizationCallbackErrors];
+
+export type SubscriptionsAuthorizationCallbackResponses = {
+    /**
+     * Response Subscriptions-Authorization Callback
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SubscriptionsCheckRenewalsJobData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/subscriptions/jobs/check-renewals';
+};
+
+export type SubscriptionsCheckRenewalsJobResponses = {
+    /**
+     * Response Subscriptions-Check Renewals Job
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type InternalProcessNotificationData = {
     body?: never;
