@@ -16,18 +16,25 @@ from app.core.config import settings
 from app.core.rate_limit import RateLimits, limiter
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    ApiKey,
     Message,
+    OAuthAccount,
+    Payment,
+    SMSDevice,
     SMSMessage,
+    Subscription,
     UpdatePassword,
     User,
     UserCreate,
     UserPlanInfo,
     UserPublic,
     UserPublicWithPlan,
+    UserQuota,
     UserRegister,
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    WebhookConfig,
 )
 from app.services.email import get_email_service
 from app.utils import (
@@ -349,7 +356,7 @@ def delete_user(
     session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
 ) -> Message:
     """
-    Delete a user.
+    Delete a user and all related data.
     """
     user = session.get(User, user_id)
     if not user:
@@ -358,8 +365,29 @@ def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(SMSMessage).where(col(SMSMessage.user_id) == user_id)
-    session.exec(statement)  # type: ignore
+
+    # Delete related data explicitly (in case CASCADE is not working in DB)
+    # Order matters due to foreign key dependencies
+
+    # First delete payments (depends on subscription)
+    subscription = session.exec(
+        select(Subscription).where(Subscription.user_id == user_id)
+    ).first()
+    if subscription:
+        session.exec(  # type: ignore
+            delete(Payment).where(col(Payment.subscription_id) == subscription.id)
+        )
+        session.delete(subscription)
+
+    # Delete other user-related data
+    session.exec(delete(SMSMessage).where(col(SMSMessage.user_id) == user_id))  # type: ignore
+    session.exec(delete(SMSDevice).where(col(SMSDevice.user_id) == user_id))  # type: ignore
+    session.exec(delete(WebhookConfig).where(col(WebhookConfig.user_id) == user_id))  # type: ignore
+    session.exec(delete(ApiKey).where(col(ApiKey.user_id) == user_id))  # type: ignore
+    session.exec(delete(OAuthAccount).where(col(OAuthAccount.user_id) == user_id))  # type: ignore
+    session.exec(delete(UserQuota).where(col(UserQuota.user_id) == user_id))  # type: ignore
+
+    # Finally delete the user
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
