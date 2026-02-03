@@ -9,10 +9,10 @@ const NotFound = () => {
     >
       <div className="flex items-center z-10">
         <div className="flex flex-col ml-4 items-center justify-center p-4">
-          <span className="text-6xl md:text-8xl font-bold leading-none mb-4">
+          <span className="text-6xl md:text-8xl font-serif leading-none mb-4">
             404
           </span>
-          <span className="text-2xl font-bold mb-2">Oops!</span>
+          <span className="text-2xl font-serif mb-2">Oops!</span>
         </div>
       </div>
 

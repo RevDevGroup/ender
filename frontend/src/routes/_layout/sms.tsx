@@ -50,7 +50,7 @@ function Sms() {
       <title>{`Message Logs - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">SMS</h1>
+          <h1 className="text-2xl">SMS</h1>
           <p className="text-muted-foreground">Create and manage your SMS</p>
         </div>
         <SendSMS />

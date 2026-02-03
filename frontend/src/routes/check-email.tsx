@@ -27,7 +27,7 @@ function CheckEmail() {
           <Mail className="h-12 w-12 text-primary" />
         </div>
 
-        <h1 className="text-2xl font-bold">Check your email</h1>
+        <h1 className="text-2xl">Check your email</h1>
 
         <p className="text-muted-foreground">
           We've sent a verification link to{" "}

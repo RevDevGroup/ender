@@ -49,7 +49,7 @@ function Integrations() {
       <title>{`Integrations - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+          <h1 className="text-2xl">Integrations</h1>
           <p className="text-muted-foreground">
             Manage API keys for programmatic access to the API
           </p>
