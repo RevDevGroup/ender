@@ -42,13 +42,11 @@ function QuotaCard() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
-            <CardDescription>Your usage and limits</CardDescription>
-          </div>
-          <CreditCard className="h-4 w-4 text-muted-foreground" />
-        </div>
+        <CardTitle className="flex items-center gap-3">
+          <CreditCard className="h-5 w-5 text-[#e94d1f]" />
+          Current Plan
+        </CardTitle>
+        <CardDescription>Your usage and limits</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
