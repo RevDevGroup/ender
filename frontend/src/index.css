@@ -5,53 +5,53 @@
 
 /* ==========================================================================
    Ender Design System
-   Warm color palette with beige/cream background and orange accent
+   Mint color palette with cool mint-gray background and mint accent
    ========================================================================== */
 
 :root {
   /* Core palette (hex values for reference)
-   * --color-accent: #e94d1f (orange/red)
-   * --color-bg: #f5f1eb (warm beige)
-   * --color-text: #1a1a1a (near black)
+   * --color-accent: #2dd4a8 (mint/teal)
+   * --color-bg: #edf5f1 (cool mint gray)
+   * --color-text: #181c1b (near black mint)
    */
 
-  /* shadcn semantic colors mapped to warm palette */
-  --background: #f5f1eb;
-  --foreground: #1a1a1a;
-  --card: #f5f1eb;
-  --card-foreground: #1a1a1a;
+  /* shadcn semantic colors mapped to mint palette */
+  --background: #edf5f1;
+  --foreground: #181c1b;
+  --card: #edf5f1;
+  --card-foreground: #181c1b;
   --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #1a1a1a;
+  --popover-foreground: #181c1b;
+  --primary: #181c1b;
   --primary-foreground: #ffffff;
-  --secondary: #e8e4de;
-  --secondary-foreground: #5c5852;
-  --muted: #e8e4de;
-  --muted-foreground: #78746e;
-  --accent: #e8e4de;
-  --accent-foreground: #1a1a1a;
+  --secondary: #e0e8e4;
+  --secondary-foreground: #545c58;
+  --muted: #e0e8e4;
+  --muted-foreground: #707874;
+  --accent: #e0e8e4;
+  --accent-foreground: #181c1b;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #d4d0ca;
-  --input: #d4d0ca;
-  --ring: #1a1a1a;
+  --border: #ccd4d0;
+  --input: #ccd4d0;
+  --ring: #181c1b;
 
   /* Chart colors */
-  --chart-1: #e94d1f;
-  --chart-2: #e9a86c;
-  --chart-3: #78746e;
-  --chart-4: #d4d0ca;
-  --chart-5: #d4441b;
+  --chart-1: #2dd4a8;
+  --chart-2: #6ee7c2;
+  --chart-3: #707874;
+  --chart-4: #ccd4d0;
+  --chart-5: #1fa888;
 
   /* Sidebar */
-  --sidebar: #f5f1eb;
-  --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #1a1a1a;
+  --sidebar: #edf5f1;
+  --sidebar-foreground: #181c1b;
+  --sidebar-primary: #181c1b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8e4de;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #d4d0ca;
-  --sidebar-ring: #1a1a1a;
+  --sidebar-accent: #e0e8e4;
+  --sidebar-accent-foreground: #181c1b;
+  --sidebar-border: #ccd4d0;
+  --sidebar-ring: #181c1b;
 
   /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -76,69 +76,69 @@
     0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
-  /* Neutral scale (warm grays) */
-  --neutral-50: #fafaf9;
-  --neutral-100: #f5f1eb;
-  --neutral-200: #e8e4de;
-  --neutral-300: #d4d0ca;
-  --neutral-400: #a8a49e;
-  --neutral-500: #78746e;
-  --neutral-600: #5c5852;
-  --neutral-700: #403c36;
-  --neutral-800: #262420;
-  --neutral-900: #1a1a1a;
-  --neutral-950: #0d0d0d;
+  /* Neutral scale (mint-tinted grays) */
+  --neutral-50: #f7faf9;
+  --neutral-100: #edf5f1;
+  --neutral-200: #e0e8e4;
+  --neutral-300: #ccd4d0;
+  --neutral-400: #a0a8a4;
+  --neutral-500: #707874;
+  --neutral-600: #545c58;
+  --neutral-700: #383e3c;
+  --neutral-800: #222826;
+  --neutral-900: #181c1b;
+  --neutral-950: #0c0f0e;
 
   /* Code block syntax highlighting */
-  --color-code-bg: #262420;
-  --color-code-text: #f5f1eb;
-  --color-code-comment: #78746e;
-  --color-code-string: #e9a86c;
-  --color-code-keyword: #e94d1f;
-  --color-code-function: #f5f1eb;
-  --color-code-variable: #d4d0ca;
-  --color-code-punctuation: #a8a49e;
-  --color-code-border: #403c36;
-  --color-code-filename-bg: #1a1a1a;
+  --color-code-bg: #222826;
+  --color-code-text: #edf5f1;
+  --color-code-comment: #707874;
+  --color-code-string: #6ee7c2;
+  --color-code-keyword: #2dd4a8;
+  --color-code-function: #edf5f1;
+  --color-code-variable: #ccd4d0;
+  --color-code-punctuation: #a0a8a4;
+  --color-code-border: #383e3c;
+  --color-code-filename-bg: #181c1b;
 }
 
 .dark {
-  --background: #1a1a1a;
-  --foreground: #f5f1eb;
-  --card: #262420;
-  --card-foreground: #f5f1eb;
-  --popover: #262420;
-  --popover-foreground: #f5f1eb;
-  --primary: #f5f1eb;
-  --primary-foreground: #1a1a1a;
-  --secondary: #403c36;
-  --secondary-foreground: #f5f1eb;
-  --muted: #403c36;
-  --muted-foreground: #a8a49e;
-  --accent: #403c36;
-  --accent-foreground: #f5f1eb;
+  --background: #181c1b;
+  --foreground: #edf5f1;
+  --card: #222826;
+  --card-foreground: #edf5f1;
+  --popover: #222826;
+  --popover-foreground: #edf5f1;
+  --primary: #edf5f1;
+  --primary-foreground: #181c1b;
+  --secondary: #383e3c;
+  --secondary-foreground: #edf5f1;
+  --muted: #383e3c;
+  --muted-foreground: #a0a8a4;
+  --accent: #383e3c;
+  --accent-foreground: #edf5f1;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #403c36;
-  --input: #403c36;
-  --ring: #f5f1eb;
+  --border: #383e3c;
+  --input: #383e3c;
+  --ring: #edf5f1;
 
   /* Chart colors (dark) */
-  --chart-1: #e94d1f;
-  --chart-2: #e9a86c;
-  --chart-3: #a8a49e;
-  --chart-4: #5c5852;
-  --chart-5: #d4441b;
+  --chart-1: #2dd4a8;
+  --chart-2: #6ee7c2;
+  --chart-3: #a0a8a4;
+  --chart-4: #545c58;
+  --chart-5: #1fa888;
 
   /* Sidebar (dark) */
-  --sidebar: #262420;
-  --sidebar-foreground: #f5f1eb;
-  --sidebar-primary: #f5f1eb;
-  --sidebar-primary-foreground: #1a1a1a;
-  --sidebar-accent: #403c36;
-  --sidebar-accent-foreground: #f5f1eb;
-  --sidebar-border: #403c36;
-  --sidebar-ring: #f5f1eb;
+  --sidebar: #222826;
+  --sidebar-foreground: #edf5f1;
+  --sidebar-primary: #edf5f1;
+  --sidebar-primary-foreground: #181c1b;
+  --sidebar-accent: #383e3c;
+  --sidebar-accent-foreground: #edf5f1;
+  --sidebar-border: #383e3c;
+  --sidebar-ring: #edf5f1;
 }
 
 @theme inline {
@@ -253,13 +253,13 @@
   textarea:focus,
   select:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgb(26 26 26 / 10%);
+    box-shadow: 0 0 0 3px rgb(24 28 27 / 10%);
   }
 
   .dark input:focus,
   .dark textarea:focus,
   .dark select:focus {
-    box-shadow: 0 0 0 3px rgb(245 241 235 / 15%);
+    box-shadow: 0 0 0 3px rgb(237 245 241 / 15%);
   }
 }
 

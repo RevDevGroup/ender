@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils"
  * These match the CSS variables defined in index.css
  */
 export const codeColors = {
-  bg: '#262420',
-  text: '#f5f1eb',
-  comment: '#78746e',
-  string: '#e9a86c',
-  keyword: '#e94d1f',
-  function: '#f5f1eb',
-  variable: '#d4d0ca',
-  punctuation: '#a8a49e',
+  bg: '#222826',
+  text: '#edf5f1',
+  comment: '#707874',
+  string: '#6ee7c2',
+  keyword: '#2dd4a8',
+  function: '#edf5f1',
+  variable: '#ccd4d0',
+  punctuation: '#a0a8a4',
 } as const
 
 interface CodeBlockProps {

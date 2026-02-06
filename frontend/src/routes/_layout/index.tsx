@@ -54,7 +54,7 @@ function StatCard({
       <Card className="cursor-pointer">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <Icon className="h-5 w-5 text-[#e94d1f]" />
+            <Icon className="h-5 w-5 text-[#2dd4a8]" />
             {title}
           </CardTitle>
           <CardDescription>{description}</CardDescription>
@@ -118,7 +118,7 @@ function SystemStatusCard() {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-3">
-          <Zap className="h-5 w-5 text-[#e94d1f]" />
+          <Zap className="h-5 w-5 text-[#2dd4a8]" />
           System Status
         </CardTitle>
         <Badge variant="secondary" className="text-xs">
@@ -147,7 +147,7 @@ function QuickInfoCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-[#e94d1f]" />
+          <Clock className="h-5 w-5 text-[#2dd4a8]" />
           Quick Info
         </CardTitle>
       </CardHeader>
@@ -196,8 +196,8 @@ function GettingStartedCard() {
       <Card className="cursor-pointer group">
         <CardHeader className="flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-[#e94d1f]/10 p-2">
-              <CheckCircle2 className="h-5 w-5 text-[#e94d1f]" />
+            <div className="rounded-full bg-[#2dd4a8]/10 p-2">
+              <CheckCircle2 className="h-5 w-5 text-[#2dd4a8]" />
             </div>
             <div>
               <CardTitle>Getting Started</CardTitle>
