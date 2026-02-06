@@ -68,7 +68,7 @@ function Admin() {
 
         <TabsContent value="users" className="mt-6">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+            <h1 className="text-2xl">Users</h1>
             <p className="text-muted-foreground">
               Manage user accounts and permissions
             </p>
@@ -78,9 +78,7 @@ function Admin() {
 
         <TabsContent value="settings" className="mt-6">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold tracking-tight">
-              System Settings
-            </h1>
+            <h1 className="text-2xl">System Settings</h1>
             <p className="text-muted-foreground">
               Configure system-wide settings and payment options
             </p>

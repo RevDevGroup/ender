@@ -49,7 +49,7 @@ function Devices() {
       <title>{`Devices - ${config.appName}`}</title>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Devices</h1>
+          <h1 className="text-2xl">Devices</h1>
           <p className="text-muted-foreground">
             Manage your registered SMS devices
           </p>

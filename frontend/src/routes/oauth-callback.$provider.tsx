@@ -93,7 +93,7 @@ function OAuthCallback() {
       <AuthLayout>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-2xl font-bold">Link Your Account</h1>
+            <h1 className="text-2xl">Link Your Account</h1>
             <p className="text-muted-foreground text-sm">
               An account with email <strong>{existing_email}</strong> already
               exists. Enter your password to link your {provider} account.
@@ -141,7 +141,7 @@ function OAuthCallback() {
   return (
     <AuthLayout>
       <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-2xl font-bold">Signing in...</h1>
+        <h1 className="text-2xl">Signing in...</h1>
         <p className="text-muted-foreground">
           Please wait while we complete your sign in with {provider}.
         </p>

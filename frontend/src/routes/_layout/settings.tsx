@@ -38,7 +38,7 @@ function UserSettings() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">User Settings</h1>
+        <h1 className="text-2xl">User Settings</h1>
         <p className="text-muted-foreground">
           Manage your account settings and preferences
         </p>

@@ -61,7 +61,7 @@ function VerifyEmail() {
         {status === "loading" && (
           <>
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            <h1 className="text-2xl font-bold">Verifying your email...</h1>
+            <h1 className="text-2xl">Verifying your email...</h1>
             <p className="text-muted-foreground">
               Please wait while we verify your email address.
             </p>
@@ -71,7 +71,7 @@ function VerifyEmail() {
         {status === "success" && (
           <>
             <CheckCircle className="h-16 w-16 text-green-500" />
-            <h1 className="text-2xl font-bold">Email Verified!</h1>
+            <h1 className="text-2xl">Email Verified!</h1>
             <p className="text-muted-foreground">
               Your email has been successfully verified. You can now log in to
               your account.
@@ -85,7 +85,7 @@ function VerifyEmail() {
         {status === "error" && (
           <>
             <XCircle className="h-16 w-16 text-destructive" />
-            <h1 className="text-2xl font-bold">Verification Failed</h1>
+            <h1 className="text-2xl">Verification Failed</h1>
             <p className="text-muted-foreground">{errorMessage}</p>
             <div className="flex gap-4 mt-4">
               <Button variant="outline" asChild>

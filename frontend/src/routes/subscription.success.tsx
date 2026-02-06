@@ -22,7 +22,7 @@ function SubscriptionSuccess() {
           <CheckCircle className="h-12 w-12 text-green-500" />
         </div>
 
-        <h1 className="text-2xl font-bold">Subscription Activated!</h1>
+        <h1 className="text-2xl">Subscription Activated!</h1>
 
         <p className="text-muted-foreground">
           Your payment has been authorized successfully. Your subscription is

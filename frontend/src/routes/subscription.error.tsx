@@ -22,7 +22,7 @@ function SubscriptionError() {
           <XCircle className="h-12 w-12 text-destructive" />
         </div>
 
-        <h1 className="text-2xl font-bold">Subscription Failed</h1>
+        <h1 className="text-2xl">Subscription Failed</h1>
 
         <p className="text-muted-foreground">
           We couldn't complete your subscription. This could be because the
