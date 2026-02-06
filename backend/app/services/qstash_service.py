@@ -102,6 +102,7 @@ class QStashService:
         *,
         retries: int = 3,
         deduplication_id: str | None = None,
+        delay: str | None = None,
     ) -> str | None:
         """
         Enqueue a task to the notifications queue.
@@ -114,6 +115,7 @@ class QStashService:
             payload: The JSON payload to send
             retries: Number of retry attempts (default 3, then goes to DLQ)
             deduplication_id: Optional ID to prevent duplicate messages
+            delay: Optional delivery delay (e.g. "5s", "1m")
 
         Returns:
             QStash message ID or None if enqueue failed
@@ -132,6 +134,7 @@ class QStashService:
                 body=payload,
                 retries=retries,
                 deduplication_id=deduplication_id,
+                delay=delay,
             )
             logger.info(f"Enqueued to '{queue_name}': {response.message_id}")
             return response.message_id

@@ -30,6 +30,53 @@ class DeviceType(str, Enum):
     # Add more device types here as needed
 
 
+# FCM data message limit is 4096 bytes. We reserve a safety margin
+# for JSON structure overhead, keys, and the "body" field.
+FCM_MAX_PAYLOAD_BYTES = 4096
+FCM_PAYLOAD_OVERHEAD_BYTES = 256  # keys, JSON braces, quotes, etc.
+FCM_CHUNK_DELAY_SECONDS = 5  # delay between chunks to the same device
+
+
+def _estimate_fcm_payload_size(messages: list[dict[str, str]], body: str) -> int:
+    """Estimate the serialized size of an FCM data payload in bytes."""
+    payload = {"messages": json.dumps(messages), "body": body}
+    return len(json.dumps(payload).encode("utf-8"))
+
+
+def chunk_messages_for_fcm(
+    messages: list[dict[str, str]], body: str
+) -> list[list[dict[str, str]]]:
+    """
+    Split a messages list into chunks that each fit within FCM's 4KB limit.
+
+    Each chunk, when combined with the body into an FCM payload, will stay
+    under FCM_MAX_PAYLOAD_BYTES.
+    """
+    if not messages:
+        return []
+
+    # If everything fits in one payload, skip chunking
+    if _estimate_fcm_payload_size(messages, body) <= FCM_MAX_PAYLOAD_BYTES:
+        return [messages]
+
+    chunks: list[list[dict[str, str]]] = []
+    current_chunk: list[dict[str, str]] = []
+
+    for msg in messages:
+        candidate = [*current_chunk, msg]
+        if _estimate_fcm_payload_size(candidate, body) > FCM_MAX_PAYLOAD_BYTES:
+            if current_chunk:
+                chunks.append(current_chunk)
+            current_chunk = [msg]
+        else:
+            current_chunk = candidate
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks
+
+
 class NotificationPayload:
     """Standardized payload for device notifications."""
 
@@ -207,18 +254,26 @@ class NotificationDispatcher:
                 for msg in device_messages
             ]
 
-            payload = NotificationPayload(
-                device_id=device_id,
-                device_token=device_token,
-                device_type=device_type,
-                messages=messages_data,
-                body=body,
-            )
+            # Split into chunks that fit within FCM's 4KB payload limit
+            chunks = chunk_messages_for_fcm(messages_data, body)
 
-            await cls._dispatch_single(payload)
+            for i, chunk in enumerate(chunks):
+                payload = NotificationPayload(
+                    device_id=device_id,
+                    device_token=device_token,
+                    device_type=device_type,
+                    messages=chunk,
+                    body=body,
+                )
+
+                # Stagger chunks to the same device to avoid flooding
+                delay = f"{i * FCM_CHUNK_DELAY_SECONDS}s" if i > 0 else None
+                await cls._dispatch_single(payload, delay=delay)
 
     @classmethod
-    async def _dispatch_single(cls, payload: NotificationPayload) -> None:
+    async def _dispatch_single(
+        cls, payload: NotificationPayload, *, delay: str | None = None
+    ) -> None:
         """
         Dispatch a single notification payload via QStash.
 
@@ -236,6 +291,7 @@ class NotificationDispatcher:
             endpoint="/api/v1/internal/notifications/send",
             payload=payload.to_dict(),
             deduplication_id=f"{payload.device_id}-{hash(payload.body)}-{len(payload.messages)}",
+            delay=delay,
         )
 
     @classmethod
