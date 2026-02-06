@@ -218,7 +218,7 @@ python-dotenv==1.2.1
     #   uvicorn
 python-magic==0.4.27
     # via maileroo
-python-multipart==0.0.21
+python-multipart==0.0.22
     # via
     #   app (pyproject.toml)
     #   fastapi
